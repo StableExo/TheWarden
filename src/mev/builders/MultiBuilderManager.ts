@@ -89,7 +89,9 @@ export class MultiBuilderManager {
       // 1. Select builders based on strategy
       const selectedBuilders = this.selectBuilders(negotiatedBlock);
 
-      logger.info(`[MultiBuilderManager] Selected ${selectedBuilders.length} builders:`, selectedBuilders.map(b => b.name).join(', '));
+      logger.info(
+        `[MultiBuilderManager] Selected ${selectedBuilders.length} builders: ${selectedBuilders.map(b => b.name).join(', ')}`
+      );
 
       // 2. Convert negotiated block to standard bundle format
       const standardBundle = this.convertToStandardBundle(negotiatedBlock, options);

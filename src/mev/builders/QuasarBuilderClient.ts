@@ -170,9 +170,9 @@ export class QuasarBuilderClient implements IBuilderClient {
       },
       body: {
         tx: bundle.txs,
-        canRevert: bundle.revertingTxHashes
-          ? bundle.txs.map((tx) => bundle.revertingTxHashes?.includes(tx) || false)
-          : bundle.txs.map(() => false),
+        canRevert: bundle.txs.map((tx) => 
+          bundle.revertingTxHashes?.includes(tx) || false
+        ),
       },
       privacy: bundle.privacy,
     };

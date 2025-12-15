@@ -193,22 +193,24 @@ export const ALL_BUILDERS: BuilderEndpoint[] = [
 /**
  * Top 4 builders by market share (cover ~95% of blocks)
  * ✅ All builders verified and active (December 2024)
+ * Note: Rankings by market share (Flashbots #3, Quasar #4 are very close at ~16%)
  */
 export const TOP_4_BUILDERS: BuilderEndpoint[] = [
   TITAN_BUILDER,      // 50.85% (rank #1)
   BUILDERNET_BUILDER, // 29.84% (rank #2)
-  QUASAR_BUILDER,     // 16.08% (rank #3) - ✅ VERIFIED AND ACTIVATED
-  FLASHBOTS_BUILDER,  // 16.13% (rank #4)
+  FLASHBOTS_BUILDER,  // 16.13% (rank #3)
+  QUASAR_BUILDER,     // 16.08% (rank #4) - ✅ VERIFIED AND ACTIVATED
 ];
 
 /**
  * Top 3 active builders (legacy constant, use TOP_4_BUILDERS for better coverage)
- * Combined market share: ~96% (Titan 50.85% + BuilderNet 29.84% + Quasar 16.08%)
+ * Combined market share: ~96.8% (Titan 50.85% + BuilderNet 29.84% + Flashbots 16.13%)
+ * Note: Quasar (16.08%) is very close to Flashbots, but Flashbots slightly higher
  */
 export const TOP_3_BUILDERS: BuilderEndpoint[] = [
   TITAN_BUILDER,      // 50.85% (rank #1)
   BUILDERNET_BUILDER, // 29.84% (rank #2)
-  QUASAR_BUILDER,     // 16.08% (rank #3) - ✅ VERIFIED AND ACTIVATED
+  FLASHBOTS_BUILDER,  // 16.13% (rank #3)
 ];
 
 /**
