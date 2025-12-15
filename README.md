@@ -268,6 +268,7 @@ See [Autonomous Monitoring Guide](./docs/AUTONOMOUS_MONITORING.md) for complete 
 - **Orderflow Privacy**: Enhanced privacy through TEE-secured orderflow distribution
 - **Remote Attestation**: Verify builder code integrity via platform attestation (Intel SGX, AMD SEV)
 - **Reputation System**: Dynamic builder scoring based on performance and attestation status
+- **Operator API**: Remotely manage BuilderNet instances via port 3535 (liveness checks, logs, rbuilder control)
 
 ### 🚀 Rollup-Boost for L2 (New - 2024-2025)
 - **Flashblocks**: Sub-second (200-250ms) block confirmations on OP Stack L2s
@@ -302,7 +303,7 @@ See [Aerodrome Integration Guide](./docs/AERODROME_INTEGRATION.md) for complete 
 - **Outcome-Based Learning**: Prediction vs reality comparison for continuous improvement
 - **Production-Tested Utilities**: Battle-hardened price math, caching, networking, and validation from MEV environment
 
-See [MEV Intelligence Suite Documentation](./docs/MEV_INTELLIGENCE_SUITE.md), [Flashbots Intelligence](./docs/FLASHBOTS_INTELLIGENCE.md), [Bundle Cache API](./docs/BUNDLE_CACHE_API.md), [BuilderNet Integration](./docs/BUILDERNET_INTEGRATION.md), [Rollup-Boost Integration](./docs/ROLLUP_BOOST_INTEGRATION.md), [Private RPC Documentation](./docs/PRIVATE_RPC.md), [Arbitrage Engines](./docs/ARBITRAGE_ENGINES.md), [AxionCitadel Integration](./docs/INTEGRATION_FROM_AXIONCITADEL.md), [Strategic Intelligence Integration](./docs/AXIONCITADEL_STRATEGIC_INTEGRATION.md), [Conscious Knowledge Loop](./docs/CONSCIOUS_KNOWLEDGE_LOOP.md), [Utilities Integration](./docs/AXIONCITADEL_UTILITIES.md), [Autonomous Intelligence Vision](./docs/AUTONOMOUS_INTELLIGENCE_VISION.md), [Ethics Engine Integration](./docs/ETHICS_ENGINE.md), and [Memory Core & Gated Execution](./docs/MEMORY_CORE_AND_GATED_EXECUTION.md) for details.
+See [MEV Intelligence Suite Documentation](./docs/MEV_INTELLIGENCE_SUITE.md), [Flashbots Intelligence](./docs/FLASHBOTS_INTELLIGENCE.md), [Bundle Cache API](./docs/BUNDLE_CACHE_API.md), [BuilderNet Integration](./docs/BUILDERNET_INTEGRATION.md), [BuilderNet Operator API](./docs/BUILDERNET_OPERATOR_API.md), [Rollup-Boost Integration](./docs/ROLLUP_BOOST_INTEGRATION.md), [Private RPC Documentation](./docs/PRIVATE_RPC.md), [Arbitrage Engines](./docs/ARBITRAGE_ENGINES.md), [AxionCitadel Integration](./docs/INTEGRATION_FROM_AXIONCITADEL.md), [Strategic Intelligence Integration](./docs/AXIONCITADEL_STRATEGIC_INTEGRATION.md), [Conscious Knowledge Loop](./docs/CONSCIOUS_KNOWLEDGE_LOOP.md), [Utilities Integration](./docs/AXIONCITADEL_UTILITIES.md), [Autonomous Intelligence Vision](./docs/AUTONOMOUS_INTELLIGENCE_VISION.md), [Ethics Engine Integration](./docs/ETHICS_ENGINE.md), and [Memory Core & Gated Execution](./docs/MEMORY_CORE_AND_GATED_EXECUTION.md) for details.
 
 ## Installation
 
