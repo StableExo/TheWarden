@@ -312,13 +312,13 @@ async function main() {
   intelligence.registerBuilderNode({
     operator: nodeId,
     ipAddress: new URL(operatorUrl).hostname,
-    attestationStatus: 'pending' as any,
+    attestationStatus: 'pending',
     reputationScore: 0.8,
     isActive: true,
     connectedRelays: ['https://relay.flashbots.net'],
     orderflowSources: ['public', 'private-wallets'],
     lastActivity: new Date(),
-  });
+  } as any); // Type assertion needed - attestationStatus expects enum value
 
   // Simulate TEE attestation (in production, this would come from real attestation)
   intelligence.simulateRemoteAttestation(nodeId, 'Intel SGX');

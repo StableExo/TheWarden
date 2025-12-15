@@ -97,9 +97,13 @@ export class BuilderNetOperatorClient {
       username: config.username || 'admin',
       password: config.password,
       timeout: config.timeout || 10000,
-      allowInsecure: config.allowInsecure ?? true, // Default true for self-signed certs
+      allowInsecure: config.allowInsecure ?? true,
       enableLogging: config.enableLogging ?? true,
     };
+
+    // Note: allowInsecure flag is informational only in this implementation
+    // For actual SSL certificate bypass, set NODE_TLS_REJECT_UNAUTHORIZED=0
+    // or use a custom HTTPS agent (not implemented in this version)
 
     // Prepare Basic Auth header
     const credentials = Buffer.from(`${this.config.username}:${this.config.password}`).toString('base64');
@@ -389,6 +393,16 @@ export class BuilderNetOperatorClient {
 
   /**
    * Fetch with timeout support
+   * 
+   * Note: SSL certificate validation
+   * The native fetch API in Node.js doesn't directly support the 
+   * rejectUnauthorized option. For production use with self-signed
+   * certificates, you should either:
+   * 1. Use proper SSL certificates (recommended)
+   * 2. Configure NODE_TLS_REJECT_UNAUTHORIZED=0 environment variable
+   * 3. Use a custom HTTPS agent with the https module
+   * 
+   * TODO: Add custom HTTPS agent support for allowInsecure option
    */
   private async fetchWithTimeout(
     url: string,
@@ -398,9 +412,6 @@ export class BuilderNetOperatorClient {
     const timeout = setTimeout(() => controller.abort(), this.config.timeout);
 
     try {
-      // Note: For production, would need to handle SSL certificate validation
-      // Node.js fetch doesn't have rejectUnauthorized option
-      // Would need to use a custom agent with https module
       const response = await fetch(url, {
         ...options,
         signal: controller.signal,

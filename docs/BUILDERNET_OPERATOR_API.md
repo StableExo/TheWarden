@@ -437,6 +437,28 @@ const client = new BuilderNetOperatorClient({
 });
 ```
 
+**For Self-Signed Certificates** (development only):
+
+The `allowInsecure` option is informational in the current implementation. To actually bypass certificate validation for self-signed certificates, you need to set an environment variable:
+
+```bash
+# NOT recommended for production!
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+```
+
+Alternatively, use Let's Encrypt for free valid certificates:
+
+```bash
+# Install certbot
+sudo apt install certbot
+
+# Generate certificate
+sudo certbot certonly --standalone -d builder.example.com
+
+# Configure your BuilderNet instance to use the certificates
+# Then set allowInsecure: false in your client config
+```
+
 ### Monitoring Setup
 
 ```typescript
