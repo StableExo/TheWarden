@@ -13,6 +13,7 @@ export * from './BuilderRegistry';
 // Clients
 export { TitanBuilderClient } from './TitanBuilderClient';
 export { BuilderNetClient } from './BuilderNetClient';
+export { BuilderNetOperatorClient } from './BuilderNetOperatorClient';
 export { QuasarBuilderClient } from './QuasarBuilderClient';
 export { RsyncBuilderClient } from './RsyncBuilderClient';
 
