@@ -13,6 +13,8 @@ export * from './BuilderRegistry';
 // Clients
 export { TitanBuilderClient } from './TitanBuilderClient';
 export { BuilderNetClient } from './BuilderNetClient';
+export { QuasarBuilderClient } from './QuasarBuilderClient';
+export { RsyncBuilderClient } from './RsyncBuilderClient';
 
 // Manager
 export { MultiBuilderManager, DEFAULT_MULTI_BUILDER_CONFIG } from './MultiBuilderManager';

@@ -205,7 +205,7 @@ export class TitanBuilderClient implements IBuilderClient {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        const data = await response.json() as { result?: { bundleHash?: string } | string; error?: { message?: string } };
 
         if (data.error) {
           throw new Error(data.error.message || JSON.stringify(data.error));
@@ -215,7 +215,7 @@ export class TitanBuilderClient implements IBuilderClient {
           throw new Error('No bundle hash in response');
         }
 
-        return data.result.bundleHash || data.result;
+        return typeof data.result === 'string' ? data.result : (data.result.bundleHash || '');
       } catch (error) {
         lastError = error as Error;
         
