@@ -1,0 +1,78 @@
+{
+  "timestamp": "2025-12-15T12:10:36.973Z",
+  "totalBuilders": 7,
+  "healthyBuilders": 0,
+  "submissionSuccesses": 7,
+  "validationResults": [
+    {
+      "builder": "titan",
+      "healthCheckPassed": false,
+      "healthCheckTime": 0,
+      "submissionSuccess": true,
+      "submissionTime": 0,
+      "error": "Cannot read properties of undefined (reading 'find')"
+    },
+    {
+      "builder": "buildernet",
+      "healthCheckPassed": false,
+      "healthCheckTime": 0,
+      "submissionSuccess": true,
+      "submissionTime": 0,
+      "error": "Cannot read properties of undefined (reading 'find')"
+    },
+    {
+      "builder": "flashbots",
+      "healthCheckPassed": false,
+      "healthCheckTime": 0,
+      "submissionSuccess": true,
+      "submissionTime": 0,
+      "error": "Cannot read properties of undefined (reading 'find')"
+    },
+    {
+      "builder": "bloxroute",
+      "healthCheckPassed": false,
+      "healthCheckTime": 0,
+      "submissionSuccess": true,
+      "submissionTime": 0,
+      "error": "Cannot read properties of undefined (reading 'find')"
+    },
+    {
+      "builder": "beaver",
+      "healthCheckPassed": false,
+      "healthCheckTime": 0,
+      "submissionSuccess": true,
+      "submissionTime": 0,
+      "error": "Cannot read properties of undefined (reading 'find')"
+    },
+    {
+      "builder": "rsync",
+      "healthCheckPassed": false,
+      "healthCheckTime": 0,
+      "submissionSuccess": true,
+      "submissionTime": 0,
+      "error": "Cannot read properties of undefined (reading 'find')"
+    },
+    {
+      "builder": "quasar",
+      "healthCheckPassed": false,
+      "healthCheckTime": 0,
+      "submissionSuccess": true,
+      "submissionTime": 0,
+      "error": "Cannot read properties of undefined (reading 'find')"
+    }
+  ],
+  "marketCoverage": 0,
+  "averageResponseTime": null,
+  "recommendations": [
+    "⚠️  7 builder(s) unhealthy: titan, buildernet, flashbots, bloxroute, beaver, rsync, quasar",
+    "   This may be due to CI environment geo-restrictions. Test in production environment for accurate results.",
+    "⚠️  Limited market coverage: 0.0% (0/7 builders healthy)",
+    "⚠️  Slow response times: NaNms average",
+    "",
+    "📋 NEXT STEPS:",
+    "1. Deploy to production environment (no geo-restrictions)",
+    "2. Run 24-hour opportunity detection",
+    "3. Create partnership materials with this data",
+    "4. Start outreach to DeFi protocols and MEV searchers"
+  ]
+}
