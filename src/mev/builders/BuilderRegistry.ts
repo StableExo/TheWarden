@@ -21,7 +21,7 @@ export const TITAN_BUILDER: BuilderEndpoint = {
   fallbackUrls: [
     'https://relay.titanbuilder.xyz',
   ],
-  marketShare: 0.45, // ~45% average market share (late 2025)
+  marketShare: 0.5085, // ~50.85% market share (December 2024, relayscan.io)
   capabilities: [
     BuilderCapability.STANDARD_BUNDLES,
     BuilderCapability.PARALLEL_MERGING,
@@ -46,7 +46,7 @@ export const BUILDERNET_BUILDER: BuilderEndpoint = {
   fallbackUrls: [
     'https://api.buildernet.org',
   ],
-  marketShare: 0.25, // ~25% average market share (rank #2-3)
+  marketShare: 0.2984, // ~29.84% market share (December 2024, relayscan.io)
   capabilities: [
     BuilderCapability.STANDARD_BUNDLES,
     BuilderCapability.BUNDLE_SIMULATION,
@@ -69,7 +69,7 @@ export const FLASHBOTS_BUILDER: BuilderEndpoint = {
   fallbackUrls: [
     'https://relay-sepolia.flashbots.net', // Testnet
   ],
-  marketShare: 0.20, // ~20% average market share
+  marketShare: 0.1613, // ~16.13% market share (BuilderNet Flashbots, December 2024, relayscan.io)
   capabilities: [
     BuilderCapability.STANDARD_BUNDLES,
     BuilderCapability.MEV_SHARE,
@@ -132,16 +132,40 @@ export const BEAVER_BUILDER: BuilderEndpoint = {
 export const RSYNC_BUILDER: BuilderEndpoint = {
   name: BuilderName.RSYNC,
   displayName: 'Rsync Builder',
-  relayUrl: 'https://relay.rsyncbuilder.xyz',
+  relayUrl: 'https://rsync-builder.xyz', // Updated based on awesome-block-builders
   fallbackUrls: [],
-  marketShare: 0.05, // ~5% market share
+  marketShare: 0.10, // ~10% estimated (described as "one of most dominant" in research)
   capabilities: [
     BuilderCapability.STANDARD_BUNDLES,
+    BuilderCapability.BUNDLE_CANCELLATION,
+    BuilderCapability.BUNDLE_SIMULATION,
   ],
   isActive: true,
-  priority: 65,
+  priority: 75, // High priority due to dominance and advanced features
   metadata: {
-    description: 'Independent MEV builder',
+    description: 'Dominant MEV builder with advanced bundle API (atomic bundles, UUID cancellation, refund control)',
+    features: ['60% private order flow', 'Atomic bundles', 'UUID cancellation', 'Refund distribution control'],
+  },
+};
+
+/**
+ * Quasar Builder endpoint configuration
+ */
+export const QUASAR_BUILDER: BuilderEndpoint = {
+  name: BuilderName.QUASAR,
+  displayName: 'Quasar Builder',
+  relayUrl: 'https://relay.quasar.win', // Placeholder - needs verification
+  fallbackUrls: [],
+  marketShare: 0.1608, // ~16.08% market share (December 2024, relayscan.io)
+  capabilities: [
+    BuilderCapability.STANDARD_BUNDLES,
+    BuilderCapability.BUNDLE_SIMULATION,
+  ],
+  isActive: false, // Inactive until relay endpoint verified
+  priority: 80, // Same tier as Flashbots (16% market share)
+  metadata: {
+    description: 'Major MEV builder competing for #3 spot with Flashbots',
+    features: ['Consistent market presence', 'High market share'],
   },
 };
 
@@ -155,15 +179,26 @@ export const ALL_BUILDERS: BuilderEndpoint[] = [
   BLOXROUTE_BUILDER,
   BEAVER_BUILDER,
   RSYNC_BUILDER,
+  QUASAR_BUILDER,
 ];
 
 /**
- * Top 3 builders by market share (cover ~90% of blocks)
+ * Top 4 builders by market share (cover ~95% of blocks)
+ */
+export const TOP_4_BUILDERS: BuilderEndpoint[] = [
+  TITAN_BUILDER,      // 50.85% (rank #1)
+  BUILDERNET_BUILDER, // 29.84% (rank #2)
+  QUASAR_BUILDER,     // 16.08% (rank #3) - INACTIVE until endpoint verified
+  FLASHBOTS_BUILDER,  // 16.13% (rank #4)
+];
+
+/**
+ * Top 3 active builders (exclude Quasar until endpoint verified)
  */
 export const TOP_3_BUILDERS: BuilderEndpoint[] = [
-  TITAN_BUILDER,      // 45% (rank #1)
-  BUILDERNET_BUILDER, // 25% (rank #2)
-  FLASHBOTS_BUILDER,  // 20% (rank #3)
+  TITAN_BUILDER,      // 50.85% (rank #1)
+  BUILDERNET_BUILDER, // 29.84% (rank #2)
+  FLASHBOTS_BUILDER,  // 16.13% (rank #3)
 ];
 
 /**
