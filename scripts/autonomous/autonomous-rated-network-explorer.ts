@@ -344,7 +344,7 @@ class RatedNetworkExplorer {
       'Builder leaderboard reveals market concentration and competitive dynamics'
     );
     this.results.keyInsights.push(
-      'Cross-referencing rated.network builder data with TheWarden\'s BuilderRegistry enables validation'
+      "Cross-referencing rated.network builder data with TheWarden's BuilderRegistry enables validation"
     );
 
     // Slashing & Risk Insights
@@ -707,7 +707,10 @@ function parseArgs(): Partial<ExplorationConfig> {
 
   for (const arg of args) {
     if (arg.startsWith('--duration=')) {
-      config.duration = parseInt(arg.split('=')[1], 10);
+      const value = parseInt(arg.split('=')[1], 10);
+      if (!isNaN(value) && value > 0) {
+        config.duration = value;
+      }
     } else if (arg.startsWith('--save-path=')) {
       config.savePath = arg.split('=')[1];
     } else if (arg === '--verbose') {
@@ -745,7 +748,13 @@ async function main() {
 }
 
 // Run if executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+if (process.argv[1] === __filename) {
   main();
 }
 
