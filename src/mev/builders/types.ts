@@ -20,6 +20,7 @@ export enum BuilderName {
   BLOXROUTE = 'bloxroute',
   BEAVER = 'beaver',
   RSYNC = 'rsync',
+  QUASAR = 'quasar',
   UNKNOWN = 'unknown',
 }
 
