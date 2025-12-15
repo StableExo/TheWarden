@@ -5,6 +5,10 @@
  * This script autonomously explores and analyzes a specific smart contract on BSC,
  * extracting comprehensive information from BscScan and performing deep security analysis.
  * 
+ * REQUIREMENTS:
+ * - Node.js 22+ with ESM module support
+ * - Execute with: node --import tsx <script> or npm run autonomous:bscscan-ankrbnb
+ * 
  * Target: ankrBNB Liquid Staking Contract
  * Address: 0x52F24a5e03aee338Da5fd9Df68D2b6FAe1178827
  * Chain: Binance Smart Chain (BSC)
@@ -393,11 +397,13 @@ class BscScanContractExplorer {
 
   /**
    * Phase 3: Analyze Transaction Patterns
+   * NOTE: Currently uses estimated/mock data. In production, integrate with BscScan API.
    */
   private async analyzeTransactionPatterns(): Promise<void> {
     this.log('📊 Phase 3: Analyzing Transaction Patterns...');
 
     // Estimated transaction data based on typical liquid staking contract
+    // TODO: Integrate with BscScan API for real-time data
     this.findings.transactions = {
       totalTransactions: 487532, // Estimated
       dailyAverage: 1250,
@@ -425,11 +431,13 @@ class BscScanContractExplorer {
 
   /**
    * Phase 4: Analyze Token Holders
+   * NOTE: Currently uses estimated/mock data. In production, integrate with BscScan API.
    */
   private async analyzeTokenHolders(): Promise<void> {
     this.log('👥 Phase 4: Analyzing Token Holders...');
 
-    // Estimated holder data
+    // Estimated holder data (mock addresses for demonstration)
+    // TODO: Integrate with BscScan API for actual holder data
     this.findings.holders = {
       totalHolders: 12483,
       topHolders: [
@@ -814,8 +822,12 @@ The combination of known vulnerabilities, high TVL, and strong Immunefi rewards 
     // Ensure output directory exists
     try {
       mkdirSync(this.config.outputDir, { recursive: true });
-    } catch (err) {
-      // Directory might already exist
+    } catch (err: any) {
+      // Only ignore if directory already exists
+      if (err.code !== 'EEXIST') {
+        console.error('Failed to create output directory:', err);
+        throw err;
+      }
     }
 
     const timestamp = this.config.timestamp.split('T')[0];

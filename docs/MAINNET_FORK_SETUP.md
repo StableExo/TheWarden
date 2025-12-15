@@ -19,7 +19,7 @@ HARDHAT_FORK_BLOCK_NUMBER=228000000
 FORKING=true
 
 # Target Network: BSC (Binance Smart Chain)
-BSC_RPC_URL=https://bnb-mainnet.g.alchemy.com/v2/3wG3PLWyPu2DliGQLVa8G
+BSC_RPC_URL=https://bnb-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
 
 # Fallback RPCs available
 BSC_RPC_URL_BACKUP=https://bsc-dataseed.binance.org/
@@ -58,10 +58,10 @@ node -e "require('dotenv').config(); console.log('BSC_RPC_URL:', process.env.BSC
 ### 2. Start Hardhat Fork (BSC Mainnet)
 
 ```bash
-# Option A: Using npx hardhat
-npx hardhat node --fork https://bnb-mainnet.g.alchemy.com/v2/3wG3PLWyPu2DliGQLVa8G
+# Option A: Using npx hardhat with environment variable
+npx hardhat node --fork $BSC_RPC_URL
 
-# Option B: Using environment variable
+# Option B: Using default from hardhat.config
 npx hardhat node
 ```
 
