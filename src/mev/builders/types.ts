@@ -87,6 +87,9 @@ export interface StandardBundle {
   /** Transaction hashes that can revert */
   revertingTxHashes?: string[];
   
+  /** UUID for bundle replacement/cancellation (rsync-builder feature) */
+  replacementUuid?: string;
+  
   /** Builder preferences (if supported) */
   privacy?: {
     hints?: string[];

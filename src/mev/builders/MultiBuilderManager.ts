@@ -29,6 +29,8 @@ import {
 import { BuilderRegistry, TOP_3_BUILDERS } from './BuilderRegistry';
 import { TitanBuilderClient } from './TitanBuilderClient';
 import { BuilderNetClient } from './BuilderNetClient';
+import { QuasarBuilderClient } from './QuasarBuilderClient';
+import { RsyncBuilderClient } from './RsyncBuilderClient';
 
 /**
  * Default multi-builder configuration
@@ -87,7 +89,7 @@ export class MultiBuilderManager {
       // 1. Select builders based on strategy
       const selectedBuilders = this.selectBuilders(negotiatedBlock);
 
-      logger.info(`[MultiBuilderManager] Selected ${selectedBuilders.length} builders:`, selectedBuilders.map(b => b.name));
+      logger.info(`[MultiBuilderManager] Selected ${selectedBuilders.length} builders:`, selectedBuilders.map(b => b.name).join(', '));
 
       // 2. Convert negotiated block to standard bundle format
       const standardBundle = this.convertToStandardBundle(negotiatedBlock, options);
@@ -120,7 +122,8 @@ export class MultiBuilderManager {
         totalTimeMs,
       };
     } catch (error) {
-      logger.error('[MultiBuilderManager] Submission failed:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error('[MultiBuilderManager] Submission failed:', errorMessage);
       throw error;
     }
   }
@@ -334,13 +337,23 @@ export class MultiBuilderManager {
    * Initialize builder clients
    */
   private initializeClients(): void {
-    // Initialize Titan client
+    // Initialize Titan client (50.85% market share)
     this.clients.set(BuilderName.TITAN, new TitanBuilderClient({
       enableLogging: true,
     }));
 
-    // Initialize BuilderNet client
+    // Initialize BuilderNet client (29.84% market share)
     this.clients.set(BuilderName.BUILDERNET, new BuilderNetClient({
+      enableLogging: true,
+    }));
+
+    // Initialize Quasar client (16.08% market share) ✅ VERIFIED
+    this.clients.set(BuilderName.QUASAR, new QuasarBuilderClient({
+      enableLogging: true,
+    }));
+
+    // Initialize Rsync client (10%+ market share) ✅ VERIFIED
+    this.clients.set(BuilderName.RSYNC, new RsyncBuilderClient({
       enableLogging: true,
     }));
 
