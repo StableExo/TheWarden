@@ -25,6 +25,7 @@
     "autonomous:immunefi-ankr": "node --import tsx scripts/autonomous/autonomous-immunefi-ankr-explorer.ts",
     "autonomous:bscscan-ankrbnb": "node --import tsx scripts/autonomous/autonomous-bscscan-contract-explorer.ts",
     "autonomous:ankrbnb-security": "node --import tsx scripts/autonomous/autonomous-ankrbnb-security-testing.ts",
+    "autonomous:ankrbnb-security-enhanced": "node --import tsx scripts/autonomous/autonomous-ankrbnb-security-testing-enhanced.ts",
     "example:rated-network": "node --import tsx scripts/examples/rated-network-example.ts",
     "example:mev-intelligence": "node --import tsx scripts/examples/mev-intelligence-example.ts",
     "solve:puzzle": "node --import tsx scripts/bitcoin/puzzle-solver-secure.ts",

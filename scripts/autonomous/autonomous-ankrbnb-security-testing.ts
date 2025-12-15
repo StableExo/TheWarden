@@ -293,13 +293,17 @@ class AutonomousAnkrBNBSecurityTester {
     // Get all findings from detector
     const allFindings = this.detector.getAllFindings();
 
+    // Get contract info from registry
+    const ankrBNB = AnkrContractRegistry.getContractsByChain(AnkrChain.BSC)
+      .find(c => c.name === 'ankrBNB');
+
     const report = {
       metadata: {
         generatedAt: endTime.toISOString(),
         runtime: `${this.stats.runtime.toFixed(2)}s`,
-        contract: 'ankrBNB',
+        contract: ankrBNB?.name || 'ankrBNB',
         chain: 'BSC',
-        address: '0x52F24a5e03aee338Da5fd9Df68D2b6FAe1178827',
+        address: ankrBNB?.address || '0x52F24a5e03aee338Da5fd9Df68D2b6FAe1178827',
       },
       statistics: {
         blocksScanned: this.stats.blocksScanned,
