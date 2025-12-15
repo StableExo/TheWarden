@@ -4,7 +4,7 @@
 **Date:** 2025-12-15  
 **Purpose:** Extract and apply rbuilder's optimization techniques to improve TheWarden's bundle quality  
 **Expected Impact:** +5-10% revenue increase ($13k-$27k/month)  
-**Timeline:** 2-4 weeks implementation
+**Timeline:** 3-4 weeks implementation
 
 ---
 
@@ -65,14 +65,12 @@ class NonceConflictDetector {
   } {
     const nonceMap = new Map<string, Map<number, Scout>>();
     const conflicts: Conflict[] = [];
-    const cleanScouts: Scout[] = [];
+    let cleanScouts: Scout[] = [];
     
     for (const scout of coalition) {
       let hasConflict = false;
       
       for (const tx of scout.bundle.transactions) {
-        const key = `${tx.from}:${tx.nonce}`;
-        
         if (nonceMap.has(tx.from)) {
           const addressNonces = nonceMap.get(tx.from)!;
           
