@@ -30,6 +30,10 @@ jobs:
   ankr-bug-attack:
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: write  # Need write access to commit results
+      actions: read     # Read workflow artifacts
+      
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
