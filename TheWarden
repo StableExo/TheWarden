@@ -16,8 +16,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ "$1" == "--monitor" ]] || [[ "$1" == "--diagnostic" ]]; then
     shift  # Remove the flag from arguments
     # Execute the autonomous monitoring script
-    exec "$SCRIPT_DIR/scripts/autonomous-monitor.sh" "$@"
+    exec "$SCRIPT_DIR/scripts/autonomous/autonomous-monitor.sh" "$@"
 else
     # Execute the autonomous runner script (normal mode)
-    exec "$SCRIPT_DIR/scripts/autonomous-run.sh" "$@"
+    exec "$SCRIPT_DIR/scripts/autonomous/autonomous-run.sh" "$@"
 fi
