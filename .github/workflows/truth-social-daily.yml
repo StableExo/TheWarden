@@ -10,6 +10,12 @@ jobs:
   post-daily-update:
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: write        # Commit posts to memory
+      actions: read          # Read workflow artifacts
+      issues: write          # Create issues if posting fails
+      pull-requests: write   # Create PRs for updates
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

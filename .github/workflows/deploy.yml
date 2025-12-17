@@ -14,6 +14,13 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read         # Checkout code
+      actions: read          # Read workflow artifacts
+      checks: write          # Create check runs
+      statuses: write        # Update commit statuses
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,6 +47,13 @@ jobs:
     name: Build Docker Images
     needs: test
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read         # Checkout code
+      packages: write        # Push to GitHub Container Registry
+      actions: read          # Read workflow artifacts
+      id-token: write        # OIDC token for deployments
+    
     strategy:
       matrix:
         service: [scanner, pathfinding, ml, execution, analytics, bridge, dashboard]
