@@ -270,7 +270,7 @@ export class PerformanceMonitor {
     const recommendation = this.generateAnomalyRecommendation(metric, deviation, direction);
 
     return {
-      id: `anomaly-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `anomaly-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       timestamp: Date.now(),
       subsystemId: metric.subsystemId,
       metricName: metric.metricName,
@@ -502,7 +502,7 @@ export class PerformanceMonitor {
     actionRequired: boolean;
   }): void {
     const alert: PerformanceAlert = {
-      id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `alert-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       timestamp: Date.now(),
       alertType: params.alertType,
       severity: params.severity,

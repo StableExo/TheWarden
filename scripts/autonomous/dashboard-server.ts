@@ -47,7 +47,7 @@ export class DashboardServer {
     this.httpServer = createServer(this.app);
     this.io = new SocketIOServer(this.httpServer, {
       cors: {
-        origin: '*',
+        origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:*',
         methods: ['GET', 'POST'],
       },
     });
