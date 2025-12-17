@@ -12,6 +12,7 @@ import { BlackBoxLogger } from '../memory/strategic-logger/BlackBoxLogger';
 import { CalibrationEngine, CalibrationResult } from '../memory/strategic-logger/CalibrationEngine';
 import { MemoryFormation, StrategicMemory } from '../memory/strategic-logger/MemoryFormation';
 import { AdaptiveStrategies, Strategy, StrategySelection } from './AdaptiveStrategies';
+import { MetaLearningEngine, LearningMetrics, MetaLearningInsight } from './MetaLearningEngine';
 
 export interface LearningCycleResult {
   memoriesFormed: number;
@@ -19,6 +20,12 @@ export interface LearningCycleResult {
   strategiesUpdated: number;
   insights: string[];
   timestamp: number;
+  metaLearning?: {
+    learningMetrics: LearningMetrics[];
+    metaInsights: MetaLearningInsight[];
+    currentGeneration: number;
+    bestStrategyName: string;
+  };
 }
 
 export class KnowledgeLoop {
@@ -26,8 +33,11 @@ export class KnowledgeLoop {
   private calibrationEngine: CalibrationEngine;
   private memoryFormation: MemoryFormation;
   private adaptiveStrategies: AdaptiveStrategies;
+  private metaLearningEngine: MetaLearningEngine;
   private learningInterval: NodeJS.Timeout | null = null;
   private isRunning: boolean = false;
+  private cycleCount: number = 0;
+  private lastPerformance: number = 0.5;
 
   constructor(logDirectory: string = '.memory/strategic-logger', autoStart: boolean = false) {
     // Initialize components
@@ -35,6 +45,7 @@ export class KnowledgeLoop {
     this.calibrationEngine = new CalibrationEngine(this.logger);
     this.memoryFormation = new MemoryFormation(this.logger, logDirectory);
     this.adaptiveStrategies = new AdaptiveStrategies(this.calibrationEngine, this.memoryFormation);
+    this.metaLearningEngine = new MetaLearningEngine();
 
     if (autoStart) {
       this.start();
@@ -85,10 +96,11 @@ export class KnowledgeLoop {
   }
 
   /**
-   * Run a complete learning cycle
+   * Run a complete learning cycle with meta-learning
    */
   async runLearningCycle(): Promise<LearningCycleResult> {
     const insights: string[] = [];
+    this.cycleCount++;
 
     // 1. Form memories from recent operations
     const memories = await this.memoryFormation.formMemories({}, 5);
@@ -111,28 +123,92 @@ export class KnowledgeLoop {
       }
     }
 
-    // 4. Log cycle completion
+    // 4. META-LEARNING: Track learning effectiveness
+    const currentPerformance = await this.calculateCurrentPerformance();
+    const learningMetrics = this.metaLearningEngine.trackLearningEffectiveness(
+      'knowledge_loop',
+      0.1, // Current learning rate (could be dynamic)
+      this.lastPerformance,
+      currentPerformance,
+      memories.length + calibrations.length
+    );
+    this.lastPerformance = currentPerformance;
+    
+    insights.push(
+      `Meta-learning: Effectiveness ${(learningMetrics.effectiveness * 100).toFixed(1)}%, ` +
+      `Convergence ${(learningMetrics.convergenceSpeed * 100).toFixed(1)}%`
+    );
+
+    // 5. META-LEARNING: Adjust learning parameters automatically
+    const adjustment = this.metaLearningEngine.adjustLearningParameters('knowledge_loop');
+    if (adjustment.confidence > 0.6) {
+      insights.push(`Meta-learning: ${adjustment.reasoning}`);
+    }
+
+    // 6. META-LEARNING: Evolve learning strategies (every 10 cycles)
+    let metaInsights: MetaLearningInsight[] = [];
+    if (this.cycleCount % 10 === 0) {
+      const evolution = this.metaLearningEngine.evolveLearningStrategies();
+      insights.push(
+        `Meta-learning: Generation ${evolution.generation}, ` +
+        `Best: ${evolution.bestStrategy.name} ` +
+        `(${(evolution.bestStrategy.successRate * 100).toFixed(1)}% success)`
+      );
+      
+      // Detect emergent patterns
+      const patterns = this.metaLearningEngine.detectEmergentPatterns();
+      metaInsights = patterns;
+      if (patterns.length > 0) {
+        insights.push(`Meta-learning: Detected ${patterns.length} emergent patterns`);
+      }
+    }
+
+    // 7. Log cycle completion with meta-learning data
     await this.logger.log({
       eventType: 'learning_cycle',
       context: {
         memoriesFormed: memories.length,
         calibrationsPerformed: calibrations.length,
+        cycleNumber: this.cycleCount,
+        metaLearningEffectiveness: learningMetrics.effectiveness,
       },
-      decision: 'Learning cycle completed',
+      decision: 'Learning cycle completed with meta-learning',
       outcome: 'success',
       metrics: {
         totalMemories: this.memoryFormation.getMemoryCount(),
         totalParams: this.calibrationEngine.getAllParams().length,
+        learningEffectiveness: learningMetrics.effectiveness,
+        convergenceSpeed: learningMetrics.convergenceSpeed,
       },
     });
+
+    const metaStats = this.metaLearningEngine.getStatistics();
 
     return {
       memoriesFormed: memories.length,
       calibrationsPerformed: calibrations.length,
-      strategiesUpdated: 0, // Strategies are updated on execution, not in cycle
+      strategiesUpdated: 0,
       insights,
       timestamp: Date.now(),
+      metaLearning: {
+        learningMetrics: [learningMetrics],
+        metaInsights,
+        currentGeneration: metaStats.currentGeneration,
+        bestStrategyName: metaStats.bestStrategy?.name || 'none',
+      },
     };
+  }
+
+  /**
+   * Calculate current performance for meta-learning
+   */
+  private async calculateCurrentPerformance(): Promise<number> {
+    const summary = await this.logger.getSummary();
+    const totalOps = summary.successCount + summary.failureCount + summary.pendingCount;
+    
+    if (totalOps === 0) return 0.5;
+    
+    return summary.successCount / totalOps;
   }
 
   /**
@@ -262,6 +338,42 @@ export class KnowledgeLoop {
       calibrationEngine: this.calibrationEngine,
       memoryFormation: this.memoryFormation,
       adaptiveStrategies: this.adaptiveStrategies,
+      metaLearningEngine: this.metaLearningEngine,
     };
+  }
+
+  /**
+   * Get meta-learning statistics
+   */
+  getMetaLearningStats() {
+    return this.metaLearningEngine.getStatistics();
+  }
+
+  /**
+   * Get recent meta-learning insights
+   */
+  getMetaLearningInsights(limit: number = 10) {
+    return this.metaLearningEngine.getRecentInsights(limit);
+  }
+
+  /**
+   * Get learning strategy evolution history
+   */
+  getLearningEvolution() {
+    return this.metaLearningEngine.getEvolutionHistory();
+  }
+
+  /**
+   * Manually trigger learning strategy evolution
+   */
+  evolveLearningStrategies() {
+    return this.metaLearningEngine.evolveLearningStrategies();
+  }
+
+  /**
+   * Detect emergent patterns in meta-learning
+   */
+  detectEmergentPatterns() {
+    return this.metaLearningEngine.detectEmergentPatterns();
   }
 }

@@ -9,3 +9,4 @@
 
 export * from './AdaptiveStrategies';
 export * from './KnowledgeLoop';
+export * from './MetaLearningEngine';
