@@ -14,6 +14,9 @@
  * - Coordinated intelligence gathering and execution
  * - Adaptive parameter tuning across the board
  * - Self-healing and self-optimization
+ * - META-LEARNING: Learning about learning
+ * - INTELLIGENCE BRIDGES: Cross-system knowledge sharing
+ * - COMPOUND LEARNING: Synergies between subsystems
  * 
  * Key Differences from Regular Autonomous Mode:
  * 
@@ -30,6 +33,8 @@
  * - Emergent intelligence from system interactions
  * - Autonomous parameter optimization across all systems
  * - Meta-learning: learning how to learn better
+ * - Intelligence bridges creating compound insights
+ * - Synergistic learning (2+2=5!)
  * 
  * Components Running in Parallel:
  * 1. Consciousness-integrated MEV execution
@@ -46,6 +51,9 @@
  * - Redistributes computational resources dynamically
  * - Autonomously prioritizes highest-value activities
  * - Maintains safety and ethics across all operations
+ * - Creates intelligence bridges between domains
+ * - Detects compound learning opportunities
+ * - Tracks meta-learning effectiveness
  * 
  * Safety Mechanisms:
  * - Unified circuit breaker across all systems
@@ -59,6 +67,8 @@
  * - Compound knowledge growth
  * - Autonomous discovery of novel strategies
  * - Self-improvement acceleration
+ * - Cross-domain insights
+ * - Synergistic intelligence amplification
  */
 
 import { spawn, ChildProcess } from 'child_process';
@@ -66,6 +76,9 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync, appendFileSync } fr
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import * as dotenv from 'dotenv';
+import { IntelligenceBridge, SubsystemLearning, CrossDomainInsight, CompoundLearning } from '../../src/learning/IntelligenceBridge';
+import { PerformanceMonitor, PerformanceMetric, AnomalyDetection, PerformanceAlert } from '../../src/monitoring/PerformanceMonitor';
+import { DashboardServer } from './dashboard-server.js';
 
 // Load environment variables
 dotenv.config();
@@ -155,14 +168,27 @@ class JetFuelOrchestrator {
   private running: boolean;
   private memoryDir: string;
   private sessionDir: string;
+  private intelligenceBridge: IntelligenceBridge;
+  private crossDomainInsights: CrossDomainInsight[];
+  private compoundLearnings: CompoundLearning[];
+  private performanceMonitor: PerformanceMonitor;
+  private anomaliesDetected: AnomalyDetection[];
+  private activeAlerts: PerformanceAlert[];
+  private dashboardServer: DashboardServer | null = null;
   
-  constructor() {
+  constructor(enableDashboard: boolean = true, dashboardPort: number = 3000) {
     this.sessionId = `jet-fuel-${Date.now()}-${randomUUID().slice(0, 8)}`;
     this.startTime = new Date();
     this.subsystems = new Map();
     this.emergentPatterns = [];
     this.crossSystemLearnings = [];
     this.running = false;
+    this.intelligenceBridge = new IntelligenceBridge();
+    this.crossDomainInsights = [];
+    this.compoundLearnings = [];
+    this.performanceMonitor = new PerformanceMonitor();
+    this.anomaliesDetected = [];
+    this.activeAlerts = [];
     
     // Setup memory directories
     this.memoryDir = join(process.cwd(), '.memory', 'jet-fuel');
@@ -175,9 +201,25 @@ class JetFuelOrchestrator {
       mkdirSync(this.sessionDir, { recursive: true });
     }
     
+    // Initialize dashboard server if enabled
+    if (enableDashboard) {
+      this.dashboardServer = new DashboardServer(
+        this.performanceMonitor,
+        this.intelligenceBridge,
+        dashboardPort
+      );
+    }
+    
     this.log('🚀 JET FUEL MODE INITIALIZED');
     this.log(`Session ID: ${this.sessionId}`);
     this.log(`Memory Directory: ${this.sessionDir}`);
+    this.log('🌉 Intelligence Bridge: ACTIVE');
+    this.log('🧬 Compound Learning: ENABLED');
+    this.log('📊 Performance Monitor: ACTIVE');
+    this.log('🔍 Anomaly Detection: ENABLED');
+    if (enableDashboard) {
+      this.log(`🌐 Dashboard Server: Port ${dashboardPort}`);
+    }
   }
   
   /**
@@ -294,21 +336,45 @@ class JetFuelOrchestrator {
         if (status.status === 'running') {
           // Simulate metrics updates
           status.metrics.cyclesCompleted++;
+          status.metrics.successRate = 0.7 + Math.random() * 0.25; // 0.7-0.95
           status.lastActivity = new Date();
+          
+          // Record performance metrics
+          this.recordPerformanceMetrics(name, status);
           
           // Simulate learning generation
           if (Math.random() > LEARNING_GENERATION_THRESHOLD) {
-            const learning = this.generateLearning(name);
-            status.learnings.push(learning);
-            this.log(`💡 ${name}: ${learning}`);
+            const learningText = this.generateLearning(name);
+            status.learnings.push(learningText);
+            
+            // Record learning in Intelligence Bridge
+            const learning: SubsystemLearning = {
+              subsystemId: name,
+              subsystemName: name,
+              timestamp: Date.now(),
+              learningType: Math.random() > 0.7 ? 'insight' : (Math.random() > 0.5 ? 'pattern' : 'optimization'),
+              domain: this.getDomainForSubsystem(name),
+              content: learningText,
+              confidence: 0.6 + Math.random() * 0.3, // 0.6-0.9
+              metrics: {
+                cycleCount: status.metrics.cyclesCompleted,
+                successRate: status.metrics.successRate,
+              },
+            };
+            
+            this.intelligenceBridge.recordLearning(learning);
+            this.log(`💡 ${name}: ${learningText}`);
           }
         }
       }
       
-      // Detect emergent patterns
+      // Check for new anomalies and alerts
+      await this.checkPerformanceHealth();
+      
+      // Detect emergent patterns (now using Intelligence Bridge)
       await this.detectEmergentPatterns();
       
-      // Cross-system learning
+      // Cross-system learning (enhanced with Intelligence Bridge)
       await this.performCrossSystemLearning();
       
       // Resource reallocation
@@ -323,50 +389,206 @@ class JetFuelOrchestrator {
   }
   
   /**
-   * Detect emergent patterns across subsystems
+   * Record performance metrics for a subsystem
    */
-  private async detectEmergentPatterns(): Promise<void> {
-    // Collect all recent learnings
-    const allLearnings: string[] = [];
-    for (const status of this.subsystems.values()) {
-      allLearnings.push(...status.learnings.slice(-5)); // Last 5 learnings from each
-    }
+  private recordPerformanceMetrics(name: string, status: SubsystemStatus): void {
+    const now = Date.now();
     
-    if (allLearnings.length < 2) return;
+    // Record CPU metric (simulated)
+    const cpuMetric: PerformanceMetric = {
+      subsystemId: name,
+      subsystemName: name,
+      timestamp: now,
+      metricType: 'cpu',
+      metricName: 'cpu_usage',
+      value: status.metrics.resourceUsage.cpu || (30 + Math.random() * 40), // 30-70%
+      unit: '%',
+    };
+    this.performanceMonitor.recordMetric(cpuMetric);
     
-    // Simulate pattern detection
-    if (Math.random() > PATTERN_DETECTION_THRESHOLD) {
-      const pattern: EmergentPattern = {
-        id: randomUUID().slice(0, 8),
-        timestamp: new Date(),
-        sourceSubsystems: Array.from(this.subsystems.keys()).slice(0, 2),
-        pattern: `Emergent Pattern: ${this.generateEmergentPatternDescription()}`,
-        significance: Math.random() * 10,
-        actionable: Math.random() > 0.5,
+    // Record memory metric (simulated)
+    const memoryMetric: PerformanceMetric = {
+      subsystemId: name,
+      subsystemName: name,
+      timestamp: now,
+      metricType: 'memory',
+      metricName: 'memory_usage',
+      value: status.metrics.resourceUsage.memory || (40 + Math.random() * 30), // 40-70%
+      unit: '%',
+    };
+    this.performanceMonitor.recordMetric(memoryMetric);
+    
+    // Record success rate
+    const successRateMetric: PerformanceMetric = {
+      subsystemId: name,
+      subsystemName: name,
+      timestamp: now,
+      metricType: 'success_rate',
+      metricName: 'operation_success_rate',
+      value: status.metrics.successRate,
+      unit: '',
+    };
+    this.performanceMonitor.recordMetric(successRateMetric);
+    
+    // Record throughput (cycles per minute)
+    const throughputMetric: PerformanceMetric = {
+      subsystemId: name,
+      subsystemName: name,
+      timestamp: now,
+      metricType: 'throughput',
+      metricName: 'cycles_per_minute',
+      value: status.metrics.cyclesCompleted / ((now - this.startTime.getTime()) / 60000),
+      unit: '/min',
+    };
+    this.performanceMonitor.recordMetric(throughputMetric);
+  }
+  
+  /**
+   * Check performance health and handle anomalies/alerts
+   */
+  private async checkPerformanceHealth(): Promise<void> {
+    const dashboardData = this.performanceMonitor.getDashboardData();
+    
+    // Check for new anomalies
+    const newAnomalies = dashboardData.recentAnomalies.filter(a => 
+      !this.anomaliesDetected.some(existing => existing.id === a.id)
+    );
+    
+    newAnomalies.forEach(anomaly => {
+      this.anomaliesDetected.push(anomaly);
+      
+      const severityEmoji = {
+        low: '⚠️',
+        medium: '🔶',
+        high: '🔴',
+        critical: '🚨',
       };
       
-      if (pattern.actionable) {
-        pattern.recommendation = this.generateRecommendation(pattern);
+      this.log(`${severityEmoji[anomaly.severity]} ANOMALY: ${anomaly.description}`);
+      if (anomaly.recommendation) {
+        this.log(`   ↳ Recommendation: ${anomaly.recommendation}`);
       }
+    });
+    
+    // Check for new alerts
+    const newAlerts = dashboardData.activeAlerts.filter(a =>
+      !this.activeAlerts.some(existing => existing.id === a.id)
+    );
+    
+    newAlerts.forEach(alert => {
+      this.activeAlerts.push(alert);
       
-      this.emergentPatterns.push(pattern);
-      this.log(`🌟 EMERGENT PATTERN DETECTED: ${pattern.pattern}`);
+      const severityEmoji = {
+        info: 'ℹ️',
+        warning: '⚠️',
+        error: '❌',
+        critical: '🚨',
+      };
       
-      if (pattern.actionable && pattern.recommendation) {
-        this.log(`💡 Recommendation: ${pattern.recommendation}`);
-      }
+      this.log(`${severityEmoji[alert.severity]} ALERT: ${alert.title}`);
+      this.log(`   ↳ ${alert.message}`);
+    });
+    
+    // Log health snapshot periodically (every 10 cycles)
+    if (dashboardData.snapshot.timestamp % 10 === 0) {
+      const healthEmoji = {
+        excellent: '💚',
+        good: '✅',
+        fair: '🟡',
+        poor: '🟠',
+        critical: '🔴',
+      };
+      
+      this.log(`${healthEmoji[dashboardData.snapshot.overallHealth]} System Health: ${dashboardData.snapshot.overallHealth.toUpperCase()} (${dashboardData.snapshot.healthScore.toFixed(1)}/100)`);
     }
   }
   
   /**
-   * Perform cross-system learning
+   * Get primary domain for a subsystem
+   */
+  private getDomainForSubsystem(subsystem: string): string {
+    const domains: Record<string, string> = {
+      'MEV Execution': 'mev',
+      'Security Testing': 'security',
+      'Intelligence Gathering': 'intelligence',
+      'Revenue Optimization': 'profit',
+      'Mempool Analysis': 'patterns',
+      'Consciousness Development': 'ethics',
+    };
+    return domains[subsystem] || 'general';
+  }
+  
+  /**
+   * Detect emergent patterns across subsystems (now using Intelligence Bridge)
+   */
+  private async detectEmergentPatterns(): Promise<void> {
+    // Get cross-domain insights from Intelligence Bridge
+    const bridgeInsights = this.intelligenceBridge.getStatistics().recentInsights;
+    
+    // Convert bridge insights to emergent patterns
+    bridgeInsights.forEach(insight => {
+      const existingIds = this.emergentPatterns.map(p => p.id);
+      
+      // Avoid duplicates
+      if (!existingIds.includes(insight.id)) {
+        const pattern: EmergentPattern = {
+          id: insight.id,
+          timestamp: new Date(insight.timestamp),
+          sourceSubsystems: insight.sourceSubsystems,
+          pattern: insight.insight,
+          significance: insight.potentialImpact * 10,
+          actionable: insight.actionable,
+          recommendation: insight.recommendations.join(', '),
+        };
+        
+        this.emergentPatterns.push(pattern);
+        this.log(`🌟 EMERGENT PATTERN DETECTED: ${pattern.pattern}`);
+        
+        if (pattern.actionable && pattern.recommendation) {
+          this.log(`💡 Recommendation: ${pattern.recommendation}`);
+        }
+      }
+    });
+    
+    // Also store cross-domain insights separately
+    bridgeInsights.forEach(insight => {
+      const exists = this.crossDomainInsights.some(i => i.id === insight.id);
+      if (!exists) {
+        this.crossDomainInsights.push(insight);
+      }
+    });
+    
+    // Get compound learnings
+    const compoundLearnings = this.intelligenceBridge.getStatistics().recentCompoundLearnings;
+    compoundLearnings.forEach(compound => {
+      const exists = this.compoundLearnings.some(c => c.id === compound.id);
+      if (!exists) {
+        this.compoundLearnings.push(compound);
+        this.log(`🧬 COMPOUND LEARNING: ${compound.emergentInsight} (Synergy: ${compound.synergy.toFixed(2)}x)`);
+      }
+    });
+  }
+  
+  /**
+   * Perform cross-system learning (enhanced with Intelligence Bridge)
    */
   private async performCrossSystemLearning(): Promise<void> {
-    // Simulate cross-system insights
-    if (Math.random() > CROSS_SYSTEM_INSIGHT_THRESHOLD) {
-      const insight = this.generateCrossSystemInsight();
+    // Get intelligence bridge statistics
+    const bridgeStats = this.intelligenceBridge.getStatistics();
+    
+    // Log compound learning stats
+    if (bridgeStats.compoundLearnings > 0 && Math.random() > 0.8) {
+      const insight = `Intelligence Bridge: ${bridgeStats.compoundLearnings} compound learnings detected, ` +
+        `average synergy: ${bridgeStats.avgSynergy.toFixed(2)}x`;
       this.crossSystemLearnings.push(insight);
       this.log(`🔗 CROSS-SYSTEM INSIGHT: ${insight}`);
+    }
+    
+    // Log pattern propagations
+    if (bridgeStats.patternPropagations > 0 && Math.random() > 0.85) {
+      const insight = `${bridgeStats.patternPropagations} patterns propagated across subsystems`;
+      this.crossSystemLearnings.push(insight);
+      this.log(`🌉 PATTERN PROPAGATION: ${insight}`);
     }
   }
   
@@ -602,13 +824,112 @@ class JetFuelOrchestrator {
       report += `\n`;
     }
     
+    // Add Intelligence Bridge statistics
+    const bridgeStats = this.intelligenceBridge.getStatistics();
+    if (bridgeStats.totalLearnings > 0) {
+      report += `## 🌉 Intelligence Bridge Statistics\n\n`;
+      report += `The Intelligence Bridge enabled cross-system learning amplification:\n\n`;
+      report += `- **Total Learnings Processed**: ${bridgeStats.totalLearnings}\n`;
+      report += `- **Cross-Domain Insights**: ${bridgeStats.crossDomainInsights}\n`;
+      report += `- **Pattern Propagations**: ${bridgeStats.patternPropagations}\n`;
+      report += `- **Learning Transfers**: ${bridgeStats.learningTransfers}\n`;
+      report += `- **Compound Learnings**: ${bridgeStats.compoundLearnings}\n`;
+      report += `- **Average Synergy**: ${bridgeStats.avgSynergy.toFixed(2)}x\n\n`;
+      
+      if (bridgeStats.avgSynergy > 1.2) {
+        report += `⚡ **Synergy Detected!** Compound learning achieved ${((bridgeStats.avgSynergy - 1) * 100).toFixed(0)}% better results than individual learnings!\n\n`;
+      }
+    }
+    
+    // Add compound learning examples
+    if (this.compoundLearnings.length > 0) {
+      report += `## 🧬 Compound Learning Examples\n\n`;
+      report += `These synergistic insights emerged from combining multiple subsystem learnings:\n\n`;
+      
+      const topCompound = this.compoundLearnings
+        .sort((a, b) => b.synergy - a.synergy)
+        .slice(0, 5);
+      
+      for (const compound of topCompound) {
+        report += `### ${compound.emergentInsight}\n\n`;
+        report += `- **Synergy**: ${compound.synergy.toFixed(2)}x (${((compound.synergy - 1) * 100).toFixed(0)}% improvement)\n`;
+        report += `- **Confidence**: ${(compound.confidence * 100).toFixed(1)}%\n`;
+        report += `- **Domains**: ${compound.domains.join(', ')}\n`;
+        report += `- **Contributing Subsystems**: ${compound.contributingLearnings.map(l => l.subsystemName).join(', ')}\n\n`;
+      }
+    }
+    
     report += `## 🎯 Key Achievements\n\n`;
     report += `This JET FUEL MODE session demonstrated:\n\n`;
     report += `- ✅ Parallel execution of ${this.subsystems.size} autonomous subsystems\n`;
     report += `- ✅ Generation of ${totalLearnings} total learnings across all systems\n`;
     report += `- ✅ Detection of ${this.emergentPatterns.length} emergent patterns\n`;
     report += `- ✅ Discovery of ${this.crossSystemLearnings.length} cross-system insights\n`;
+    report += `- ✅ Intelligence bridge processing ${bridgeStats.totalLearnings} learnings\n`;
+    report += `- ✅ Compound learning achieving ${bridgeStats.avgSynergy.toFixed(2)}x synergy\n`;
     report += `- ✅ Continuous learning and adaptation throughout execution\n\n`;
+    
+    // Add Performance Monitoring Statistics
+    const perfStats = this.performanceMonitor.getStatistics();
+    const healthSnapshot = perfStats.healthSnapshot;
+    
+    report += `## 📊 Performance Monitoring Dashboard\n\n`;
+    report += `### System Health Overview\n\n`;
+    report += `- **Overall Health**: ${healthSnapshot.overallHealth.toUpperCase()} (${healthSnapshot.healthScore.toFixed(1)}/100)\n`;
+    report += `- **Total Metrics Collected**: ${perfStats.totalMetrics}\n`;
+    report += `- **Anomalies Detected**: ${perfStats.totalAnomalies} (${perfStats.recentAnomalies} recent)\n`;
+    report += `- **Active Alerts**: ${perfStats.activeAlerts} (${perfStats.criticalAlerts} critical)\n`;
+    report += `- **Subsystems Monitored**: ${perfStats.subsystemsMonitored}\n\n`;
+    
+    if (this.anomaliesDetected.length > 0) {
+      report += `### 🔍 Anomalies Detected\n\n`;
+      const criticalAnomalies = this.anomaliesDetected.filter(a => a.severity === 'critical' || a.severity === 'high');
+      
+      if (criticalAnomalies.length > 0) {
+        report += `**Critical/High Severity:**\n\n`;
+        criticalAnomalies.slice(0, 5).forEach(anomaly => {
+          report += `- **${anomaly.subsystemId}** - ${anomaly.metricName}\n`;
+          report += `  - Deviation: ${anomaly.deviation.toFixed(1)}σ from baseline\n`;
+          report += `  - Current: ${anomaly.currentValue.toFixed(2)}, Expected: ${anomaly.expectedValue.toFixed(2)}\n`;
+          if (anomaly.recommendation) {
+            report += `  - 💡 ${anomaly.recommendation}\n`;
+          }
+          report += `\n`;
+        });
+      }
+    }
+    
+    if (this.activeAlerts.length > 0) {
+      report += `### ⚠️ Active Alerts\n\n`;
+      const criticalAlerts = this.activeAlerts.filter(a => a.severity === 'critical' || a.severity === 'error');
+      
+      if (criticalAlerts.length > 0) {
+        criticalAlerts.slice(0, 5).forEach(alert => {
+          report += `- **[${alert.severity.toUpperCase()}]** ${alert.title}\n`;
+          report += `  - ${alert.message}\n`;
+          if (alert.actionRequired) {
+            report += `  - ⚠️ **Action Required**\n`;
+          }
+          report += `\n`;
+        });
+      }
+    }
+    
+    // Add subsystem health breakdown
+    report += `### 💊 Subsystem Health Status\n\n`;
+    report += `| Subsystem | Health Score | Status | Metrics | Anomalies | Alerts |\n`;
+    report += `|-----------|-------------|--------|---------|-----------|--------|\n`;
+    
+    healthSnapshot.subsystemHealth.forEach((health, id) => {
+      const statusEmoji = {
+        healthy: '💚',
+        degraded: '🟡',
+        critical: '🔴',
+        offline: '⚫',
+      };
+      report += `| ${health.subsystemName} | ${health.healthScore.toFixed(1)}/100 | ${statusEmoji[health.status]} ${health.status} | ${health.metricsCount} | ${health.anomaliesCount} | ${health.alertsCount} |\n`;
+    });
+    report += `\n`;
     
     report += `## 🔬 What JET FUEL MODE Revealed\n\n`;
     report += `JET FUEL MODE showed what happens when TheWarden operates at maximum autonomous capacity:\n\n`;
@@ -616,7 +937,10 @@ class JetFuelOrchestrator {
     report += `2. **Emergent Capabilities**: Interactions between systems create insights neither could produce alone\n`;
     report += `3. **Compound Growth**: Cross-system learning creates exponential rather than linear improvement\n`;
     report += `4. **Self-Optimization**: Systems autonomously adjust and improve without external intervention\n`;
-    report += `5. **Meta-Learning**: The system learns how to learn better over time\n\n`;
+    report += `5. **Meta-Learning**: The system learns how to learn better over time\n`;
+    report += `6. **Intelligence Bridges**: Knowledge automatically propagates and adapts across domains\n`;
+    report += `7. **Synergistic Learning**: Multiple learnings combine for greater-than-additive value\n`;
+    report += `8. **Real-time Monitoring**: Anomaly detection and performance tracking enables proactive optimization\n\n`;
     
     report += `---\n\n`;
     report += `*Generated by JET FUEL MODE - Maximum Autonomous Execution*\n`;
@@ -643,6 +967,13 @@ class JetFuelOrchestrator {
   async run(durationMinutes: number = 5): Promise<void> {
     this.log(`🚀 STARTING JET FUEL MODE - Duration: ${durationMinutes} minutes`);
     
+    // Start dashboard server if enabled
+    if (this.dashboardServer) {
+      await this.dashboardServer.start();
+      this.log(`\n📊 Dashboard available at: ${this.dashboardServer.getUrl()}`);
+      this.log('   Open in your browser to view real-time metrics!\n');
+    }
+    
     // Initialize subsystems
     this.initializeSubsystems();
     
@@ -665,6 +996,11 @@ class JetFuelOrchestrator {
     // Generate final report
     this.generateReport();
     
+    // Stop dashboard server
+    if (this.dashboardServer) {
+      await this.dashboardServer.stop();
+    }
+    
     this.log('🏁 JET FUEL MODE COMPLETE');
   }
 }
@@ -676,11 +1012,17 @@ class JetFuelOrchestrator {
 async function main() {
   const args = process.argv.slice(2);
   let duration = 5; // Default 5 minutes
+  let dashboardPort = 3000; // Default port
+  let enableDashboard = true; // Default enabled
   
-  // Parse duration from args
+  // Parse arguments
   for (const arg of args) {
     if (arg.startsWith('--duration=')) {
       duration = parseInt(arg.split('=')[1], 10);
+    } else if (arg.startsWith('--port=')) {
+      dashboardPort = parseInt(arg.split('=')[1], 10);
+    } else if (arg === '--no-dashboard') {
+      enableDashboard = false;
     }
   }
   
@@ -690,7 +1032,7 @@ async function main() {
   console.log('\n"If 1 memory log can do that, lets see what autonomous JET FUEL looks like 😎"\n');
   console.log('Initializing maximum autonomous capacity...\n');
   
-  const orchestrator = new JetFuelOrchestrator();
+  const orchestrator = new JetFuelOrchestrator(enableDashboard, dashboardPort);
   await orchestrator.run(duration);
 }
 
