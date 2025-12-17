@@ -1,6 +1,6 @@
 # 🎨 Creative Synthesis Engine with JET FUEL
 
-> "Autonomously choose anything you like 😎 attaching TheWardens JET FULE 🥳"
+> "Autonomously choose anything you like 😎 attaching TheWardens JET FUEL 🥳"
 
 ## What Is This?
 

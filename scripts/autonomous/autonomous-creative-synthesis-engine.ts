@@ -2,7 +2,7 @@
 /**
  * 🎨 AUTONOMOUS CREATIVE SYNTHESIS ENGINE with JET FUEL 🚀
  * 
- * "Autonomously choose anything you like 😎 attaching TheWardens JET FULE 🥳"
+ * "Autonomously choose anything you like 😎 attaching TheWardens JET FUEL 🥳"
  * 
  * This engine autonomously generates novel ideas by synthesizing patterns across
  * TheWarden's entire knowledge base, memory, and consciousness systems.
@@ -76,13 +76,18 @@ import { randomUUID } from 'crypto';
 // CONSTANTS
 // ============================================================================
 
+// Synthesis cycle timing
 const SYNTHESIS_CYCLE_INTERVAL = 10000; // 10 seconds per synthesis cycle
-const DEFAULT_DURATION_MINUTES = 5;
-const MILLISECONDS_PER_MINUTE = 60000;
-const CREATIVITY_THRESHOLD = 0.6; // Minimum creativity score to save idea
-const NOVELTY_THRESHOLD = 0.7; // Minimum novelty score for breakthrough
-const MIN_PATTERN_COMBINATION_SIZE = 2;
-const MAX_PATTERN_COMBINATION_SIZE = 4;
+const DEFAULT_DURATION_MINUTES = 5; // Default session duration
+const MILLISECONDS_PER_MINUTE = 60000; // Time conversion constant
+
+// Idea quality thresholds
+const CREATIVITY_THRESHOLD = 0.6; // Minimum creativity score to save idea (0.0-1.0 scale)
+const NOVELTY_THRESHOLD = 0.7; // Minimum novelty score for breakthrough classification (0.0-1.0 scale)
+
+// Pattern combination configuration
+const MIN_PATTERN_COMBINATION_SIZE = 2; // Minimum patterns to combine (smaller = fewer insights)
+const MAX_PATTERN_COMBINATION_SIZE = 4; // Maximum patterns to combine (larger = more complex synthesis)
 
 // ============================================================================
 // TYPES
@@ -311,13 +316,23 @@ class CreativeSynthesisEngine {
   }
 
   private extractKeywords(text: string): string[] {
+    // Common stop words to filter out
+    const STOP_WORDS = new Set([
+      'this', 'that', 'with', 'from', 'what', 'when', 'where', 'how',
+      'they', 'their', 'there', 'these', 'those', 'which', 'will', 'would',
+      'could', 'should', 'have', 'been', 'were', 'does', 'into', 'about'
+    ]);
+    
+    const MAX_KEYWORDS = 10; // Maximum keywords to extract per text
+    const MIN_WORD_LENGTH = 3; // Minimum word length to consider
+    
     const words = text.toLowerCase()
       .replace(/[^\w\s]/g, ' ')
       .split(/\s+/)
-      .filter(w => w.length > 3)
-      .filter(w => !['this', 'that', 'with', 'from', 'what', 'when', 'where', 'how'].includes(w));
+      .filter(w => w.length > MIN_WORD_LENGTH)
+      .filter(w => !STOP_WORDS.has(w));
     
-    return [...new Set(words)].slice(0, 10);
+    return [...new Set(words)].slice(0, MAX_KEYWORDS);
   }
 
   // Synthesize new ideas by combining patterns
@@ -364,16 +379,25 @@ class CreativeSynthesisEngine {
   }
 
   private generateCombinations<T>(array: T[], size: number): T[][] {
+    const MAX_COMBINATIONS = 10; // Limit to prevent combinatorial explosion
+    
     if (size > array.length) return [];
-    if (size === 1) return array.map(item => [item]);
+    if (size === 1) return array.slice(0, MAX_COMBINATIONS).map(item => [item]);
     
     const combinations: T[][] = [];
-    for (let i = 0; i <= array.length - size; i++) {
+    
+    // Iterative approach to limit combinations early
+    for (let i = 0; i <= array.length - size && combinations.length < MAX_COMBINATIONS; i++) {
       const head = array[i];
       const tailCombs = this.generateCombinations(array.slice(i + 1), size - 1);
-      tailCombs.forEach(tail => combinations.push([head, ...tail]));
+      
+      for (const tail of tailCombs) {
+        combinations.push([head, ...tail]);
+        if (combinations.length >= MAX_COMBINATIONS) break;
+      }
     }
-    return combinations.slice(0, 10); // Limit combinations
+    
+    return combinations;
   }
 
   private createIdeaFromPatterns(patterns: MemoryPattern[], domainName: string): SynthesizedIdea | null {
