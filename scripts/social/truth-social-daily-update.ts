@@ -29,14 +29,19 @@ interface DailyProgressSummary {
 /**
  * Generate Daily Progress Summary
  * 
- * Analyzes git commits and memory logs from the last 24 hours
- * to create a summary of progress.
+ * NOTE: This is a template implementation. In production, this would
+ * integrate with git logs and memory system to analyze actual progress.
+ * 
+ * For now, returns a template structure that should be manually updated
+ * daily to reflect actual achievements, or left as-is for automated posting.
+ * 
+ * Future enhancement: Parse git commits from last 24 hours and extract
+ * meaningful metrics automatically.
  */
 async function generateDailyProgressSummary(): Promise<DailyProgressSummary> {
   const today = new Date().toISOString().split('T')[0];
   
-  // This would integrate with git logs and memory system
-  // For now, returning a template structure
+  // Template data - update daily or implement git log parsing
   return {
     date: today,
     breakthroughs: [
@@ -192,8 +197,11 @@ async function main() {
 }
 
 // Run if executed directly
-const isMainModule = import.meta.url === `file://${process.argv[1]}`;
-if (isMainModule) {
+// Note: This uses a simple check that works for most cases
+// The script path is normalized for comparison
+const scriptPath = process.argv[1];
+const isMainModule = scriptPath && import.meta.url.endsWith(scriptPath);
+if (isMainModule || process.argv[1]?.includes('truth-social-daily-update')) {
   main();
 }
 
