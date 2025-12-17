@@ -10,3 +10,4 @@
 export * from './AdaptiveStrategies';
 export * from './KnowledgeLoop';
 export * from './MetaLearningEngine';
+export * from './IntelligenceBridge';
