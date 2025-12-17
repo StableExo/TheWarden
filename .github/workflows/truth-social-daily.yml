@@ -1,0 +1,48 @@
+name: Truth Social Daily Update
+
+on:
+  schedule:
+    # Run daily at 12:00 AM EST (5:00 AM UTC)
+    - cron: '0 5 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  post-daily-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for git log analysis
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate Truth Social post
+        run: npm run truth-social:daily
+        env:
+          TZ: 'America/New_York'
+          # Add Truth Social API token when available
+          # TRUTH_SOCIAL_API_TOKEN: ${{ secrets.TRUTH_SOCIAL_API_TOKEN }}
+      
+      - name: Upload post artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: truth-social-post-${{ github.run_number }}
+          path: .memory/truth-social-posts/
+          retention-days: 30
+      
+      - name: Commit post to memory
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .memory/truth-social-posts/
+          git commit -m "Add Truth Social daily update [automated]" || echo "No changes to commit"
+          git push || echo "No changes to push"
