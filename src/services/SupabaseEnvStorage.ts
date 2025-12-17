@@ -77,14 +77,14 @@ export class SupabaseEnvStorage {
   constructor(options?: SupabaseEnvStorageOptions) {
     const supabaseUrl = options?.supabaseUrl || process.env.SUPABASE_URL;
     const supabaseKey = options?.supabaseKey || process.env.SUPABASE_ANON_KEY;
-    const encryptionKey = options?.encryptionKey || process.env.SECRETS_ENCRYPTION_KEY || '';
+    const encryptionKey = options?.encryptionKey || process.env.SECRETS_ENCRYPTION_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Supabase URL and Key are required. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.');
     }
 
     this.supabase = createClient(supabaseUrl, supabaseKey);
-    this.defaultEncryptionKey = encryptionKey;
+    this.defaultEncryptionKey = encryptionKey || '';
   }
 
   // ==========================================================================
@@ -225,7 +225,7 @@ export class SupabaseEnvStorage {
     metadata?: Partial<Omit<EnvironmentSecret, 'id' | 'secret_name' | 'encrypted_value' | 'created_at' | 'updated_at'>>
   ): Promise<EnvironmentSecret> {
     const key = encryptionKey || this.defaultEncryptionKey;
-    if (!key) {
+    if (!key || key.trim() === '') {
       throw new Error('Encryption key is required. Provide it as parameter or set SECRETS_ENCRYPTION_KEY environment variable.');
     }
 
