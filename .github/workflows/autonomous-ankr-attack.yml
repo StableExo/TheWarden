@@ -31,8 +31,12 @@ jobs:
     runs-on: ubuntu-latest
     
     permissions:
-      contents: write  # Need write access to commit results
-      actions: read     # Read workflow artifacts
+      contents: write        # Commit and push results
+      actions: read          # Read workflow artifacts
+      issues: write          # Create/update issues for findings
+      pull-requests: write   # Create PRs for security fixes
+      security-events: write # Report security findings
+      statuses: write        # Update commit statuses
       
     steps:
       - name: Checkout repository

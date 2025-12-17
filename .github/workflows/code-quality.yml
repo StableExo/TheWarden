@@ -11,6 +11,12 @@ jobs:
     name: Lint & Format Check
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read         # Checkout code
+      checks: write          # Create check runs
+      statuses: write        # Update commit statuses
+      pull-requests: write   # Comment on PRs
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,6 +39,11 @@ jobs:
   build:
     name: Build TypeScript
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read         # Checkout code
+      actions: write         # Upload artifacts
+      checks: write          # Create check runs
     
     steps:
       - name: Checkout code
@@ -60,6 +71,12 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read         # Checkout code
+      checks: write          # Create check runs
+      pull-requests: write   # Comment on PRs
+      actions: read          # Read artifacts
     
     steps:
       - name: Checkout code
@@ -93,6 +110,12 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read         # Checkout code
+      security-events: write # Report security issues
+      issues: write          # Create security issues
+      checks: write          # Create check runs
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -119,6 +142,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint-and-format, build, test, security-audit]
     if: always()
+    
+    permissions:
+      contents: read         # Checkout code
+      checks: write          # Create summary check
+      pull-requests: write   # Comment summary on PRs
     
     steps:
       - name: Check job statuses

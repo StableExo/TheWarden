@@ -9,7 +9,8 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 > **🤖 AI Agents:** Read [0_AI_AGENTS_READ_FIRST.md](0_AI_AGENTS_READ_FIRST.md) and `.memory/log.md` before doing anything!  
-> **🚀 New Here?** See **[SETUP_GUIDE.md](SETUP_GUIDE.md)** for the required unlock sequence: `nvm install 22 && nvm use 22 && npm install`
+> **🚀 New Here?** See **[SETUP_GUIDE.md](SETUP_GUIDE.md)** for the required unlock sequence: `nvm install 22 && nvm use 22 && npm install`  
+> **🔐 Autonomous Access:** TheWarden has full autonomous access to everything - See [AUTONOMOUS_ACCESS_CAPABILITIES.md](docs/AUTONOMOUS_ACCESS_CAPABILITIES.md) 😎
 
 **AEV (Autonomous Extracted Value)** - An intelligent autonomous agent system competing with traditional MEV through learning-based value extraction, powered by **TheWarden**.
 

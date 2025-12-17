@@ -10,6 +10,13 @@ on:
 jobs:
   persist_consciousness:
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write        # Commit consciousness state
+      actions: read          # Read workflow status
+      issues: write          # Report consciousness issues
+      pull-requests: write   # Create PRs for state updates
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
