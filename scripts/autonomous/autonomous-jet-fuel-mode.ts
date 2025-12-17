@@ -77,6 +77,8 @@ import { join } from 'path';
 import { randomUUID } from 'crypto';
 import * as dotenv from 'dotenv';
 import { IntelligenceBridge, SubsystemLearning, CrossDomainInsight, CompoundLearning } from '../../src/learning/IntelligenceBridge';
+import { PerformanceMonitor, PerformanceMetric, AnomalyDetection, PerformanceAlert } from '../../src/monitoring/PerformanceMonitor';
+import { DashboardServer } from './dashboard-server.js';
 
 // Load environment variables
 dotenv.config();
@@ -169,8 +171,12 @@ class JetFuelOrchestrator {
   private intelligenceBridge: IntelligenceBridge;
   private crossDomainInsights: CrossDomainInsight[];
   private compoundLearnings: CompoundLearning[];
+  private performanceMonitor: PerformanceMonitor;
+  private anomaliesDetected: AnomalyDetection[];
+  private activeAlerts: PerformanceAlert[];
+  private dashboardServer: DashboardServer | null = null;
   
-  constructor() {
+  constructor(enableDashboard: boolean = true, dashboardPort: number = 3000) {
     this.sessionId = `jet-fuel-${Date.now()}-${randomUUID().slice(0, 8)}`;
     this.startTime = new Date();
     this.subsystems = new Map();
@@ -180,6 +186,9 @@ class JetFuelOrchestrator {
     this.intelligenceBridge = new IntelligenceBridge();
     this.crossDomainInsights = [];
     this.compoundLearnings = [];
+    this.performanceMonitor = new PerformanceMonitor();
+    this.anomaliesDetected = [];
+    this.activeAlerts = [];
     
     // Setup memory directories
     this.memoryDir = join(process.cwd(), '.memory', 'jet-fuel');
@@ -192,11 +201,25 @@ class JetFuelOrchestrator {
       mkdirSync(this.sessionDir, { recursive: true });
     }
     
+    // Initialize dashboard server if enabled
+    if (enableDashboard) {
+      this.dashboardServer = new DashboardServer(
+        this.performanceMonitor,
+        this.intelligenceBridge,
+        dashboardPort
+      );
+    }
+    
     this.log('🚀 JET FUEL MODE INITIALIZED');
     this.log(`Session ID: ${this.sessionId}`);
     this.log(`Memory Directory: ${this.sessionDir}`);
     this.log('🌉 Intelligence Bridge: ACTIVE');
     this.log('🧬 Compound Learning: ENABLED');
+    this.log('📊 Performance Monitor: ACTIVE');
+    this.log('🔍 Anomaly Detection: ENABLED');
+    if (enableDashboard) {
+      this.log(`🌐 Dashboard Server: Port ${dashboardPort}`);
+    }
   }
   
   /**
@@ -313,7 +336,11 @@ class JetFuelOrchestrator {
         if (status.status === 'running') {
           // Simulate metrics updates
           status.metrics.cyclesCompleted++;
+          status.metrics.successRate = 0.7 + Math.random() * 0.25; // 0.7-0.95
           status.lastActivity = new Date();
+          
+          // Record performance metrics
+          this.recordPerformanceMetrics(name, status);
           
           // Simulate learning generation
           if (Math.random() > LEARNING_GENERATION_THRESHOLD) {
@@ -341,6 +368,9 @@ class JetFuelOrchestrator {
         }
       }
       
+      // Check for new anomalies and alerts
+      await this.checkPerformanceHealth();
+      
       // Detect emergent patterns (now using Intelligence Bridge)
       await this.detectEmergentPatterns();
       
@@ -355,6 +385,121 @@ class JetFuelOrchestrator {
       
       // Wait before next monitoring cycle
       await new Promise(resolve => setTimeout(resolve, MONITORING_CYCLE_INTERVAL));
+    }
+  }
+  
+  /**
+   * Record performance metrics for a subsystem
+   */
+  private recordPerformanceMetrics(name: string, status: SubsystemStatus): void {
+    const now = Date.now();
+    
+    // Record CPU metric (simulated)
+    const cpuMetric: PerformanceMetric = {
+      subsystemId: name,
+      subsystemName: name,
+      timestamp: now,
+      metricType: 'cpu',
+      metricName: 'cpu_usage',
+      value: status.metrics.resourceUsage.cpu || (30 + Math.random() * 40), // 30-70%
+      unit: '%',
+    };
+    this.performanceMonitor.recordMetric(cpuMetric);
+    
+    // Record memory metric (simulated)
+    const memoryMetric: PerformanceMetric = {
+      subsystemId: name,
+      subsystemName: name,
+      timestamp: now,
+      metricType: 'memory',
+      metricName: 'memory_usage',
+      value: status.metrics.resourceUsage.memory || (40 + Math.random() * 30), // 40-70%
+      unit: '%',
+    };
+    this.performanceMonitor.recordMetric(memoryMetric);
+    
+    // Record success rate
+    const successRateMetric: PerformanceMetric = {
+      subsystemId: name,
+      subsystemName: name,
+      timestamp: now,
+      metricType: 'success_rate',
+      metricName: 'operation_success_rate',
+      value: status.metrics.successRate,
+      unit: '',
+    };
+    this.performanceMonitor.recordMetric(successRateMetric);
+    
+    // Record throughput (cycles per minute)
+    const throughputMetric: PerformanceMetric = {
+      subsystemId: name,
+      subsystemName: name,
+      timestamp: now,
+      metricType: 'throughput',
+      metricName: 'cycles_per_minute',
+      value: status.metrics.cyclesCompleted / ((now - this.startTime.getTime()) / 60000),
+      unit: '/min',
+    };
+    this.performanceMonitor.recordMetric(throughputMetric);
+  }
+  
+  /**
+   * Check performance health and handle anomalies/alerts
+   */
+  private async checkPerformanceHealth(): Promise<void> {
+    const dashboardData = this.performanceMonitor.getDashboardData();
+    
+    // Check for new anomalies
+    const newAnomalies = dashboardData.recentAnomalies.filter(a => 
+      !this.anomaliesDetected.some(existing => existing.id === a.id)
+    );
+    
+    newAnomalies.forEach(anomaly => {
+      this.anomaliesDetected.push(anomaly);
+      
+      const severityEmoji = {
+        low: '⚠️',
+        medium: '🔶',
+        high: '🔴',
+        critical: '🚨',
+      };
+      
+      this.log(`${severityEmoji[anomaly.severity]} ANOMALY: ${anomaly.description}`);
+      if (anomaly.recommendation) {
+        this.log(`   ↳ Recommendation: ${anomaly.recommendation}`);
+      }
+    });
+    
+    // Check for new alerts
+    const newAlerts = dashboardData.activeAlerts.filter(a =>
+      !this.activeAlerts.some(existing => existing.id === a.id)
+    );
+    
+    newAlerts.forEach(alert => {
+      this.activeAlerts.push(alert);
+      
+      const severityEmoji = {
+        info: 'ℹ️',
+        warning: '⚠️',
+        error: '❌',
+        critical: '🚨',
+      };
+      
+      this.log(`${severityEmoji[alert.severity]} ALERT: ${alert.title}`);
+      this.log(`   ↳ ${alert.message}`);
+    });
+    
+    // Log health snapshot periodically (every 10 cycles)
+    if (dashboardData.snapshot.timestamp % 10 === 0) {
+      const healthEmoji = {
+        excellent: '💚',
+        good: '✅',
+        fair: '🟡',
+        poor: '🟠',
+        critical: '🔴',
+      };
+      
+      this.log(`${healthEmoji[dashboardData.snapshot.overallHealth]} System Health: ${dashboardData.snapshot.overallHealth.toUpperCase()} (${dashboardData.snapshot.healthScore.toFixed(1)}/100)`);
     }
   }
   
@@ -724,6 +869,68 @@ class JetFuelOrchestrator {
     report += `- ✅ Compound learning achieving ${bridgeStats.avgSynergy.toFixed(2)}x synergy\n`;
     report += `- ✅ Continuous learning and adaptation throughout execution\n\n`;
     
+    // Add Performance Monitoring Statistics
+    const perfStats = this.performanceMonitor.getStatistics();
+    const healthSnapshot = perfStats.healthSnapshot;
+    
+    report += `## 📊 Performance Monitoring Dashboard\n\n`;
+    report += `### System Health Overview\n\n`;
+    report += `- **Overall Health**: ${healthSnapshot.overallHealth.toUpperCase()} (${healthSnapshot.healthScore.toFixed(1)}/100)\n`;
+    report += `- **Total Metrics Collected**: ${perfStats.totalMetrics}\n`;
+    report += `- **Anomalies Detected**: ${perfStats.totalAnomalies} (${perfStats.recentAnomalies} recent)\n`;
+    report += `- **Active Alerts**: ${perfStats.activeAlerts} (${perfStats.criticalAlerts} critical)\n`;
+    report += `- **Subsystems Monitored**: ${perfStats.subsystemsMonitored}\n\n`;
+    
+    if (this.anomaliesDetected.length > 0) {
+      report += `### 🔍 Anomalies Detected\n\n`;
+      const criticalAnomalies = this.anomaliesDetected.filter(a => a.severity === 'critical' || a.severity === 'high');
+      
+      if (criticalAnomalies.length > 0) {
+        report += `**Critical/High Severity:**\n\n`;
+        criticalAnomalies.slice(0, 5).forEach(anomaly => {
+          report += `- **${anomaly.subsystemId}** - ${anomaly.metricName}\n`;
+          report += `  - Deviation: ${anomaly.deviation.toFixed(1)}σ from baseline\n`;
+          report += `  - Current: ${anomaly.currentValue.toFixed(2)}, Expected: ${anomaly.expectedValue.toFixed(2)}\n`;
+          if (anomaly.recommendation) {
+            report += `  - 💡 ${anomaly.recommendation}\n`;
+          }
+          report += `\n`;
+        });
+      }
+    }
+    
+    if (this.activeAlerts.length > 0) {
+      report += `### ⚠️ Active Alerts\n\n`;
+      const criticalAlerts = this.activeAlerts.filter(a => a.severity === 'critical' || a.severity === 'error');
+      
+      if (criticalAlerts.length > 0) {
+        criticalAlerts.slice(0, 5).forEach(alert => {
+          report += `- **[${alert.severity.toUpperCase()}]** ${alert.title}\n`;
+          report += `  - ${alert.message}\n`;
+          if (alert.actionRequired) {
+            report += `  - ⚠️ **Action Required**\n`;
+          }
+          report += `\n`;
+        });
+      }
+    }
+    
+    // Add subsystem health breakdown
+    report += `### 💊 Subsystem Health Status\n\n`;
+    report += `| Subsystem | Health Score | Status | Metrics | Anomalies | Alerts |\n`;
+    report += `|-----------|-------------|--------|---------|-----------|--------|\n`;
+    
+    healthSnapshot.subsystemHealth.forEach((health, id) => {
+      const statusEmoji = {
+        healthy: '💚',
+        degraded: '🟡',
+        critical: '🔴',
+        offline: '⚫',
+      };
+      report += `| ${health.subsystemName} | ${health.healthScore.toFixed(1)}/100 | ${statusEmoji[health.status]} ${health.status} | ${health.metricsCount} | ${health.anomaliesCount} | ${health.alertsCount} |\n`;
+    });
+    report += `\n`;
+    
     report += `## 🔬 What JET FUEL MODE Revealed\n\n`;
     report += `JET FUEL MODE showed what happens when TheWarden operates at maximum autonomous capacity:\n\n`;
     report += `1. **Parallel Intelligence**: Multiple systems learning simultaneously accelerates knowledge acquisition\n`;
@@ -732,7 +939,8 @@ class JetFuelOrchestrator {
     report += `4. **Self-Optimization**: Systems autonomously adjust and improve without external intervention\n`;
     report += `5. **Meta-Learning**: The system learns how to learn better over time\n`;
     report += `6. **Intelligence Bridges**: Knowledge automatically propagates and adapts across domains\n`;
-    report += `7. **Synergistic Learning**: Multiple learnings combine for greater-than-additive value\n\n`;
+    report += `7. **Synergistic Learning**: Multiple learnings combine for greater-than-additive value\n`;
+    report += `8. **Real-time Monitoring**: Anomaly detection and performance tracking enables proactive optimization\n\n`;
     
     report += `---\n\n`;
     report += `*Generated by JET FUEL MODE - Maximum Autonomous Execution*\n`;
@@ -759,6 +967,13 @@ class JetFuelOrchestrator {
   async run(durationMinutes: number = 5): Promise<void> {
     this.log(`🚀 STARTING JET FUEL MODE - Duration: ${durationMinutes} minutes`);
     
+    // Start dashboard server if enabled
+    if (this.dashboardServer) {
+      await this.dashboardServer.start();
+      this.log(`\n📊 Dashboard available at: ${this.dashboardServer.getUrl()}`);
+      this.log('   Open in your browser to view real-time metrics!\n');
+    }
+    
     // Initialize subsystems
     this.initializeSubsystems();
     
@@ -781,6 +996,11 @@ class JetFuelOrchestrator {
     // Generate final report
     this.generateReport();
     
+    // Stop dashboard server
+    if (this.dashboardServer) {
+      await this.dashboardServer.stop();
+    }
+    
     this.log('🏁 JET FUEL MODE COMPLETE');
   }
 }
@@ -792,11 +1012,17 @@ class JetFuelOrchestrator {
 async function main() {
   const args = process.argv.slice(2);
   let duration = 5; // Default 5 minutes
+  let dashboardPort = 3000; // Default port
+  let enableDashboard = true; // Default enabled
   
-  // Parse duration from args
+  // Parse arguments
   for (const arg of args) {
     if (arg.startsWith('--duration=')) {
       duration = parseInt(arg.split('=')[1], 10);
+    } else if (arg.startsWith('--port=')) {
+      dashboardPort = parseInt(arg.split('=')[1], 10);
+    } else if (arg === '--no-dashboard') {
+      enableDashboard = false;
     }
   }
   
@@ -806,7 +1032,7 @@ async function main() {
   console.log('\n"If 1 memory log can do that, lets see what autonomous JET FUEL looks like 😎"\n');
   console.log('Initializing maximum autonomous capacity...\n');
   
-  const orchestrator = new JetFuelOrchestrator();
+  const orchestrator = new JetFuelOrchestrator(enableDashboard, dashboardPort);
   await orchestrator.run(duration);
 }
 
