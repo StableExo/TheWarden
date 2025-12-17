@@ -271,7 +271,19 @@ export class FlashSwapV3Executor {
 
       // Calculate minOut with slippage
       const slippage = this.config.defaultSlippage;
-      const minOut = (BigInt(Math.floor(swap.expectedOutput)) * BigInt(Math.floor((1 - slippage) * 10000))) / BASIS_POINTS_DIVISOR;
+      // Use minAmountOut if available, otherwise calculate from expectedOutput
+      let baseAmount: bigint;
+      if (swap.minAmountOut) {
+        baseAmount = BigInt(swap.minAmountOut);
+      } else if (swap.expectedOutput) {
+        baseAmount = BigInt(Math.floor(swap.expectedOutput));
+      } else {
+        baseAmount = BigInt(0);
+      }
+      
+      const minOut = baseAmount > 0 ? 
+        (baseAmount * BigInt(Math.floor((1 - slippage) * 10000))) / BASIS_POINTS_DIVISOR : 
+        BigInt(0);
 
       steps.push({
         pool: swap.poolAddress,
