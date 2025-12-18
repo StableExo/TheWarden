@@ -631,6 +631,20 @@ npm install aev-thewarden
 
 ## Quick Start - Running TheWarden
 
+### 🚀 Autonomous Money Making (Production)
+
+**NEW**: Launch TheWarden autonomously without any prompts!
+
+```bash
+# Autonomous launch (no confirmation prompts)
+npm run money:auto
+
+# Or use the script directly
+./launch-money-making-auto.sh
+```
+
+**See [Autonomous Launch Guide](docs/AUTONOMOUS_LAUNCH.md) for complete documentation.**
+
 ### Development Mode (Safe - Dry Run)
 
 ```bash
