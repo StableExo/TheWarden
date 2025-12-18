@@ -11,11 +11,11 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { ethers, JsonRpcProvider } from 'ethers';
-import { DEXRegistry } from '../src/dex/core/DEXRegistry';
-import { MultiHopDataFetcher } from '../src/arbitrage/MultiHopDataFetcher';
-import { PoolDataStore } from '../src/arbitrage/PoolDataStore';
-import { getScanTokens, getNetworkName } from '../src/utils/chainTokens';
-import { logger } from '../src/utils/logger';
+import { DEXRegistry } from '../../src/dex/core/DEXRegistry';
+import { MultiHopDataFetcher } from '../../src/arbitrage/MultiHopDataFetcher';
+import { PoolDataStore } from '../../src/arbitrage/PoolDataStore';
+import { getScanTokens, getNetworkName } from '../../src/utils/chainTokens';
+import { logger } from '../../src/utils/logger';
 
 interface PreloadConfig {
   chainIds: number[];
