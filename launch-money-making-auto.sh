@@ -197,8 +197,15 @@ echo ""
 echo -e "${GREEN}🚀 LIVE!${NC}"
 echo ""
 
-# Run TheWarden
-npm run dev
+# Run TheWarden - use production command based on configuration
+# Check if DRY_RUN is set to false for production mode
+if grep -q "DRY_RUN=false" .env; then
+    # Production mode - run with explicit production command
+    node --import tsx src/main.ts
+else
+    # Development/dry-run mode
+    npm run dev
+fi
 
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
