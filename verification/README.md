@@ -1,5 +1,15 @@
 # Contract Verification Files
 
+## ⚠️ **STOP! Read This First!** ⚠️
+
+### Are you getting a "ParserError" on BaseScan?
+
+**👉 READ: [`IMPORTANT_READ_FIRST.md`](./IMPORTANT_READ_FIRST.md) 👈**
+
+Common mistake: Pasting constructor arguments into the source code field.
+
+---
+
 This directory contains all the materials needed to verify the FlashSwapV2 and FlashSwapV3 contracts on BaseScan.
 
 ## 🎯 Recommended Verification Methods

@@ -69,12 +69,17 @@ async function createContractGist(
   
   // Create the gist with flattened contract as FIRST file
   // This is critical because BaseScan fetches the first file only
+  // We prefix the .sol file with "1_" to ensure it comes first alphabetically
+  // since GitHub Gist files are sorted alphabetically
+  const solFileName = `1_${flattenedFile}`;
+  const argsFileName = `2_${constructorArgsFile}`;
+  
   const gistData = {
     description: `TheWarden ${contractName} - BaseScan Contract Verification`,
     public: true,
     files: {
-      [flattenedFile]: { content: flattenedContent },
-      [constructorArgsFile]: { content: argsContent },
+      [solFileName]: { content: flattenedContent },
+      [argsFileName]: { content: argsContent },
     },
   };
   
@@ -133,10 +138,10 @@ function generateGistUrlsDoc(v2Gist: GistResponse, v3Gist: GistResponse): void {
   const verificationDir = join(process.cwd(), 'verification');
   const outputPath = join(verificationDir, 'GIST_URLS.md');
   
-  const v2FlattenedUrl = v2Gist.files['FlashSwapV2_flattened.sol']?.raw_url || '';
-  const v2ArgsUrl = v2Gist.files['FlashSwapV2_constructor_args.txt']?.raw_url || '';
-  const v3FlattenedUrl = v3Gist.files['FlashSwapV3_flattened.sol']?.raw_url || '';
-  const v3ArgsUrl = v3Gist.files['FlashSwapV3_constructor_args.txt']?.raw_url || '';
+  const v2FlattenedUrl = v2Gist.files['1_FlashSwapV2_flattened.sol']?.raw_url || '';
+  const v2ArgsUrl = v2Gist.files['2_FlashSwapV2_constructor_args.txt']?.raw_url || '';
+  const v3FlattenedUrl = v3Gist.files['1_FlashSwapV3_flattened.sol']?.raw_url || '';
+  const v3ArgsUrl = v3Gist.files['2_FlashSwapV3_constructor_args.txt']?.raw_url || '';
   
   const doc = `# GitHub Gist URLs for Contract Verification
 
