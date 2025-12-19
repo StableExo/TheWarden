@@ -35,10 +35,15 @@ function flattenContract(contractName: string): string {
       { encoding: 'utf8', stdio: 'pipe' }
     );
     
-    // Remove SPDX license identifiers except the first one
+    // Remove dotenv injection messages and duplicate SPDX license identifiers
     const lines = output.split('\n');
     let firstSpdx = true;
     const filtered = lines.filter(line => {
+      // Remove dotenv injection messages
+      if (line.includes('[dotenv@')) {
+        return false;
+      }
+      // Remove duplicate SPDX headers
       if (line.includes('SPDX-License-Identifier')) {
         if (firstSpdx) {
           firstSpdx = false;

@@ -80,7 +80,7 @@ async function main() {
   console.log("\n📤 Submitting verification request...");
   
   try {
-    // Hardhat v3: Use hre.run to execute verify task
+    // Use hre.run to execute the standard Hardhat verify task
     await hre.run("verify:verify", {
       address: contractAddress,
       constructorArguments: constructorArgs,

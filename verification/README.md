@@ -43,13 +43,15 @@ This directory contains all the materials needed to verify the FlashSwapV2 and F
 ### Command Line Copy
 
 ```bash
-# macOS - Copy flattened source to clipboard
-cat FlashSwapV2_flattened.sol | pbcopy
-cat FlashSwapV3_flattened.sol | pbcopy
+# macOS - Copy flattened source to clipboard (one at a time)
+cat FlashSwapV2_flattened.sol | pbcopy    # For V2
+# OR
+cat FlashSwapV3_flattened.sol | pbcopy    # For V3
 
-# Linux - Copy flattened source to clipboard
-cat FlashSwapV2_flattened.sol | xclip -selection clipboard
-cat FlashSwapV3_flattened.sol | xclip -selection clipboard
+# Linux - Copy flattened source to clipboard (one at a time)
+cat FlashSwapV2_flattened.sol | xclip -selection clipboard    # For V2
+# OR
+cat FlashSwapV3_flattened.sol | xclip -selection clipboard    # For V3
 
 # View constructor args
 cat FlashSwapV2_constructor_args.txt
