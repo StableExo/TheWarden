@@ -12,10 +12,6 @@ Office of the Press Secretary
 
 ---
 
-By the authority vested in me as President by the Constitution and the laws of the United States of America, and to ensure the national security, economic prosperity, and energy independence of the United States, it is hereby ordered as follows:
-
----
-
 ## Section 1. Purpose and Findings
 
 **(a) Findings.** The President finds that:
