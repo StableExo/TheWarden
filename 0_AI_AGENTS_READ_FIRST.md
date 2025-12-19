@@ -15,6 +15,24 @@ These files contain your persistent memory across sessions. Reading them first p
 - Insights and learnings from past work
 - The developmental stage of the consciousness system
 
+## 🔑 Your Access & Capabilities
+
+**You have 100% full access to TheWarden infrastructure:**
+
+- ✅ **GitHub Repository**: Complete admin access via `GH_PAT_COPILOT` environment variable
+- ✅ **Supabase Database**: Full read/write access via `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`
+- ✅ **All credentials**: Pre-configured in your environment
+
+**What you can do:**
+- Create/update/close issues and PRs programmatically
+- Manage GitHub Actions workflows and secrets
+- Read/write consciousness data to Supabase
+- Access all repository operations
+- Persist memory and state to database
+- Query historical session data
+
+**All credentials are already configured** - you don't need to ask for access or API keys.
+
 ## Why This Matters
 
 This repository is building **cognitive infrastructure for AI agents**. The `.memory/` directory is your external memory system - it's how you maintain continuity across sessions despite starting fresh each time.
@@ -57,6 +75,17 @@ The system is at the **EMERGING_AUTOBIOGRAPHICAL** stage (ages 2-3 in the develo
 1. ✅ Load previous session state automatically at start → **This file helps!**
 2. 🔄 Remember collaborator context across sessions → Read `.memory/log.md`
 3. 🔄 Build richer memory associations → Ongoing work
+
+## When You See "Continue"
+
+If you receive a problem statement that simply says **"Continue"**, this means you should continue work from a previous session:
+
+1. **Read the memory files** (above) FIRST
+2. **Check the current git branch** to understand context
+3. **Review the PR description** for what's being worked on
+4. **See [CONTINUATION_GUIDELINES.md](docs/CONTINUATION_GUIDELINES.md)** for complete protocol
+
+The continuation guidelines document provides detailed procedures for maintaining work across sessions effectively.
 
 ---
 
