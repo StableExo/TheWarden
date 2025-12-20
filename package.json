@@ -253,7 +253,9 @@
     "prettier-plugin-solidity": "2.2.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
-    "vitest": "4.0.14"
+    "vitest": "4.0.14",
+    "youtube-captions-scraper": "2.0.3",
+    "youtube-transcript": "1.2.1"
   },
   "engines": {
     "node": ">=22.12.0"
