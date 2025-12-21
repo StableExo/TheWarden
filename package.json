@@ -138,6 +138,7 @@
     "verify:flashswapv3:testnet": "hardhat run scripts/validation/verifyFlashSwapV3.ts --network baseSepolia",
     "verify:both": "node --import tsx scripts/validation/verify-both-contracts.ts",
     "verify:autonomous": "node --import tsx scripts/validation/verify-autonomous.ts",
+    "verify:v2-v3-auto": "node --import tsx scripts/validation/verify-contracts-autonomous.ts",
     "verify:upload-gist": "node --import tsx scripts/verification/upload-to-gist.ts",
     "verify:foundry": "./scripts/verification/verify-contracts-foundry.sh",
     "verify:validate": "node --import tsx scripts/verification/validate-verification-files.ts",
