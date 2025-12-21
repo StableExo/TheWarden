@@ -139,6 +139,8 @@
     "verify:both": "node --import tsx scripts/validation/verify-both-contracts.ts",
     "verify:autonomous": "node --import tsx scripts/validation/verify-autonomous.ts",
     "verify:v2-v3-auto": "node --import tsx scripts/validation/verify-contracts-autonomous.ts",
+    "verify:check": "node --import tsx scripts/validation/verify-v2-v3-simple.ts",
+    "verify:api": "node --import tsx scripts/validation/verify-v2-v3-api.ts",
     "verify:upload-gist": "node --import tsx scripts/verification/upload-to-gist.ts",
     "verify:foundry": "./scripts/verification/verify-contracts-foundry.sh",
     "verify:validate": "node --import tsx scripts/verification/validate-verification-files.ts",
