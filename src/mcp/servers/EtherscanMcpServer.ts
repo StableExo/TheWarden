@@ -12,6 +12,10 @@
  * - Token information
  * - Multi-chain support (Ethereum, Base, Arbitrum, Polygon, Optimism, etc.)
  * 
+ * Security:
+ * - Supports Hardhat Configuration Variables (encrypted secrets)
+ * - Falls back to environment variables for backward compatibility
+ * 
  * Based on: https://docs.etherscan.io/mcp-docs/introduction
  */
 
@@ -96,22 +100,66 @@ export class EtherscanMcpServer extends BaseMcpServer {
   }
 
   /**
-   * Load API keys from environment variables
+   * Load API keys from environment variables or Hardhat Configuration Variables
+   * Prioritizes Hardhat vars (encrypted) over env vars for security
    */
   private loadApiKeys(): void {
     for (const [chain, config] of Object.entries(CHAIN_CONFIG)) {
-      const apiKey = process.env[config.envKey];
+      let apiKey: string | undefined;
+      
+      try {
+        // Option 1: Try Hardhat Configuration Variables (secure, encrypted)
+        // This requires @types/node for dynamic import
+        const hardhatConfig = this.tryLoadHardhatVars();
+        if (hardhatConfig && hardhatConfig.has(config.envKey)) {
+          apiKey = hardhatConfig.get(config.envKey, undefined);
+          if (apiKey) {
+            this.log(`✓ Loaded ${chain} API key from Hardhat vars (encrypted)`);
+          }
+        }
+      } catch (error) {
+        // Hardhat vars not available, password not provided, or not in Hardhat environment
+        // Fall through to environment variable
+      }
+      
+      // Option 2: Fallback to environment variables (backward compatibility)
+      if (!apiKey) {
+        apiKey = process.env[config.envKey];
+        if (apiKey) {
+          this.log(`✓ Loaded ${chain} API key from environment variable`);
+        }
+      }
+      
       if (apiKey) {
         this.apiKeys.set(chain, apiKey);
-        this.log(`✓ Loaded API key for ${chain}`);
       } else {
         this.log(`ℹ No API key for ${chain} (${config.envKey})`);
       }
     }
 
     if (this.apiKeys.size === 0) {
-      this.log('⚠️  Warning: No Etherscan API keys found in environment');
+      this.log('⚠️  Warning: No Etherscan API keys found');
+      this.log('   Set keys via: npx hardhat vars set BASESCAN_API_KEY');
+      this.log('   Or use .env file for development');
     }
+  }
+
+  /**
+   * Try to load Hardhat Configuration Variables
+   * Returns vars object if available, undefined otherwise
+   */
+  private tryLoadHardhatVars(): any {
+    try {
+      // Try to import Hardhat config (only works in Hardhat environment)
+      const hardhat = require('hardhat');
+      if (hardhat && hardhat.vars) {
+        return hardhat.vars;
+      }
+    } catch (error) {
+      // Not in Hardhat environment or hardhat not installed
+      // This is fine - we'll use env vars instead
+    }
+    return undefined;
   }
 
   /**
