@@ -82,7 +82,8 @@ async function checkVerificationStatus(address: string): Promise<boolean> {
       return false;
     }
 
-    // Check if contract is already verified via BaseScan API v2 (unified Etherscan endpoint)
+    // Check if contract is already verified via unified Etherscan API v2
+    // Note: BaseScan has migrated to Etherscan's unified endpoint with chainid parameter
     const response = await fetch(
       `https://api.etherscan.io/v2/api?chainid=8453&module=contract&action=getabi&address=${address}&apikey=${apiKey}`
     );
