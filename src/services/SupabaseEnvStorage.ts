@@ -23,6 +23,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { validateSecretsEncryptionKey } from '../utils/validateEncryptionKey.js';
 
 // ============================================================================
 // TYPES
@@ -81,6 +82,18 @@ export class SupabaseEnvStorage {
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Supabase URL and Key are required. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.');
+    }
+
+    // Validate encryption key if provided
+    if (encryptionKey) {
+      const validation = validateSecretsEncryptionKey(encryptionKey);
+      if (!validation.isValid) {
+        const errors = validation.errors.join('; ');
+        throw new Error(
+          `Invalid SECRETS_ENCRYPTION_KEY: ${errors}. ` +
+          'Generate a valid key with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+        );
+      }
     }
 
     this.supabase = createClient(supabaseUrl, supabaseKey);
