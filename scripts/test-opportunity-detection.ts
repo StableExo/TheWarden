@@ -82,10 +82,11 @@ try {
     console.log('\n✅ SUCCESS! Found opportunities:\n');
     paths.slice(0, 3).forEach((path, i) => {
       console.log(`Opportunity #${i + 1}:`);
-      console.log(`   Path: ${path.path.join(' → ')}`);
-      console.log(`   Profit: ${(Number(path.netProfit) / 1e18).toFixed(6)} ETH`);
-      console.log(`   Gas Cost: ${(Number(path.totalGasCost) / 1e18).toFixed(6)} ETH`);
-      console.log(`   DEXes: ${path.dexes.join(', ')}`);
+      const tokenPath = path.hops ? path.hops.map(h => h.tokenOut?.substring(0, 6)).join(' → ') : 'N/A';
+      console.log(`   Path: ${path.startToken?.substring(0, 6)}... → ${tokenPath} → ${path.endToken?.substring(0, 6)}...`);
+      console.log(`   Profit: ${(Number(path.netProfit || 0) / 1e18).toFixed(6)} ETH`);
+      console.log(`   Gas Cost: ${(Number(path.totalGasCost || 0) / 1e18).toFixed(6)} ETH`);
+      console.log(`   Hops: ${path.hops?.length || 0}`);
       console.log('');
     });
     
