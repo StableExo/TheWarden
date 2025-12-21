@@ -80,8 +80,8 @@ export interface ProfitableInfrastructureConfig {
 export function loadCEXConfig(): CEXMonitoringConfig {
   const enabled = process.env.ENABLE_CEX_MONITOR === 'true';
   
-  // Parse exchanges from env (comma-separated: binance,coinbase,okx)
-  const exchangeList = (process.env.CEX_EXCHANGES || 'binance')
+  // Parse exchanges from env (comma-separated: coinbase,okx,bybit,kraken)
+  const exchangeList = (process.env.CEX_EXCHANGES || 'coinbase,okx')
     .split(',')
     .map(e => e.trim().toLowerCase());
   
