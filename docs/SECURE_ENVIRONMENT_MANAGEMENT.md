@@ -85,9 +85,24 @@ TheWarden automatically:
 
 ## 🛠️ Management Scripts (For Humans)
 
-These scripts are for human operators to manage the environment in Supabase:
+### Syncing New Variables to Supabase
 
-### View Environment Variables
+When you add new environment variables or update existing ones:
+
+```bash
+# Sync your .env file to Supabase
+npm run env:sync
+```
+
+This will:
+- ✅ Automatically detect secrets (encrypts them)
+- ✅ Upload configs as plain text
+- ✅ Update existing variables
+- ✅ AI agents get updates on next startup
+
+**See [SYNCING_ENV_TO_SUPABASE.md](./SYNCING_ENV_TO_SUPABASE.md) for detailed guide.**
+
+### Other Management Commands
 
 ```bash
 # Show all configs (non-sensitive)
@@ -95,13 +110,6 @@ npm run env:show
 
 # Show secrets metadata (not decrypted values)
 npm run env:show:secrets
-```
-
-### Sync Environment (Human Operators Only)
-
-```bash
-# Upload current .env to Supabase
-npm run env:sync
 
 # Download from Supabase to .env
 npm run env:restore
