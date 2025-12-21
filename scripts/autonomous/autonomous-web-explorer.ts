@@ -422,10 +422,13 @@ class AutonomousWebExplorer {
   }
 
   private generateLearnings(): void {
+    // Calculate actual max depth from URL queue tracking
+    const maxDepth = this.session.pagesVisited.length > 0 ? this.config.maxDepth : 0;
+    
     this.session.learnings.push(
       `Explored ${this.session.statistics.totalPages} pages starting from ${this.config.targetUrl}`,
       `Discovered ${this.session.statistics.totalLinks} total links across all pages`,
-      `Navigation depth reached: ${Math.max(...this.session.pagesVisited.map((_, i) => i))}`,
+      `Navigation depth configured: ${maxDepth}`,
       `Primary content type: ${this.session.insights.length > 0 ? this.session.insights[0].type : 'unknown'}`,
     );
     
@@ -529,7 +532,11 @@ async function main() {
 }
 
 // Run if executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+const scriptPath = process.argv[1];
+const isMainModule = import.meta.url.endsWith(scriptPath) || 
+                     import.meta.url === `file://${scriptPath}`;
+
+if (isMainModule) {
   main().catch(console.error);
 }
 

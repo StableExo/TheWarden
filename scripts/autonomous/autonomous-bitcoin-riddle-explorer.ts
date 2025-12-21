@@ -571,27 +571,26 @@ class AutonomousBitcoinRiddleExplorer {
       try {
         // Test based on strategy
         switch (hypothesis.strategy) {
-          case 'pi_to_mnemonic':
-            attempt.notes.push('Would map Pi digits to BIP39 word indices');
-            attempt.notes.push('Example: 3,14,159,2653 -> words at indices 3,14,159,2653 % 2048');
+          case 'six_part_combination':
+            attempt.notes.push('Testing 6-part WIF concatenation strategy');
+            attempt.notes.push('3 parts × 9 chars + 3 parts × 8 chars = 51 char WIF key');
+            attempt.notes.push('Would arrange parts: decode QRs, determine lengths, concatenate');
             break;
             
-          case 'modular_transform':
-            attempt.notes.push('Would apply modular arithmetic to number sequence');
-            attempt.notes.push('Example: (3 * 14 + 159) % 2048 for word index');
+          case 'qr_hex_segments':
+            attempt.notes.push('Testing hex segment combination strategy');
+            attempt.notes.push('Would decode QR codes to hex strings');
+            attempt.notes.push('6 parts × ~10-11 chars = 64 char hex private key');
             break;
             
-          case 'direct_address':
-            if (hypothesis.cluesUsed.length > 0) {
-              attempt.output = hypothesis.cluesUsed[0];
-              attempt.notes.push(`Found address: ${attempt.output}`);
-              attempt.notes.push('Would need to check balance on blockchain');
-            }
+          case 'mathematical_combination':
+            attempt.notes.push('Testing mathematical transformation strategy');
+            attempt.notes.push('Would apply Σ (sum) operation to parts');
+            attempt.notes.push('Example: (part1*9 + part2*9 + part3*9) + (part4*8 + part5*8 + part6*8)');
             break;
             
-          case 'pi_key_derivation':
-            attempt.notes.push('Would use Pi digits as entropy for key derivation');
-            attempt.notes.push('Example: SHA256(Pi_digits) -> private key');
+          default:
+            attempt.notes.push(`Strategy ${hypothesis.strategy} not yet implemented`);
             break;
         }
         
@@ -811,7 +810,11 @@ async function main() {
 }
 
 // Run if executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+const scriptPath = process.argv[1];
+const isMainModule = import.meta.url.endsWith(scriptPath) || 
+                     import.meta.url === `file://${scriptPath}`;
+
+if (isMainModule) {
   main().catch(console.error);
 }
 
