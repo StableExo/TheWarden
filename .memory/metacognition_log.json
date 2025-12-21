@@ -5,5 +5,12 @@
     "data": {
       "question": "How can I improve the shutdown sequence?"
     }
+  },
+  {
+    "timestamp": "2025-12-21T13:09:24.706Z",
+    "type": "question_for_future",
+    "data": {
+      "question": "How can I improve the shutdown sequence?"
+    }
   }
 ]
