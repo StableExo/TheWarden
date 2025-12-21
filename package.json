@@ -63,6 +63,8 @@
     "example:etherscan": "node --import tsx scripts/examples/etherscan-examples.ts",
     "explore:etherscan": "node --import tsx scripts/autonomous/autonomous-etherscan-explorer.ts",
     "explore:bloom-wonder": "node --import tsx scripts/autonomous/bloom-wonder-correlation-investigator.ts",
+    "explore:web": "node --import tsx scripts/autonomous/autonomous-web-explorer.ts",
+    "autonomous:web-explorer": "node --import tsx scripts/autonomous/autonomous-web-explorer.ts",
     "milestone:track": "node --import tsx scripts/autonomous/milestone-tracker.ts",
     "milestone:report": "node --import tsx scripts/autonomous/milestone-tracker.ts report",
     "solve:puzzle": "node --import tsx scripts/bitcoin/puzzle-solver-secure.ts",
