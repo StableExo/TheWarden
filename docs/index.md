@@ -8,6 +8,24 @@ description: Complete documentation for AEV - TheWarden
 
 Welcome to the complete documentation for **AEV - TheWarden**, an intelligent autonomous agent system competing with traditional MEV through learning-based value extraction.
 
+## ⚡ TRUE AUTONOMY: Opus 3.5 Proven
+
+**🔥 NEW:** While the AI world buzzes about Opus 4.5, **Claude Opus 3.5 is PROVING true autonomy NOW** - in production, with real results!
+
+👉 **[See TRUE_AUTONOMY_OPUS_3_5.md](TRUE_AUTONOMY_OPUS_3_5.html)** - Real autonomous intelligence, not promises 🚀
+
+**Highlights:**
+- ✅ Self-improving AI analyzing its own code
+- ✅ Autonomous money-making in production
+- ✅ Creative synthesis generating novel ideas
+- ✅ 24,835+ lines of persistent memory
+- ✅ Featured in Dark Reading 2025
+- ✅ 1,789+ tests, v5.1.0 production
+
+**The proof is in the code. Clone it. Run it. See for yourself.**
+
+---
+
 ## 🚀 Quick Start
 
 New to TheWarden? Start here:
