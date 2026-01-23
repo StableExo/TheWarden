@@ -261,7 +261,7 @@ contract FlashSwapV3 is
         address borrowToken,
         uint256 borrowAmount,
         UniversalSwapPath memory path
-    ) external onlyOwner nonReentrant {
+    ) external onlyOwner {
         // Select optimal flash loan source
         FlashLoanSource source = selectOptimalSource(
             borrowToken,
