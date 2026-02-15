@@ -65,27 +65,31 @@ describe('SupabaseEnvStorage', () => {
     // Set required environment variables for tests
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_ANON_KEY = 'test-key';
-    process.env.SECRETS_ENCRYPTION_KEY = 'test-encryption-key-12345678901234567890';
+    process.env.SECRETS_ENCRYPTION_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
     storage = new SupabaseEnvStorage();
   });
 
   describe('constructor', () => {
     it('should throw error if SUPABASE_URL is missing', () => {
+      const originalUrl = process.env.SUPABASE_URL;
       delete process.env.SUPABASE_URL;
       expect(() => new SupabaseEnvStorage()).toThrow('Supabase URL and Key are required');
+      process.env.SUPABASE_URL = originalUrl;
     });
 
     it('should throw error if SUPABASE_ANON_KEY is missing', () => {
+      const originalKey = process.env.SUPABASE_ANON_KEY;
       delete process.env.SUPABASE_ANON_KEY;
       expect(() => new SupabaseEnvStorage()).toThrow('Supabase URL and Key are required');
+      process.env.SUPABASE_ANON_KEY = originalKey;
     });
 
     it('should accept options parameter', () => {
       const customStorage = new SupabaseEnvStorage({
         supabaseUrl: 'https://custom.supabase.co',
         supabaseKey: 'custom-key',
-        encryptionKey: 'custom-encryption-key-123456789012345',
+        encryptionKey: 'abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd',
       });
       expect(customStorage).toBeInstanceOf(SupabaseEnvStorage);
     });
@@ -136,7 +140,7 @@ describe('SupabaseEnvStorage', () => {
   describe('encryption/decryption', () => {
     it('should encrypt and decrypt values correctly', () => {
       const original = 'my-secret-value';
-      const key = 'test-encryption-key-12345678901234567890';
+      const key = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
       // Use private methods via any casting for testing
       const encrypted = (storage as any).encrypt(original, key);
@@ -154,7 +158,7 @@ describe('SupabaseEnvStorage', () => {
     });
 
     it('should throw error for invalid encrypted data', () => {
-      const key = 'test-encryption-key-12345678901234567890';
+      const key = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
       expect(() => (storage as any).decrypt('invalid-data', key)).toThrow();
     });
   });
@@ -166,17 +170,23 @@ describe('SupabaseEnvStorage', () => {
     });
 
     it('should accept custom encryption key', async () => {
-      const customKey = 'custom-key-123456789012345678901234';
+      const customKey = '11223344556677889900aabbccddeeff11223344556677889900aabbccddeeff';
       const result = await storage.setSecret('API_KEY', 'secret-value', customKey);
       expect(result).toBeDefined();
     });
 
     it('should throw error if no encryption key is provided', async () => {
+      const originalKey = process.env.SECRETS_ENCRYPTION_KEY;
+      delete process.env.SECRETS_ENCRYPTION_KEY;
+
       const storageWithoutKey = new SupabaseEnvStorage({
         supabaseUrl: 'https://test.supabase.co',
         supabaseKey: 'test-key',
       });
+
       await expect(storageWithoutKey.setSecret('TEST', 'value')).rejects.toThrow('Encryption key is required');
+
+      process.env.SECRETS_ENCRYPTION_KEY = originalKey;
     });
   });
 
@@ -187,14 +197,20 @@ describe('SupabaseEnvStorage', () => {
     });
 
     it('should throw error if no decryption key is provided', async () => {
+      const originalKey = process.env.SECRETS_ENCRYPTION_KEY;
+      delete process.env.SECRETS_ENCRYPTION_KEY;
+
       const storageWithoutKey = new SupabaseEnvStorage({
         supabaseUrl: 'https://test.supabase.co',
         supabaseKey: 'test-key',
       });
       
-      // This would fail in real scenario but mocked data returns null
+      // In real scenario this might throw if it found data,
+      // but mocked getSecret returns null if data is missing.
       const result = await storageWithoutKey.getSecret('TEST');
       expect(result).toBeNull();
+
+      process.env.SECRETS_ENCRYPTION_KEY = originalKey;
     });
   });
 

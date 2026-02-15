@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import BitCrackRangeManager from '../../../scripts/bitcrack_range_manager';
+import BitCrackRangeManager from '../../../scripts/bitcoin/bitcrack_range_manager';
 
 describe('BitCrackRangeManager', () => {
   const testDataDir = '/tmp/test-ml-predictions';

@@ -439,6 +439,8 @@ describe('FlashSwapV3Executor', () => {
           amount: ethers.parseEther('1').toString(),
         },
         expectedProfit: ethers.parseUnits('1050', 6).toString(),
+        inputAmount: 1000000000000000000,
+        grossProfit: 1050000000,
       };
 
       const path = executor.constructSwapPath(mockOpportunity);
