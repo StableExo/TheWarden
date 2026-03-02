@@ -6,6 +6,7 @@
  * - Redis: Distributed caching and storage
  * - PersistentMemoryStore: Unified interface with automatic fallback
  * - MemoryMigrationService: Automatic migration from in-memory to persistent
+ * - SupabaseNeuralStore: Real-time neural memory — operations log + pattern persistence
  */
 
 export { SQLiteStore, SQLiteStoreConfig, SQLiteStats } from './SQLiteStore';
@@ -24,3 +25,10 @@ export {
   MigrationEventType,
   MigrationEventHandler,
 } from './MemoryMigrationService';
+export {
+  SupabaseNeuralStore,
+  SupabaseNeuralStoreConfig,
+  OperationLog,
+  NeuralPattern,
+  OperationStats,
+} from './SupabaseNeuralStore';
