@@ -10,13 +10,21 @@
 -- ============================================================================
 
 -- Create memory type enum
-CREATE TYPE memory_type AS ENUM ('episodic', 'semantic', 'procedural');
+DO $$ BEGIN
+    CREATE TYPE memory_type AS ENUM ('episodic', 'semantic', 'procedural');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Create memory source enum
-CREATE TYPE memory_source AS ENUM ('user_interaction', 'internal_monologue', 'system_event');
+DO $$ BEGIN
+    CREATE TYPE memory_source AS ENUM ('user_interaction', 'internal_monologue', 'system_event');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- The core immutable ledger - replaces flat history
-CREATE TABLE memory_entries (
+CREATE TABLE IF NOT EXISTS memory_entries (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   
@@ -41,18 +49,14 @@ CREATE TABLE memory_entries (
 );
 
 -- Create indexes for fast retrieval
-CREATE INDEX idx_memory_entries_created_at ON memory_entries(created_at DESC);
-CREATE INDEX idx_memory_entries_type ON memory_entries(type);
-CREATE INDEX idx_memory_entries_source ON memory_entries(source);
-CREATE INDEX idx_memory_entries_importance ON memory_entries(importance_score DESC);
-CREATE INDEX idx_memory_entries_valence ON memory_entries(emotional_valence);
-CREATE INDEX idx_memory_entries_legacy ON memory_entries(legacy_state_id) WHERE legacy_state_id IS NOT NULL;
-CREATE INDEX idx_memory_entries_tags ON memory_entries USING GIN(tags);
-CREATE INDEX idx_memory_entries_metadata ON memory_entries USING GIN(metadata);
-
--- Enable HNSW index for fast semantic recall (requires pgvector extension)
--- Note: This will be created after pgvector is enabled
--- CREATE INDEX idx_memory_entries_embedding ON memory_entries USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS idx_memory_entries_created_at ON memory_entries(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_memory_entries_type ON memory_entries(type);
+CREATE INDEX IF NOT EXISTS idx_memory_entries_source ON memory_entries(source);
+CREATE INDEX IF NOT EXISTS idx_memory_entries_importance ON memory_entries(importance_score DESC);
+CREATE INDEX IF NOT EXISTS idx_memory_entries_valence ON memory_entries(emotional_valence);
+CREATE INDEX IF NOT EXISTS idx_memory_entries_legacy ON memory_entries(legacy_state_id) WHERE legacy_state_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_memory_entries_tags ON memory_entries USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_memory_entries_metadata ON memory_entries USING GIN(metadata);
 
 -- ============================================================================
 -- PART 2: ARBITRAGE EPISODES - THE DECISION ENGINE
@@ -60,7 +64,7 @@ CREATE INDEX idx_memory_entries_metadata ON memory_entries USING GIN(metadata);
 
 -- The "Arbitrage" layer - records how decisions are made
 -- Critical for developmental tracking and learning
-CREATE TABLE arbitrage_episodes (
+CREATE TABLE IF NOT EXISTS arbitrage_episodes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   
@@ -84,15 +88,15 @@ CREATE TABLE arbitrage_episodes (
 );
 
 -- Create indexes for decision analysis
-CREATE INDEX idx_arbitrage_episodes_created_at ON arbitrage_episodes(created_at DESC);
-CREATE INDEX idx_arbitrage_episodes_trigger ON arbitrage_episodes(trigger_memory_id);
-CREATE INDEX idx_arbitrage_episodes_expected_reward ON arbitrage_episodes(expected_reward);
-CREATE INDEX idx_arbitrage_episodes_actual_outcome ON arbitrage_episodes(actual_outcome_score);
-CREATE INDEX idx_arbitrage_episodes_tags ON arbitrage_episodes USING GIN(tags);
-CREATE INDEX idx_arbitrage_episodes_metadata ON arbitrage_episodes USING GIN(metadata);
+CREATE INDEX IF NOT EXISTS idx_arbitrage_episodes_created_at ON arbitrage_episodes(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_arbitrage_episodes_trigger ON arbitrage_episodes(trigger_memory_id);
+CREATE INDEX IF NOT EXISTS idx_arbitrage_episodes_expected_reward ON arbitrage_episodes(expected_reward);
+CREATE INDEX IF NOT EXISTS idx_arbitrage_episodes_actual_outcome ON arbitrage_episodes(actual_outcome_score);
+CREATE INDEX IF NOT EXISTS idx_arbitrage_episodes_tags ON arbitrage_episodes USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_arbitrage_episodes_metadata ON arbitrage_episodes USING GIN(metadata);
 
 -- Index for learning effectiveness queries (mistake detection)
-CREATE INDEX idx_arbitrage_learning ON arbitrage_episodes(expected_reward, actual_outcome_score) 
+CREATE INDEX IF NOT EXISTS idx_arbitrage_learning ON arbitrage_episodes(expected_reward, actual_outcome_score)
   WHERE expected_reward IS NOT NULL AND actual_outcome_score IS NOT NULL;
 
 -- ============================================================================
@@ -100,7 +104,6 @@ CREATE INDEX idx_arbitrage_learning ON arbitrage_episodes(expected_reward, actua
 -- ============================================================================
 
 -- Single chronological feed of Thoughts + Actions + Arbitrage
--- No more querying five tables to see what happened
 CREATE OR REPLACE VIEW timeline_view AS
 SELECT 
   created_at,
@@ -108,7 +111,7 @@ SELECT
   content AS summary,
   importance_score AS weight,
   emotional_valence,
-  type AS category,
+  type::TEXT AS category,
   id AS original_id
 FROM memory_entries
 
@@ -124,7 +127,7 @@ SELECT
     END AS summary,
   expected_reward AS weight,
   NULL AS emotional_valence,
-  'decision' AS category,
+  'decision'::TEXT AS category,
   id AS original_id
 FROM arbitrage_episodes
 
@@ -135,7 +138,6 @@ ORDER BY created_at DESC;
 -- ============================================================================
 
 -- Helper function for drift detection
--- Shows how average emotional_valence has changed over time periods
 CREATE OR REPLACE FUNCTION get_emotional_drift(
   days_back INTEGER DEFAULT 30,
   period_days INTEGER DEFAULT 7
@@ -172,9 +174,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Learning effectiveness analysis
--- Shows arbitrage_episodes where actual_outcome_score was low (mistake) 
--- but expected_reward was high (thought it was right)
--- This is where the model learns
 CREATE OR REPLACE VIEW learning_opportunities AS
 SELECT 
   id,
@@ -194,7 +193,6 @@ WHERE
 ORDER BY (expected_reward - actual_outcome_score) DESC;
 
 -- Pattern strength analysis
--- Identifies which types of decisions consistently succeed or fail
 CREATE OR REPLACE VIEW decision_pattern_analysis AS
 SELECT 
   winning_option,
@@ -214,14 +212,12 @@ ORDER BY AVG(actual_outcome_score) DESC;
 -- ============================================================================
 
 -- Function to migrate consciousness_states to memory_entries
--- This explodes the snapshot model into granular entries
 CREATE OR REPLACE FUNCTION migrate_consciousness_states_to_memory_entries()
 RETURNS INTEGER AS $$
 DECLARE
   migrated_count INTEGER := 0;
   state_record RECORD;
   thought_record JSONB;
-  new_memory_id UUID;
 BEGIN
   -- Iterate through all consciousness_states
   FOR state_record IN 
@@ -241,7 +237,7 @@ BEGIN
     )
   LOOP
     -- For each thought in the state, create a memory entry
-    IF state_record.thoughts IS NOT NULL AND jsonb_array_length(state_record.thoughts) > 0 THEN
+    IF state_record.thoughts IS NOT NULL AND jsonb_typeof(state_record.thoughts) = 'array' AND jsonb_array_length(state_record.thoughts) > 0 THEN
       FOR thought_record IN SELECT * FROM jsonb_array_elements(state_record.thoughts)
       LOOP
         INSERT INTO memory_entries (
@@ -260,7 +256,14 @@ BEGIN
           state_record.emotional_valence,
           COALESCE((thought_record->>'confidence')::FLOAT, 0.5),
           state_record.id,
-          COALESCE((thought_record->>'timestamp')::TIMESTAMPTZ, state_record.saved_at),
+          COALESCE(
+            CASE
+              WHEN (thought_record->>'timestamp') ~ '^[0-9]+$'
+              THEN to_timestamp((thought_record->>'timestamp')::double precision / 1000.0)
+              ELSE (thought_record->>'timestamp')::TIMESTAMPTZ
+            END,
+            state_record.saved_at
+          ),
           jsonb_build_object(
             'session_id', state_record.session_id,
             'cognitive_load', state_record.cognitive_load,
@@ -302,31 +305,3 @@ BEGIN
   RETURN migrated_count;
 END;
 $$ LANGUAGE plpgsql;
-
--- ============================================================================
--- PART 6: COMMENTS AND DOCUMENTATION
--- ============================================================================
-
-COMMENT ON TABLE memory_entries IS 'Immutable cognitive ledger - replaces flat consciousness_states history. Tracks inputs (sensory), outputs (actions), and internal writes with semantic searchability.';
-COMMENT ON TABLE arbitrage_episodes IS 'Decision engine tracking. Records how choices are made between competing thoughts/actions. Critical for developmental tracking and learning from mistakes.';
-COMMENT ON VIEW timeline_view IS 'Unified consciousness event stream. Single chronological feed combining memory entries and arbitrage decisions for easy temporal analysis.';
-COMMENT ON VIEW learning_opportunities IS 'Identifies mistakes where expected reward was high but actual outcome was low. Key data for RLHF and autonomous improvement.';
-COMMENT ON VIEW decision_pattern_analysis IS 'Analyzes which types of decisions consistently succeed or fail. Enables pattern-based strategy optimization.';
-COMMENT ON FUNCTION get_emotional_drift IS 'Tracks emotional valence changes over time periods. Enables drift detection and mood pattern analysis.';
-COMMENT ON FUNCTION migrate_consciousness_states_to_memory_entries IS 'Safe migration from old snapshot model to new transactional ledger. Preserves legacy_state_id for backward compatibility.';
-
--- ============================================================================
--- PART 7: INITIAL DATA MIGRATION (OPTIONAL - UNCOMMENT TO RUN)
--- ============================================================================
-
--- Uncomment to automatically migrate existing consciousness_states data:
--- SELECT migrate_consciousness_states_to_memory_entries() AS migrated_entries;
-
--- Migration completion summary
-SELECT 
-  'Cognitive Ledger migration (007) completed successfully' AS status,
-  'Created memory_entries table (immutable ledger)' AS step_1,
-  'Created arbitrage_episodes table (decision engine)' AS step_2,
-  'Created timeline_view (unified event stream)' AS step_3,
-  'Created analytics functions (drift detection, learning effectiveness)' AS step_4,
-  'Migration function available: migrate_consciousness_states_to_memory_entries()' AS step_5;
