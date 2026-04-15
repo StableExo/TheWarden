@@ -177,39 +177,21 @@ export class EventDrivenMonitor extends EventEmitter {
   }
 
   /**
-   * Load pools from Supabase warden_pools table.
-   * Expected schema: { address, dex, token0, token1, fee, enabled }
+   * Load pools from Supabase warden_pools + warden_tokens tables.
+   * Uses EventDrivenInitializer for proper FK resolution.
+   * @deprecated Use EventDrivenInitializer.loadPoolsFromSupabase() instead
    */
   async loadPoolsFromSupabase(supabaseUrl: string, supabaseKey: string): Promise<void> {
-    try {
-      const response = await fetch(`${supabaseUrl}/rest/v1/warden_pools?enabled=eq.true`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Supabase query failed: ${response.status} ${response.statusText}`);
-      }
-
-      const rows: any[] = await response.json();
-      
-      const pools: MonitoredPool[] = rows.map(row => ({
-        address: row.address,
-        dex: row.dex,
-        token0: row.token0,
-        token1: row.token1,
-        fee: row.fee,
-      }));
-
-      this.setPools(pools);
-      logger.info(`[EventDrivenMonitor] Loaded ${pools.length} pools from Supabase`);
-    } catch (err: any) {
-      logger.error(`[EventDrivenMonitor] Failed to load pools from Supabase: ${err.message}`);
-      throw err;
+    // Delegate to the initializer which handles FK resolution
+    const { loadPoolsFromSupabase: loadPools } = await import('./EventDrivenInitializer');
+    const { pools, tokenDecimals } = await loadPools(supabaseUrl, supabaseKey);
+    
+    // Update token decimals in config
+    for (const [addr, decimals] of tokenDecimals) {
+      this.config.tokenDecimals.set(addr, decimals);
     }
+    
+    this.setPools(pools);
   }
 
   // ============================================================
