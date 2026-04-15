@@ -201,6 +201,43 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
   }
 
   /**
+   * Phase 4b: Execute arbitrage from event-driven monitoring pipeline.
+   * Called by EventDrivenMonitor when an opportunity passes validation.
+   * Bridges the monitoring pipeline directly to FlashSwapV3Executor.
+   */
+  async executeFromEventDriven(
+    borrowToken: string,
+    borrowAmount: bigint,
+    path: UniversalSwapPath
+  ): Promise<V3ExecutionResult> {
+    if (!this.v3Executor) {
+      throw new Error('[IntegratedOrchestrator] V3 executor not initialized — cannot execute from event-driven pipeline');
+    }
+
+    logger.info(
+      `[IntegratedOrchestrator] Event-driven execution: ` +
+      `token=${borrowToken.substring(0, 10)}... amount=${borrowAmount} steps=${path.steps.length}`
+    );
+
+    const result = await this.v3Executor.executeArbitrage(borrowToken, borrowAmount, path);
+
+    if (result.success) {
+      this.stats.completedExecutions++;
+      logger.info(
+        `[IntegratedOrchestrator] ✅ Event-driven execution SUCCESS: ` +
+        `txHash=${result.txHash} profit=${result.netProfit} method=${result.executionMethod}`
+      );
+    } else {
+      this.stats.failedExecutions++;
+      logger.error(
+        `[IntegratedOrchestrator] ❌ Event-driven execution FAILED: ${result.error}`
+      );
+    }
+
+    return result;
+  }
+
+  /**
    * Setup pipeline stages
    */
   private setupPipelineStages(): void {
