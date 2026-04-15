@@ -16,6 +16,7 @@ import { JsonRpcProvider } from 'ethers';
 import type { getAddress as _getAddress } from 'ethers';
 import { logger } from '../utils/logger';
 import { ArbitrageOrchestrator } from '../arbitrage/ArbitrageOrchestrator';
+import { FlashSwapV3Executor, UniversalSwapPath, ExecutionResult as V3ExecutionResult } from '../execution/FlashSwapV3Executor';
 import { ExecutionPipeline } from '../execution/ExecutionPipeline';
 import { TransactionExecutor, TransactionExecutorConfig } from '../execution/TransactionExecutor';
 import { SystemHealthMonitor } from '../monitoring/SystemHealthMonitor';
@@ -74,6 +75,7 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
   private arbitrageConfig: ArbitrageConfig;
   private executorAddress: string;
   private titheRecipient: string;
+  private v3Executor?: FlashSwapV3Executor; // Phase 3: V3 executor with UserOp support
 
   // State management
   private isRunning: boolean = false;
@@ -175,6 +177,27 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
     };
 
     return new TransactionExecutor(executorConfig);
+  }
+
+  /**
+   * Phase 3: Initialize V3 executor with Smart Wallet / UserOp support.
+   * Call this after construction to enable gasless execution via CDP Paymaster.
+   */
+  initV3Executor(config: {
+    contractAddress: string;
+    privateKey: string;
+    cdpPaymasterUrl: string;
+    rpcUrl: string;
+  }): void {
+    this.v3Executor = new FlashSwapV3Executor({
+      contractAddress: config.contractAddress,
+      provider: this.provider,
+      privateKey: config.privateKey,
+      cdpPaymasterUrl: config.cdpPaymasterUrl,
+      rpcUrl: config.rpcUrl,
+    });
+    const mode = this.v3Executor.userOpEnabled ? 'UserOp (gasless)' : 'direct tx';
+    logger.info(`[IntegratedOrchestrator] V3 executor initialized: ${config.contractAddress} [${mode}]`);
   }
 
   /**
@@ -778,6 +801,11 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
    */
   private async executeStage(context: ExecutionContext): Promise<CheckpointResult> {
     logger.info(`[IntegratedOrchestrator] Execution stage for ${context.id}`);
+
+    // Phase 3: Route through V3 executor via UserOps if available
+    if (this.v3Executor) {
+      return this.executeViaV3(context);
+    }
 
     if (!this.nonceManager) {
       return {

@@ -246,6 +246,10 @@ function loadConfig(): WardenConfig {
     executorAddress: process.env.FLASHSWAP_V2_ADDRESS,
     titheRecipient: process.env.FLASHSWAP_V2_OWNER || process.env.MULTI_SIG_ADDRESS,
 
+    // Phase 3: FlashSwapV3 with Smart Wallet / UserOp execution
+    flashSwapV3Address: process.env.FLASHSWAP_V3_ADDRESS,
+    enableV3: process.env.ENABLE_FLASHSWAP_V3 === 'true',
+
     scanInterval: parseInt(process.env.SCAN_INTERVAL || '1000'),
     concurrency: parseInt(process.env.CONCURRENCY || '10'),
 
@@ -541,6 +545,25 @@ class TheWarden extends EventEmitter {
           arbitrageConfig,
           orchestratorConfig
         );
+
+        // Phase 3: Initialize V3 executor with UserOp support if configured
+        if (this.config.enableV3 && this.config.flashSwapV3Address) {
+          const privateKey = process.env.DEPLOYER_PRIVATE_KEY || process.env.WALLET_PRIVATE_KEY;
+          const cdpPaymasterUrl = process.env.CDP_PAYMASTER_URL;
+          const rpcUrl = process.env.BASE_RPC_URL;
+
+          if (privateKey && cdpPaymasterUrl && rpcUrl) {
+            this.integratedOrchestrator.initV3Executor({
+              contractAddress: this.config.flashSwapV3Address,
+              privateKey,
+              cdpPaymasterUrl,
+              rpcUrl,
+            });
+            logger.info('⚔️ FlashSwapV3 + Smart Wallet enabled — gasless execution via CDP Paymaster');
+          } else {
+            logger.warn('FlashSwapV3 configured but missing DEPLOYER_PRIVATE_KEY, CDP_PAYMASTER_URL, or BASE_RPC_URL');
+          }
+        }
 
         // Start the integrated orchestrator
         await this.integratedOrchestrator.start(this.wallet);
