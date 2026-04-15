@@ -115,6 +115,13 @@ import { extractOpportunityFeatures } from './ai/featureExtraction';
 // featuresToArray reserved for ML features
 import { featuresToArray as _featuresToArray } from './ai/featureExtraction';
 
+// Phase 4b: Event-Driven WebSocket Monitoring
+import { EventDrivenMonitor } from './monitoring/EventDrivenMonitor';
+import {
+  initializeEventDrivenMonitoring,
+  shutdownEventDrivenMonitoring,
+} from './monitoring/EventDrivenInitializer';
+
 // Bootstrap module (refactored initialization)
 import { WardenBootstrap } from './core/bootstrap';
 
@@ -358,6 +365,9 @@ class TheWarden extends EventEmitter {
   // Phase 4 components
   private phase4Components?: Phase4Components;
 
+  // Phase 4b: Event-driven WebSocket monitoring
+  private eventDrivenMonitor?: EventDrivenMonitor;
+
   // Profitable Infrastructure components (CEX-DEX + bloXroute)
   private cexMonitor?: any; // CEXLiquidityMonitor - imported dynamically to avoid circular deps
   private cexDexDetector?: any; // CEXDEXArbitrageDetector
@@ -567,6 +577,31 @@ class TheWarden extends EventEmitter {
 
         // Start the integrated orchestrator
         await this.integratedOrchestrator.start(this.wallet);
+      }
+
+      // Phase 4b: Initialize event-driven WebSocket monitoring
+      if (process.env.ENABLE_EVENT_DRIVEN === 'true') {
+        try {
+          logger.info('[Phase4b] Initializing event-driven WebSocket monitoring...');
+          this.eventDrivenMonitor = await initializeEventDrivenMonitoring({
+            supabaseUrl: process.env.SUPABASE_URL!,
+            supabaseKey: process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY!,
+            chainId: this.config.chainId,
+            dryRun: process.env.EVENT_DRIVEN_DRY_RUN !== 'false', // Default: dry-run (safe)
+            minSpreadPercent: parseFloat(process.env.EVENT_DRIVEN_MIN_SPREAD || '0.3'),
+            verbose: process.env.EVENT_DRIVEN_VERBOSE === 'true',
+          });
+
+          // Wire execution to V3 executor (only in live mode)
+          // TODO: Wire this.eventDrivenMonitor.setExecuteCallback() to integratedOrchestrator
+          // when ready for live execution. For now, dry-run mode logs opportunities.
+
+          await this.eventDrivenMonitor.start();
+          logger.info('[Phase4b] ✅ Event-driven monitoring active');
+        } catch (error) {
+          logger.error(`[Phase4b] Failed to initialize event-driven monitoring: ${error}`);
+          // Non-fatal — continue without event-driven monitoring
+        }
       }
 
       // Initialize consciousness coordination system
@@ -1752,6 +1787,11 @@ class TheWarden extends EventEmitter {
     // Stop health monitor
     if (this.healthMonitor) {
       await this.healthMonitor.stop();
+    }
+
+    // Phase 4b: Shutdown event-driven monitoring
+    if (this.eventDrivenMonitor) {
+      shutdownEventDrivenMonitoring(this.eventDrivenMonitor);
     }
 
     // Phase 3: Shutdown components
