@@ -4,15 +4,23 @@
  * Multi-source flash loan arbitrage execution with automatic source optimization.
  * Supports Balancer V2 (0%), dYdX (0%), Aave V3 (0.09%), and hybrid modes.
  * 
- * Features:
- * - Automatic flash loan source selection
- * - Universal swap path construction (1-5 hops)
- * - Gas estimation with multi-source support
- * - Profit calculation with fee accounting
- * - Source availability checking
+ * Phase 3 Update: UserOp execution via Coinbase Smart Wallet + CDP Paymaster
+ * - All write operations routed through Smart Wallet (onlyOwner)
+ * - Gas sponsored by CDP Paymaster ($0.00 per tx)
+ * - Read operations still use ethers.js provider
+ * 
+ * Architecture:
+ *   EOA (0x9358) signs UserOp
+ *     → Smart Wallet (0x378252) owns contract
+ *       → FlashSwapV3 (0xB47258) executeArbitrage
+ *         → Balancer flash loan → DEX swaps → profit
  */
 
 import { Contract, Provider, Signer, ethers, parseUnits, formatUnits } from 'ethers';
+import { createPublicClient, http, encodeFunctionData, type Hex, type PublicClient } from 'viem';
+import { base } from 'viem/chains';
+import { privateKeyToAccount } from 'viem/accounts';
+import { toCoinbaseSmartAccount, createBundlerClient } from 'viem/account-abstraction';
 import { logger } from '../utils/logger';
 import { ArbitrageOpportunity } from '../arbitrage/models';
 
@@ -77,9 +85,9 @@ export interface FlashLoanParams {
  */
 export interface SourceSelection {
   source: FlashLoanSource;
-  fee: number;           // Fee in basis points (0, 9, etc.)
-  reason: string;        // Why this source was selected
-  estimatedCost: bigint; // Estimated fee cost in borrowed token
+  fee: number;
+  reason: string;
+  estimatedCost: bigint;
 }
 
 /**
@@ -89,9 +97,14 @@ export interface FlashSwapV3Config {
   contractAddress: string;
   provider: Provider;
   signer?: Signer;
-  gasBuffer?: number;      // Gas estimation buffer (default 1.2 = 20%)
-  defaultSlippage?: number; // Default slippage tolerance (default 0.01 = 1%)
-  chainId?: number;        // Chain ID for source availability
+  gasBuffer?: number;
+  defaultSlippage?: number;
+  chainId?: number;
+
+  // Smart Wallet / UserOp execution (Phase 3)
+  privateKey?: string;       // EOA private key for signing UserOps
+  cdpPaymasterUrl?: string;  // CDP Paymaster + Bundler URL
+  rpcUrl?: string;           // Base RPC URL for viem public client
 }
 
 /**
@@ -104,6 +117,9 @@ interface ResolvedFlashSwapV3Config {
   gasBuffer: number;
   defaultSlippage: number;
   chainId: number;
+  privateKey?: string;
+  cdpPaymasterUrl?: string;
+  rpcUrl?: string;
 }
 
 /**
@@ -112,6 +128,7 @@ interface ResolvedFlashSwapV3Config {
 export interface ExecutionResult {
   success: boolean;
   txHash?: string;
+  userOpHash?: string;
   receipt?: ethers.TransactionReceipt;
   source: FlashLoanSource;
   gasUsed?: bigint;
@@ -124,10 +141,47 @@ export interface ExecutionResult {
   titheAmount?: bigint;
   ownerAmount?: bigint;
   error?: string;
+  executionMethod?: 'userop' | 'direct';
 }
 
 /**
- * FlashSwapV3 contract interface (partial)
+ * FlashSwapV3 ABI for viem calldata encoding
+ */
+const FLASH_SWAP_V3_ABI_VIEM = [
+  {
+    name: 'executeArbitrage',
+    type: 'function' as const,
+    inputs: [
+      { name: 'borrowToken', type: 'address' as const },
+      { name: 'borrowAmount', type: 'uint256' as const },
+      {
+        name: 'path',
+        type: 'tuple' as const,
+        components: [
+          {
+            name: 'steps',
+            type: 'tuple[]' as const,
+            components: [
+              { name: 'pool', type: 'address' as const },
+              { name: 'tokenIn', type: 'address' as const },
+              { name: 'tokenOut', type: 'address' as const },
+              { name: 'fee', type: 'uint24' as const },
+              { name: 'minOut', type: 'uint256' as const },
+              { name: 'dexType', type: 'uint8' as const },
+            ],
+          },
+          { name: 'borrowAmount', type: 'uint256' as const },
+          { name: 'minFinalAmount', type: 'uint256' as const },
+        ],
+      },
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable' as const,
+  },
+] as const;
+
+/**
+ * FlashSwapV3 contract ABI (ethers.js human-readable — for read calls)
  */
 const FLASH_SWAP_V3_ABI = [
   'function executeArbitrage(address borrowToken, uint256 borrowAmount, tuple(tuple(address pool, address tokenIn, address tokenOut, uint24 fee, uint256 minOut, uint8 dexType)[] steps, uint256 borrowAmount, uint256 minFinalAmount) path) external',
@@ -144,29 +198,32 @@ const FLASH_SWAP_V3_ABI = [
   'event TitheDistributed(address indexed token, address indexed titheRecipient, uint256 titheAmount, address indexed owner, uint256 ownerAmount)',
 ];
 
-/**
- * Flash loan fee structure
- */
 export const FLASH_LOAN_FEES: Record<FlashLoanSource, number> = {
-  [FlashLoanSource.BALANCER]: 0,      // 0%
-  [FlashLoanSource.DYDX]: 0,          // 0%
-  [FlashLoanSource.HYBRID_AAVE_V4]: 9, // 0.09% (9 bps)
-  [FlashLoanSource.AAVE]: 9,          // 0.09% (9 bps)
-  [FlashLoanSource.UNISWAP_V3]: 50,   // 0.05-1% (varies by pool)
+  [FlashLoanSource.BALANCER]: 0,
+  [FlashLoanSource.DYDX]: 0,
+  [FlashLoanSource.HYBRID_AAVE_V4]: 9,
+  [FlashLoanSource.AAVE]: 9,
+  [FlashLoanSource.UNISWAP_V3]: 50,
 };
 
-/**
- * Constants for calculations
- */
 const BASIS_POINTS_DIVISOR = 10000n;
-const DEFAULT_FEE_BPS = 3000; // 0.3% default fee
+const DEFAULT_FEE_BPS = 3000;
 
 /**
  * FlashSwapV3 Executor
+ * 
+ * Phase 3: Supports UserOp execution via Coinbase Smart Wallet + CDP Paymaster.
+ * When privateKey + cdpPaymasterUrl are configured, all write operations
+ * are routed through the Smart Wallet for gasless execution.
  */
 export class FlashSwapV3Executor {
   private contract: Contract;
   private config: ResolvedFlashSwapV3Config;
+  
+  // Smart Wallet clients (lazy initialized)
+  private bundlerClient: any = null;
+  private viemPublicClient: PublicClient | null = null;
+  private smartWalletAddress: string | null = null;
 
   constructor(config: FlashSwapV3Config) {
     this.config = {
@@ -175,7 +232,10 @@ export class FlashSwapV3Executor {
       signer: config.signer,
       gasBuffer: config.gasBuffer ?? 1.2,
       defaultSlippage: config.defaultSlippage ?? 0.01,
-      chainId: config.chainId ?? 8453, // Default to Base
+      chainId: config.chainId ?? 8453,
+      privateKey: config.privateKey,
+      cdpPaymasterUrl: config.cdpPaymasterUrl,
+      rpcUrl: config.rpcUrl,
     };
 
     this.contract = new Contract(
@@ -185,102 +245,92 @@ export class FlashSwapV3Executor {
     );
   }
 
+  /** Check if UserOp execution is available */
+  get userOpEnabled(): boolean {
+    return !!(this.config.privateKey && this.config.cdpPaymasterUrl);
+  }
+
   /**
-   * Select optimal flash loan source for given parameters
+   * Initialize Smart Wallet bundler client (lazy, called once)
    */
-  async selectOptimalSource(
-    borrowToken: string,
-    borrowAmount: bigint
-  ): Promise<SourceSelection> {
+  private async ensureBundlerClient(): Promise<void> {
+    if (this.bundlerClient) return;
+
+    if (!this.config.privateKey || !this.config.cdpPaymasterUrl) {
+      throw new Error('Smart Wallet config required: privateKey and cdpPaymasterUrl');
+    }
+
+    logger.info('Initializing Smart Wallet bundler client...');
+
+    const privateKeyHex = this.config.privateKey.startsWith('0x') 
+      ? this.config.privateKey as Hex
+      : `0x${this.config.privateKey}` as Hex;
+    const owner = privateKeyToAccount(privateKeyHex);
+
+    const transport = this.config.rpcUrl ? http(this.config.rpcUrl) : http();
+    this.viemPublicClient = createPublicClient({ chain: base, transport });
+
+    const smartAccount = await toCoinbaseSmartAccount({
+      client: this.viemPublicClient,
+      owners: [owner],
+    });
+
+    this.smartWalletAddress = smartAccount.address;
+
+    this.bundlerClient = createBundlerClient({
+      client: this.viemPublicClient,
+      account: smartAccount,
+      transport: http(this.config.cdpPaymasterUrl),
+      paymaster: true,
+    });
+
+    logger.info(`Smart Wallet ready: eoa=${owner.address}, smartWallet=${smartAccount.address}, contract=${this.config.contractAddress}`);
+  }
+
+  async selectOptimalSource(borrowToken: string, borrowAmount: bigint): Promise<SourceSelection> {
     try {
-      // Call contract to get optimal source
       const sourceId = await this.contract.selectOptimalSource(borrowToken, borrowAmount);
       const source = sourceId as FlashLoanSource;
-
-      // Calculate estimated cost
       const fee = FLASH_LOAN_FEES[source];
       const estimatedCost = (borrowAmount * BigInt(fee)) / 10000n;
 
-      // Determine reason
       let reason = '';
-      if (source === FlashLoanSource.BALANCER) {
-        reason = 'Balancer V2 selected: 0% fee, universal support';
-      } else if (source === FlashLoanSource.DYDX) {
-        reason = 'dYdX selected: 0% fee, ETH/USDC/DAI on Ethereum';
-      } else if (source === FlashLoanSource.HYBRID_AAVE_V4) {
-        reason = 'Hybrid mode: Large opportunity ($50M+), Aave + V4 optimal';
-      } else if (source === FlashLoanSource.AAVE) {
-        reason = 'Aave V3 fallback: 0.09% fee, universal support';
-      }
+      if (source === FlashLoanSource.BALANCER) reason = 'Balancer V2: 0% fee';
+      else if (source === FlashLoanSource.DYDX) reason = 'dYdX: 0% fee';
+      else if (source === FlashLoanSource.HYBRID_AAVE_V4) reason = 'Hybrid Aave+V4';
+      else if (source === FlashLoanSource.AAVE) reason = 'Aave V3: 0.09% fee';
 
-      return {
-        source,
-        fee,
-        reason,
-        estimatedCost,
-      };
+      return { source, fee, reason, estimatedCost };
     } catch (error) {
-      logger.error(`Failed to select optimal source for token ${borrowToken}, amount ${borrowAmount}: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`selectOptimalSource failed: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
 
-  /**
-   * Check if Balancer supports the token/amount
-   */
   async isBalancerSupported(token: string, amount: bigint): Promise<boolean> {
-    try {
-      return await this.contract.isBalancerSupported(token, amount);
-    } catch (error) {
-      logger.error(`Failed to check Balancer support for token ${token}, amount ${amount}: ${error instanceof Error ? error.message : String(error)}`);
-      return false;
-    }
+    try { return await this.contract.isBalancerSupported(token, amount); }
+    catch { return false; }
   }
 
-  /**
-   * Check if dYdX supports the token/amount
-   */
   async isDydxSupported(token: string, amount: bigint): Promise<boolean> {
-    try {
-      return await this.contract.isDydxSupported(token, amount);
-    } catch (error) {
-      logger.error(`Failed to check dYdX support for token ${token}, amount ${amount}: ${error instanceof Error ? error.message : String(error)}`);
-      return false;
-    }
+    try { return await this.contract.isDydxSupported(token, amount); }
+    catch { return false; }
   }
 
-  /**
-   * Construct universal swap path from arbitrage opportunity
-   */
   constructSwapPath(opportunity: ArbitrageOpportunity): UniversalSwapPath {
     const steps: SwapStep[] = [];
-
-    // Convert opportunity swap steps to universal format
     for (const swap of opportunity.path) {
-      // Map protocol to DexType
       let dexType: DexType;
-      if (swap.protocol === 'uniswap_v3') {
-        dexType = DexType.UNISWAP_V3;
-      } else if (swap.protocol === 'sushiswap') {
-        dexType = DexType.SUSHISWAP;
-      } else if (swap.protocol === 'aerodrome') {
-        dexType = DexType.AERODROME;
-      } else {
-        dexType = DexType.UNISWAP_V3; // Default
-      }
+      if (swap.protocol === 'uniswap_v3') dexType = DexType.UNISWAP_V3;
+      else if (swap.protocol === 'sushiswap') dexType = DexType.SUSHISWAP;
+      else if (swap.protocol === 'aerodrome') dexType = DexType.AERODROME;
+      else dexType = DexType.UNISWAP_V3;
 
-      // Calculate minOut with slippage from expectedOutput
       const slippage = this.config.defaultSlippage;
-      let baseAmount: bigint;
-      if (swap.expectedOutput) {
-        baseAmount = BigInt(Math.floor(swap.expectedOutput));
-      } else {
-        baseAmount = BigInt(0);
-      }
-      
-      const minOut = baseAmount > 0 ? 
-        (baseAmount * BigInt(Math.floor((1 - slippage) * 10000))) / BASIS_POINTS_DIVISOR : 
-        BigInt(0);
+      const baseAmount = swap.expectedOutput ? BigInt(Math.floor(swap.expectedOutput)) : 0n;
+      const minOut = baseAmount > 0n
+        ? (baseAmount * BigInt(Math.floor((1 - slippage) * 10000))) / BASIS_POINTS_DIVISOR
+        : 0n;
 
       steps.push({
         pool: swap.poolAddress,
@@ -291,7 +341,6 @@ export class FlashSwapV3Executor {
         dexType,
       });
     }
-
     return {
       steps,
       borrowAmount: BigInt(Math.floor(opportunity.inputAmount)),
@@ -300,174 +349,203 @@ export class FlashSwapV3Executor {
   }
 
   /**
-   * Execute arbitrage with automatic source selection
+   * Execute arbitrage — routes through UserOp if configured, else direct tx.
    */
   async executeArbitrage(
     borrowToken: string,
     borrowAmount: bigint,
     path: UniversalSwapPath
   ): Promise<ExecutionResult> {
+    if (this.userOpEnabled) {
+      return this.executeViaUserOp(borrowToken, borrowAmount, path);
+    }
+    logger.warn('Executing via direct tx (legacy). Enable UserOp for gasless execution.');
+    return this.executeDirectTx(borrowToken, borrowAmount, path);
+  }
+
+  /**
+   * Execute via UserOp through Coinbase Smart Wallet + CDP Paymaster
+   */
+  private async executeViaUserOp(
+    borrowToken: string, borrowAmount: bigint, path: UniversalSwapPath
+  ): Promise<ExecutionResult> {
     const startTime = Date.now();
-
     try {
-      // Select optimal source
+      await this.ensureBundlerClient();
       const selection = await this.selectOptimalSource(borrowToken, borrowAmount);
-      
-      logger.info(`Executing arbitrage with FlashSwapV3: token=${borrowToken}, amount=${formatUnits(borrowAmount, 6)}, source=${FlashLoanSource[selection.source]}, fee=${selection.fee} bps, estimatedFeeCost=${formatUnits(selection.estimatedCost, 6)}, steps=${path.steps.length}`);
 
-      // Estimate gas
-      const estimatedGas = await this.contract.executeArbitrage.estimateGas(
-        borrowToken,
-        borrowAmount,
-        path
-      );
+      logger.info(`[UserOp] Executing: token=${borrowToken}, amount=${formatUnits(borrowAmount, 6)}, source=${FlashLoanSource[selection.source]}, steps=${path.steps.length}`);
 
-      const gasLimit = (estimatedGas * BigInt(Math.floor(this.config.gasBuffer * 100))) / 100n;
+      const calldata = encodeFunctionData({
+        abi: FLASH_SWAP_V3_ABI_VIEM,
+        functionName: 'executeArbitrage',
+        args: [
+          borrowToken as Hex,
+          borrowAmount,
+          {
+            steps: path.steps.map(s => ({
+              pool: s.pool as Hex, tokenIn: s.tokenIn as Hex, tokenOut: s.tokenOut as Hex,
+              fee: s.fee, minOut: s.minOut, dexType: s.dexType,
+            })),
+            borrowAmount: path.borrowAmount,
+            minFinalAmount: path.minFinalAmount,
+          },
+        ],
+      });
 
-      // Execute transaction
-      const tx = await this.contract.executeArbitrage(
-        borrowToken,
-        borrowAmount,
-        path,
-        { gasLimit }
-      );
+      const userOpHash = await this.bundlerClient.sendUserOperation({
+        calls: [{ to: this.config.contractAddress as Hex, data: calldata, value: 0n }],
+      });
+      logger.info(`[UserOp] Submitted: hash=${userOpHash}`);
 
-      logger.info(`Transaction submitted: txHash=${tx.hash}, gasLimit=${gasLimit.toString()}`);
+      const userOpReceipt = await this.bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
+      if (!userOpReceipt.success) throw new Error(`UserOp failed: ${userOpReceipt.reason || 'unknown'}`);
 
-      // Wait for confirmation
-      const receipt = await tx.wait();
+      const txHash = userOpReceipt.receipt.transactionHash;
+      logger.info(`[UserOp] Confirmed: txHash=${txHash}, block=${userOpReceipt.receipt.blockNumber}`);
 
-      if (!receipt || receipt.status !== 1) {
-        throw new Error('Transaction failed');
+      // Parse events via ethers
+      const ethersReceipt = await this.config.provider.getTransactionReceipt(txHash);
+      let feePaid = 0n, grossProfit = 0n, netProfit = 0n;
+      let titheAmount: bigint | undefined, ownerAmount: bigint | undefined;
+
+      if (ethersReceipt) {
+        const events = ethersReceipt.logs.map((log: any) => {
+          try { return this.contract.interface.parseLog(log); } catch { return null; }
+        }).filter(Boolean);
+        const exec = events.find((e: any) => e?.name === 'FlashLoanExecuted');
+        const tithe = events.find((e: any) => e?.name === 'TitheDistributed');
+        feePaid = exec?.args?.feePaid || 0n;
+        grossProfit = exec?.args?.grossProfit || 0n;
+        netProfit = exec?.args?.netProfit || 0n;
+        titheAmount = tithe?.args?.titheAmount;
+        ownerAmount = tithe?.args?.ownerAmount;
       }
 
-      // Parse events
-      const events = receipt.logs
-        .map((log: any) => {
-          try {
-            return this.contract.interface.parseLog(log);
-          } catch {
-            return null;
-          }
-        })
-        .filter((e: any) => e !== null);
+      const gasUsed = userOpReceipt.receipt.gasUsed ? BigInt(userOpReceipt.receipt.gasUsed) : undefined;
+      const executionTime = Date.now() - startTime;
 
-      // Extract execution details from events
-      const executedEvent = events.find((e: any) => e?.name === 'FlashLoanExecuted');
-      const titheEvent = events.find((e: any) => e?.name === 'TitheDistributed');
+      logger.info(`[UserOp] Success: netProfit=${formatUnits(netProfit, 6)}, gasUsed=${gasUsed}, gasCost=$0 (sponsored), time=${executionTime}ms`);
 
+      return {
+        success: true, txHash, userOpHash, source: selection.source,
+        gasUsed, gasPrice: 0n, totalGasCost: 0n, borrowAmount,
+        feePaid, grossProfit, netProfit, titheAmount, ownerAmount,
+        executionMethod: 'userop',
+      };
+    } catch (error: any) {
+      logger.error(`[UserOp] Failed: ${error.message}`);
+      return {
+        success: false, source: FlashLoanSource.AAVE, borrowAmount,
+        feePaid: 0n, grossProfit: 0n, netProfit: 0n,
+        error: error.message, executionMethod: 'userop',
+      };
+    }
+  }
+
+  /**
+   * Legacy: Direct transaction execution
+   */
+  private async executeDirectTx(
+    borrowToken: string, borrowAmount: bigint, path: UniversalSwapPath
+  ): Promise<ExecutionResult> {
+    const startTime = Date.now();
+    try {
+      const selection = await this.selectOptimalSource(borrowToken, borrowAmount);
+      logger.info(`[DirectTx] Executing: token=${borrowToken}, amount=${formatUnits(borrowAmount, 6)}, source=${FlashLoanSource[selection.source]}`);
+
+      const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path);
+      const gasLimit = (estimatedGas * BigInt(Math.floor(this.config.gasBuffer * 100))) / 100n;
+      const tx = await this.contract.executeArbitrage(borrowToken, borrowAmount, path, { gasLimit });
+      logger.info(`[DirectTx] Submitted: txHash=${tx.hash}`);
+
+      const receipt = await tx.wait();
+      if (!receipt || receipt.status !== 1) throw new Error('Transaction failed');
+
+      const events = receipt.logs.map((log: any) => {
+        try { return this.contract.interface.parseLog(log); } catch { return null; }
+      }).filter(Boolean);
+      const exec = events.find((e: any) => e?.name === 'FlashLoanExecuted');
+      const tithe = events.find((e: any) => e?.name === 'TitheDistributed');
       const gasUsed = receipt.gasUsed;
       const gasPrice = receipt.gasPrice || 0n;
       const totalGasCost = BigInt(gasUsed) * BigInt(gasPrice);
 
-      const result: ExecutionResult = {
-        success: true,
-        txHash: tx.hash,
-        receipt,
-        source: selection.source,
-        gasUsed,
-        gasPrice,
-        totalGasCost,
-        borrowAmount,
-        feePaid: executedEvent?.args?.feePaid || 0n,
-        grossProfit: executedEvent?.args?.grossProfit || 0n,
-        netProfit: executedEvent?.args?.netProfit || 0n,
-        titheAmount: titheEvent?.args?.titheAmount,
-        ownerAmount: titheEvent?.args?.ownerAmount,
-      };
-
-      const executionTime = Date.now() - startTime;
-
-      logger.info(`Arbitrage executed successfully: txHash=${tx.hash}, source=${FlashLoanSource[selection.source]}, borrowAmount=${formatUnits(borrowAmount, 6)}, feePaid=${formatUnits(result.feePaid, 6)}, grossProfit=${formatUnits(result.grossProfit, 6)}, netProfit=${formatUnits(result.netProfit, 6)}, gasUsed=${gasUsed.toString()}, gasCost=${formatUnits(totalGasCost, 18)}, executionTime=${executionTime}ms`);
-
-      return result;
-    } catch (error: any) {
-      logger.error(`Failed to execute arbitrage: ${error.message}, borrowToken=${borrowToken}, borrowAmount=${formatUnits(borrowAmount, 6)}`);
+      logger.info(`[DirectTx] Success: netProfit=${formatUnits(exec?.args?.netProfit || 0n, 6)}, time=${Date.now() - startTime}ms`);
 
       return {
-        success: false,
-        source: FlashLoanSource.AAVE,
-        borrowAmount,
-        feePaid: 0n,
-        grossProfit: 0n,
-        netProfit: 0n,
-        error: error.message,
+        success: true, txHash: tx.hash, receipt, source: selection.source,
+        gasUsed, gasPrice, totalGasCost, borrowAmount,
+        feePaid: exec?.args?.feePaid || 0n,
+        grossProfit: exec?.args?.grossProfit || 0n,
+        netProfit: exec?.args?.netProfit || 0n,
+        titheAmount: tithe?.args?.titheAmount,
+        ownerAmount: tithe?.args?.ownerAmount,
+        executionMethod: 'direct',
+      };
+    } catch (error: any) {
+      logger.error(`[DirectTx] Failed: ${error.message}`);
+      return {
+        success: false, source: FlashLoanSource.AAVE, borrowAmount,
+        feePaid: 0n, grossProfit: 0n, netProfit: 0n,
+        error: error.message, executionMethod: 'direct',
       };
     }
   }
 
-  /**
-   * Estimate profit for given opportunity
-   */
   async estimateProfit(opportunity: ArbitrageOpportunity): Promise<{
-    source: FlashLoanSource;
-    grossProfit: bigint;
-    flashLoanFee: bigint;
-    estimatedGasCost: bigint;
-    netProfit: bigint;
+    source: FlashLoanSource; grossProfit: bigint; flashLoanFee: bigint;
+    estimatedGasCost: bigint; netProfit: bigint;
   }> {
-    // Get borrow parameters from opportunity
     const borrowAmount = BigInt(Math.floor(opportunity.flashLoanAmount || opportunity.inputAmount));
     const borrowToken = opportunity.flashLoanToken || opportunity.tokenAddresses[0];
-
-    // Select source
     const selection = await this.selectOptimalSource(borrowToken, borrowAmount);
-
-    // Calculate flash loan fee
     const flashLoanFee = selection.estimatedCost;
-
-    // Estimate gas
     const path = this.constructSwapPath(opportunity);
-    const estimatedGas = await this.contract.executeArbitrage.estimateGas(
-      borrowToken,
-      borrowAmount,
-      path
-    ).catch(() => 500000n); // Fallback if estimation fails
+    const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path).catch(() => 500000n);
 
-    const gasPrice = await this.config.provider.getFeeData().then(d => d.gasPrice || 0n);
-    const estimatedGasCost = estimatedGas * gasPrice;
+    let estimatedGasCost: bigint;
+    if (this.userOpEnabled) {
+      estimatedGasCost = 0n;
+    } else {
+      const gasPrice = await this.config.provider.getFeeData().then(d => d.gasPrice || 0n);
+      estimatedGasCost = estimatedGas * gasPrice;
+    }
 
-    // Calculate profit
     const grossProfit = BigInt(Math.floor(opportunity.grossProfit));
     const netProfit = grossProfit - flashLoanFee - estimatedGasCost;
-
-    return {
-      source: selection.source,
-      grossProfit,
-      flashLoanFee,
-      estimatedGasCost,
-      netProfit,
-    };
+    return { source: selection.source, grossProfit, flashLoanFee, estimatedGasCost, netProfit };
   }
 
-  /**
-   * Emergency withdraw tokens from contract
-   */
   async emergencyWithdraw(token: string, amount: bigint): Promise<string> {
-    try {
-      const tx = await this.contract.emergencyWithdraw(token, amount);
-      await tx.wait();
-      logger.info(`Emergency withdrawal successful: token=${token}, amount=${amount.toString()}, txHash=${tx.hash}`);
-      return tx.hash;
-    } catch (error) {
-      logger.error(`Emergency withdrawal failed for token ${token}, amount=${amount.toString()}: ${error instanceof Error ? error.message : String(error)}`);
-      throw error;
+    if (this.userOpEnabled) {
+      await this.ensureBundlerClient();
+      const calldata = encodeFunctionData({
+        abi: [{ name: 'emergencyWithdraw', type: 'function' as const,
+          inputs: [{ name: 'token', type: 'address' as const }, { name: 'amount', type: 'uint256' as const }],
+          outputs: [], stateMutability: 'nonpayable' as const }],
+        functionName: 'emergencyWithdraw',
+        args: [token as Hex, amount],
+      });
+      const hash = await this.bundlerClient.sendUserOperation({
+        calls: [{ to: this.config.contractAddress as Hex, data: calldata, value: 0n }],
+      });
+      const receipt = await this.bundlerClient.waitForUserOperationReceipt({ hash });
+      logger.info(`[UserOp] Emergency withdrawal: txHash=${receipt.receipt.transactionHash}`);
+      return receipt.receipt.transactionHash;
     }
+    const tx = await this.contract.emergencyWithdraw(token, amount);
+    await tx.wait();
+    return tx.hash;
   }
 
-  /**
-   * Get contract owner address
-   */
-  async getOwner(): Promise<string> {
-    return await this.contract.owner();
-  }
+  async getOwner(): Promise<string> { return await this.contract.owner(); }
 
-  /**
-   * Get tithe recipient and basis points
-   */
   async getTitheInfo(): Promise<{ recipient: string; bps: number }> {
     const recipient = await this.contract.titheRecipient();
     const bps = await this.contract.titheBps();
     return { recipient, bps };
   }
+
+  getSmartWalletAddress(): string | null { return this.smartWalletAddress; }
 }
