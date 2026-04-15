@@ -592,9 +592,23 @@ class TheWarden extends EventEmitter {
             verbose: process.env.EVENT_DRIVEN_VERBOSE === 'true',
           });
 
-          // Wire execution to V3 executor (only in live mode)
-          // TODO: Wire this.eventDrivenMonitor.setExecuteCallback() to integratedOrchestrator
-          // when ready for live execution. For now, dry-run mode logs opportunities.
+          // Wire execution to V3 executor
+          if (this.integratedOrchestrator) {
+            this.eventDrivenMonitor.setExecuteCallback(async (request) => {
+              logger.info(`[Phase4b] 🚀 Executing opportunity: ${request.signal.pairKey} spread=${request.signal.spreadPercent.toFixed(4)}%`);
+              const result = await this.integratedOrchestrator!.executeFromEventDriven(
+                request.borrowToken,
+                request.borrowAmount,
+                request.swapPath
+              );
+              if (result.success) {
+                logger.info(`[Phase4b] 💰 PROFIT: txHash=${result.txHash} net=${result.netProfit}`);
+              }
+            });
+            logger.info('[Phase4b] Execute callback wired to V3 executor');
+          } else {
+            logger.warn('[Phase4b] No orchestrator available — running in monitor-only mode');
+          }
 
           await this.eventDrivenMonitor.start();
           logger.info('[Phase4b] ✅ Event-driven monitoring active');
