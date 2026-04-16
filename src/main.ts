@@ -171,8 +171,8 @@ const extractOpportunityFeatures = (..._args: any[]) => ({});
 const _featuresToArray = (..._args: any[]) => [];
 const _formatTokenList = (..._args: any[]) => '';
 const loadProfitableInfrastructureConfig = (..._args: any[]) => ({});
-const validateProfitableInfrastructureConfig = (..._args: any[]) => true;
-const getExpectedMonthlyRevenue = (..._args: any[]) => 0;
+const validateProfitableInfrastructureConfig = (..._args: any[]) => ({ valid: true, errors: [], warnings: [] });
+const getExpectedMonthlyRevenue = (..._args: any[]) => ({ cexMin: 0, cexMax: 0, bloxrouteMin: 0, bloxrouteMax: 0, totalMin: 0, totalMax: 0 });
 const loadCEXConfig = (..._args: any[]) => ({});
 const loadBloXrouteConfig = (..._args: any[]) => ({});
 type DecisionContext = any;
@@ -182,7 +182,7 @@ const IntegratedArbitrageOrchestrator = _createStubClass('IntegratedArbitrageOrc
 const ArbitrageOrchestrator = _createStubClass('ArbitrageOrchestrator');
 type OpportunityContext = any;
 type ModuleInsight = any;
-const getInfrastructureCosts = (..._args: any[]) => ({});
+const getInfrastructureCosts = (..._args: any[]) => ({ cex: 0, bloxroute: 0, total: 0, monthly: 0, rpc: 0 });
 // === END S32 STUBS ===
 // === S33 STUBS: Additional dead module placeholders (deleted in Phase 6 cleanup) ===
 // Stub: core/initializer
