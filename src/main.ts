@@ -803,6 +803,8 @@ class TheWarden extends EventEmitter {
       logger.info('═══════════════════════════════════════════════════════════');
 
       // Initialize Profitable Infrastructure (CEX-DEX + bloXroute)
+      // S34: Wrapped in try-catch — profitable infra is optional, don't let it kill the bot
+      try {
       logger.info('═══════════════════════════════════════════════════════════');
       logger.info('💰 INITIALIZING PROFITABLE INFRASTRUCTURE 💰');
       logger.info('═══════════════════════════════════════════════════════════');
