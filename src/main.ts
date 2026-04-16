@@ -160,6 +160,9 @@ const loadCEXConfig = null as any;
 const loadBloXrouteConfig = null as any;
 type DecisionContext = any;
 type GasEstimationResult = any;
+const WardenBootstrap = null as any;
+const IntegratedArbitrageOrchestrator = null as any;
+const ArbitrageOrchestrator = null as any;
 // === END S32 STUBS ===
 
 // Lazy imports to avoid circular dependencies - loaded dynamically when needed
