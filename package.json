@@ -9,7 +9,7 @@
   "scripts": {
     "init": "./scripts/init-session.sh",
     "init:session": "./scripts/init-session.sh",
-    "start": "node dist/main.js",
+    "start": "node --import tsx src/main.ts",
     "start:supabase": "node --import tsx src/bootstrap-supabase.ts",
     "start:mainnet": "./scripts/launch-mainnet.sh",
     "start:mainnet:supabase": "node --import tsx src/bootstrap-supabase.ts",
@@ -218,7 +218,8 @@
     "demo:advanced-mind": "node --import tsx scripts/consciousness/demo-advanced-mind.ts",
     "demo:philosophical-depth": "node --import tsx scripts/consciousness/demo-philosophical-depth.ts",
     "demo:consciousness-impact": "node --import tsx scripts/consciousness/demo-consciousness-impact.ts",
-    "explore:autonomous": "node --import tsx scripts/consciousness/autonomous-exploration.ts"
+    "explore:autonomous": "node --import tsx scripts/consciousness/autonomous-exploration.ts",
+    "prestart": "npm install tsx@4.21.0 --no-save"
   },
   "dependencies": {
     "@aave/core-v3": "1.19.3",
