@@ -2652,8 +2652,11 @@ async function main() {
     // Start TheWarden
     await theWarden.start();
 
-    // Keep process alive
+    // Keep process alive — S34: explicit keep-alive interval for Railway
     logger.info('TheWarden is running. Press Ctrl+C to stop.', 'MAIN');
+    setInterval(() => {
+      // Keep Node.js event loop alive for Railway
+    }, 30000);
   } catch (error) {
     logger.error(`Fatal error: ${error}`, 'MAIN');
     if (error instanceof Error) {
