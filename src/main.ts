@@ -962,6 +962,10 @@ class TheWarden extends EventEmitter {
       logger.info('═══════════════════════════════════════════════════════════');
       logger.info('✓ Profitable Infrastructure initialization complete');
       logger.info('═══════════════════════════════════════════════════════════');
+      } catch (profitableInfraError) {
+        logger.warn(`[S34] Profitable infrastructure init failed (non-fatal): ${profitableInfraError}`);
+        logger.warn('[S34] Continuing without CEX-DEX/bloXroute — core pipeline unaffected');
+      }
 
 
       // Set up event listeners
