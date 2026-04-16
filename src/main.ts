@@ -35,25 +35,25 @@ import type { ethers as _ethers } from 'ethers';
 import { EventEmitter } from 'events';
 import { logger } from './utils/logger';
 import { validateAndLogConfig } from './utils/configValidator';
-import {
-  initializeComponents,
-  shutdownComponents,
-  InitializedComponents,
-} from './core/initializer';
+// [DEAD] import {
+// [DEAD]   initializeComponents,
+// [DEAD]   shutdownComponents,
+// [DEAD]   InitializedComponents,
+// [DEAD] } from './core/initializer';
 import { HealthCheckServer } from './monitoring/healthCheck';
 import { DEXRegistry } from './dex/core/DEXRegistry';
 import { DEXConfig } from './dex/types';
-import { AdvancedOrchestrator } from './arbitrage/AdvancedOrchestrator';
+// [DEAD] import { AdvancedOrchestrator } from './arbitrage/AdvancedOrchestrator';
 // [DEAD] import { IntegratedArbitrageOrchestrator } from './execution/IntegratedArbitrageOrchestrator';
 // [DEAD] import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
 // [DEAD] import { GasPriceOracle } from './gas/GasPriceOracle';
 // [DEAD] import { AdvancedGasEstimator } from './gas/AdvancedGasEstimator';
 import { SystemHealthMonitor } from './monitoring/SystemHealthMonitor';
 import { HealthStatus } from './types/ExecutionTypes';
-import {
-  defaultAdvancedArbitrageConfig,
-  getConfigByName,
-} from './config/advanced-arbitrage.config';
+// [DEAD] import {
+// [DEAD]   defaultAdvancedArbitrageConfig,
+// [DEAD]   getConfigByName,
+// [DEAD] } from './config/advanced-arbitrage.config';
 import { ArbitrageConfig } from './types/definitions';
 // [DEAD] import { SensoryMemory } from './consciousness/sensory_memory';
 // [DEAD] import { TemporalAwarenessFramework } from './consciousness/temporal_awareness';
@@ -167,6 +167,25 @@ type OpportunityContext = any;
 type ModuleInsight = any;
 const getInfrastructureCosts = null as any;
 // === END S32 STUBS ===
+// === S33 STUBS: Additional dead module placeholders (deleted in Phase 6 cleanup) ===
+// Stub: core/initializer
+type InitializedComponents = any;
+const initializeComponents = async (_config: any): Promise<any> => ({});
+const shutdownComponents = async (_components: any): Promise<void> => {};
+// Stub: arbitrage/AdvancedOrchestrator
+class AdvancedOrchestrator {
+  constructor(..._args: any[]) {}
+  async loadPreloadedData(_chainId: number) { return false; }
+  setChainId(_chainId: number) {}
+  async findOpportunities(..._args: any[]) { return []; }
+  getDataFetcher() { return null; }
+  getDEXesByNetwork(_network: string) { return []; }
+}
+// Stub: config/advanced-arbitrage.config
+const defaultAdvancedArbitrageConfig = {} as any;
+const getConfigByName = (_name: string): any => null;
+// === END S33 STUBS ===
+
 
 // Lazy imports to avoid circular dependencies - loaded dynamically when needed
 // import { CEXLiquidityMonitor } from './execution/cex/CEXLiquidityMonitor';
