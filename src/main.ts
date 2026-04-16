@@ -163,6 +163,9 @@ type GasEstimationResult = any;
 const WardenBootstrap = null as any;
 const IntegratedArbitrageOrchestrator = null as any;
 const ArbitrageOrchestrator = null as any;
+type OpportunityContext = any;
+type ModuleInsight = any;
+const getInfrastructureCosts = null as any;
 // === END S32 STUBS ===
 
 // Lazy imports to avoid circular dependencies - loaded dynamically when needed
