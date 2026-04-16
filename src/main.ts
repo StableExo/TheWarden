@@ -44,8 +44,8 @@ import { HealthCheckServer } from './monitoring/healthCheck';
 import { DEXRegistry } from './dex/core/DEXRegistry';
 import { DEXConfig } from './dex/types';
 import { AdvancedOrchestrator } from './arbitrage/AdvancedOrchestrator';
-import { IntegratedArbitrageOrchestrator } from './execution/IntegratedArbitrageOrchestrator';
-import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
+// [DEAD] import { IntegratedArbitrageOrchestrator } from './execution/IntegratedArbitrageOrchestrator';
+// [DEAD] import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
 // [DEAD] import { GasPriceOracle } from './gas/GasPriceOracle';
 // [DEAD] import { AdvancedGasEstimator } from './gas/AdvancedGasEstimator';
 import { SystemHealthMonitor } from './monitoring/SystemHealthMonitor';
@@ -123,7 +123,7 @@ import {
 } from './monitoring/EventDrivenInitializer';
 
 // Bootstrap module (refactored initialization)
-import { WardenBootstrap } from './core/bootstrap';
+// [DEAD] import { WardenBootstrap } from './core/bootstrap';
 
 // Long-running process manager
 import { LongRunningManager } from './monitoring/LongRunningManager';
