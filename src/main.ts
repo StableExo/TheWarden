@@ -64,12 +64,12 @@ import { ArbitrageConfig } from './types/definitions';
 // [DEAD] import { DashboardConfig } from './dashboard/types';
 import { getScanTokens, getTokensByChainId, getNetworkName } from './utils/chainTokens';
 // formatTokenList reserved for token display features
-import { formatTokenList as _formatTokenList } from './utils/chainTokens';
+// [DEAD] import { formatTokenList as _formatTokenList } from './utils/chainTokens';
 // [DEAD] import { ArbitrageConsciousness } from './consciousness/ArbitrageConsciousness';
-import {
-  CognitiveCoordinator,
-  OpportunityContext,
-  ModuleInsight,
+// [DEAD] import {
+// [DEAD]   CognitiveCoordinator,
+// [DEAD]   OpportunityContext,
+// [DEAD]   ModuleInsight,
 // [DEAD] } from './consciousness/coordination/CognitiveCoordinator';
 // [DEAD] import { EmergenceDetector, DecisionContext } from './consciousness/coordination/EmergenceDetector';
 import { ArbitragePath } from './arbitrage/types';
@@ -129,11 +129,11 @@ import { WardenBootstrap } from './core/bootstrap';
 import { LongRunningManager } from './monitoring/LongRunningManager';
 
 // Profitable Infrastructure (CEX-DEX Arbitrage + bloXroute)
-import {
-  loadProfitableInfrastructureConfig,
-  validateProfitableInfrastructureConfig,
-  getExpectedMonthlyRevenue,
-  getInfrastructureCosts,
+// [DEAD] import {
+// [DEAD]   loadProfitableInfrastructureConfig,
+// [DEAD]   validateProfitableInfrastructureConfig,
+// [DEAD]   getExpectedMonthlyRevenue,
+// [DEAD]   getInfrastructureCosts,
 // [DEAD] } from './config/profitable-infrastructure.config';
 
 // === S32 STUBS: Dead module placeholders (deleted in Phase 6) ===
