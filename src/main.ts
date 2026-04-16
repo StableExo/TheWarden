@@ -2588,7 +2588,10 @@ async function main() {
           logger.info('Connecting TheWarden events to dashboard...', 'MAIN');
           
           // Capture wsHandler reference in closure to avoid null reference issues
-          const wsHandler = dashboardServer?.wsHandler || { broadcast: (..._args: any[]) => {} };
+          const _rawWsHandler = dashboardServer?.wsHandler;
+          const wsHandler = (_rawWsHandler && typeof _rawWsHandler === 'object' && typeof _rawWsHandler.broadcast === 'function')
+            ? _rawWsHandler
+            : { broadcast: (..._args: any[]) => {} };
           
           // Create event listener functions and store references for cleanup
           const scanStartListener = (data: any) => {
