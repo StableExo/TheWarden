@@ -199,7 +199,11 @@ class AdvancedOrchestrator {
   getDEXesByNetwork(_network: string) { return []; }
 }
 // Stub: config/advanced-arbitrage.config
-const defaultAdvancedArbitrageConfig = {} as any;
+const defaultAdvancedArbitrageConfig = {
+  pathfinding: { maxHops: 3, minProfitThreshold: 0.005, maxSlippage: 0.01, gasPrice: '1000000000' },
+  execution: { maxRetries: 3, timeout: 30000, confirmations: 1 },
+  monitoring: { enabled: true, interval: 1000 },
+} as any;
 const getConfigByName = (_name: string): any => null;
 // === END S33 STUBS ===
 
