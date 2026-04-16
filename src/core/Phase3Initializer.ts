@@ -19,7 +19,7 @@ import { OpportunityNNScorer } from '../ai/OpportunityNNScorer';
 import { StrategyEvolutionEngine } from '../ai/StrategyEvolutionEngine';
 
 // Cross-Chain Intelligence
-import { CrossChainIntelligence } from '../crosschain/CrossChainIntelligence';
+// [DEAD] import { CrossChainIntelligence } from '../crosschain/CrossChainIntelligence';
 
 // Security Components
 import { BloodhoundScanner } from '../security/BloodhoundScanner';
