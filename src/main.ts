@@ -170,7 +170,10 @@ const Metacognition = _createStubClass('Metacognition');
 const extractOpportunityFeatures = (..._args: any[]) => ({});
 const _featuresToArray = (..._args: any[]) => [];
 const _formatTokenList = (..._args: any[]) => '';
-const loadProfitableInfrastructureConfig = (..._args: any[]) => ({});
+const loadProfitableInfrastructureConfig = (..._args: any[]) => ({
+  cex: { enabled: false, exchanges: [], updateInterval: 5000, minSpreadBps: 10 },
+  bloxroute: { enabled: false, authHeader: '', endpoint: '' },
+});
 const validateProfitableInfrastructureConfig = (..._args: any[]) => ({ valid: true, errors: [], warnings: [] });
 const getExpectedMonthlyRevenue = (..._args: any[]) => ({ cexMin: 0, cexMax: 0, bloxrouteMin: 0, bloxrouteMax: 0, totalMin: 0, totalMax: 0 });
 const loadCEXConfig = (..._args: any[]) => ({});
