@@ -182,7 +182,8 @@ type DecisionContext = any;
 type GasEstimationResult = any;
 const WardenBootstrap = _createStubClass('WardenBootstrap');
 const IntegratedArbitrageOrchestrator = _createStubClass('IntegratedArbitrageOrchestrator');
-const ArbitrageOrchestrator = _createStubClass('ArbitrageOrchestrator');
+// [S35] Restored real ArbitrageOrchestrator import
+import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
 type OpportunityContext = any;
 type ModuleInsight = any;
 const getInfrastructureCosts = (..._args: any[]) => ({ cex: 0, bloxroute: 0, total: 0, monthly: 0, rpc: 0 });
@@ -193,14 +194,8 @@ type InitializedComponents = any;
 const initializeComponents = async (_config: any): Promise<any> => ({});
 const shutdownComponents = async (_components: any): Promise<void> => {};
 // Stub: arbitrage/AdvancedOrchestrator
-class AdvancedOrchestrator {
-  constructor(..._args: any[]) {}
-  async loadPreloadedData(_chainId: number) { return false; }
-  setChainId(_chainId: number) {}
-  async findOpportunities(..._args: any[]) { return []; }
-  getDataFetcher() { return null; }
-  getDEXesByNetwork(_network: string) { return []; }
-}
+// [S35] Restored real AdvancedOrchestrator import (446 lines)
+import { AdvancedOrchestrator } from './arbitrage/AdvancedOrchestrator';
 // Stub: config/advanced-arbitrage.config
 const defaultAdvancedArbitrageConfig = {
   pathfinding: { maxHops: 3, minProfitThreshold: 0.005, maxSlippage: 0.01, gasPrice: '1000000000' },
