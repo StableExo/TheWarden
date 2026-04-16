@@ -137,35 +137,52 @@ import { LongRunningManager } from './monitoring/LongRunningManager';
 // [DEAD] } from './config/profitable-infrastructure.config';
 
 // === S32 STUBS: Dead module placeholders (deleted in Phase 6) ===
-const DashboardServer = null as any;
-const DashboardConfig = null as any;
-const GasAnalytics = null as any;
-const GasPriceOracle = null as any;
-const AdvancedGasEstimator = null as any;
-const CrossChainAnalytics = null as any;
-const SensoryMemory = null as any;
-const TemporalAwarenessFramework = null as any;
-const PerceptionStream = null as any;
-const ArbitrageConsciousness = null as any;
-const CognitiveCoordinator = null as any;
-const EmergenceDetector = null as any;
-const Metacognition = null as any;
-const extractOpportunityFeatures = null as any;
-const _featuresToArray = null as any;
-const _formatTokenList = null as any;
-const loadProfitableInfrastructureConfig = null as any;
-const validateProfitableInfrastructureConfig = null as any;
-const getExpectedMonthlyRevenue = null as any;
-const loadCEXConfig = null as any;
-const loadBloXrouteConfig = null as any;
+// S34 FIX: Converted all constructor-used stubs from `null as any` to proper classes.
+// Uses Proxy to handle any method call gracefully (returns no-op async functions).
+function _createStubClass(name: string) {
+  return class {
+    constructor(..._args: any[]) {
+      return new Proxy(this, {
+        get: (_target: any, prop: string | symbol) => {
+          if (prop === 'then' || typeof prop === 'symbol') return undefined;
+          if (prop === 'on' || prop === 'once' || prop === 'emit' || prop === 'removeListener' || prop === 'removeAllListeners') {
+            return (..._a: any[]) => _target; // EventEmitter compat - return self for chaining
+          }
+          return (..._a: any[]) => Promise.resolve(undefined);
+        }
+      });
+    }
+  };
+}
+const DashboardServer = _createStubClass('DashboardServer');
+const DashboardConfig = null as any; // not constructed, just config object
+const GasAnalytics = _createStubClass('GasAnalytics');
+const GasPriceOracle = _createStubClass('GasPriceOracle');
+const AdvancedGasEstimator = _createStubClass('AdvancedGasEstimator');
+const CrossChainAnalytics = _createStubClass('CrossChainAnalytics');
+const SensoryMemory = _createStubClass('SensoryMemory');
+const TemporalAwarenessFramework = _createStubClass('TemporalAwarenessFramework');
+const PerceptionStream = _createStubClass('PerceptionStream');
+const ArbitrageConsciousness = _createStubClass('ArbitrageConsciousness');
+const CognitiveCoordinator = _createStubClass('CognitiveCoordinator');
+const EmergenceDetector = _createStubClass('EmergenceDetector');
+const Metacognition = _createStubClass('Metacognition');
+const extractOpportunityFeatures = (..._args: any[]) => ({});
+const _featuresToArray = (..._args: any[]) => [];
+const _formatTokenList = (..._args: any[]) => '';
+const loadProfitableInfrastructureConfig = (..._args: any[]) => ({});
+const validateProfitableInfrastructureConfig = (..._args: any[]) => true;
+const getExpectedMonthlyRevenue = (..._args: any[]) => 0;
+const loadCEXConfig = (..._args: any[]) => ({});
+const loadBloXrouteConfig = (..._args: any[]) => ({});
 type DecisionContext = any;
 type GasEstimationResult = any;
-const WardenBootstrap = null as any;
-const IntegratedArbitrageOrchestrator = null as any;
-const ArbitrageOrchestrator = null as any;
+const WardenBootstrap = _createStubClass('WardenBootstrap');
+const IntegratedArbitrageOrchestrator = _createStubClass('IntegratedArbitrageOrchestrator');
+const ArbitrageOrchestrator = _createStubClass('ArbitrageOrchestrator');
 type OpportunityContext = any;
 type ModuleInsight = any;
-const getInfrastructureCosts = null as any;
+const getInfrastructureCosts = (..._args: any[]) => ({});
 // === END S32 STUBS ===
 // === S33 STUBS: Additional dead module placeholders (deleted in Phase 6 cleanup) ===
 // Stub: core/initializer
