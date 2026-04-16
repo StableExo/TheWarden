@@ -300,7 +300,7 @@ function loadConfig(): WardenConfig {
     );
   }
 
-  const walletPrivateKey = process.env.WALLET_PRIVATE_KEY;
+  const walletPrivateKey = process.env.WALLET_PRIVATE_KEY || process.env.DEPLOYER_PRIVATE_KEY;
   if (!walletPrivateKey) {
     throw new Error('WALLET_PRIVATE_KEY is required');
   }
