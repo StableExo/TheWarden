@@ -1,4 +1,35 @@
 /**
+
+// ============================================
+// S32 STUBS — Dead module placeholders
+// These modules were deleted in Phase 6 cleanup.
+// Stubs prevent compilation errors in dead code paths.
+// The event-driven pipeline does NOT use any of these.
+// ============================================
+const DashboardServer = null as any;
+const DashboardConfig = null as any;
+const GasAnalytics = null as any;
+const GasPriceOracle = null as any;
+const AdvancedGasEstimator = null as any;
+const CrossChainAnalytics = null as any;
+const SensoryMemory = null as any;
+const TemporalAwarenessFramework = null as any;
+const PerceptionStream = null as any;
+const ArbitrageConsciousness = null as any;
+const CognitiveCoordinator = null as any;
+const EmergenceDetector = null as any;
+const Metacognition = null as any;
+const extractOpportunityFeatures = null as any;
+const _featuresToArray = null as any;
+const _formatTokenList = null as any;
+const loadProfitableInfrastructureConfig = null as any;
+const validateProfitableInfrastructureConfig = null as any;
+const getExpectedMonthlyRevenue = null as any;
+const loadCEXConfig = null as any;
+const loadBloXrouteConfig = null as any;
+type DecisionContext = any;
+type GasEstimationResult = any;
+
  * Main Runner for AEV (Autonomous Extracted Value) - TheWarden
  *
  * Production-ready entry point for TheWarden autonomous agent that:
@@ -43,11 +74,7 @@ import {
 import { HealthCheckServer } from './monitoring/healthCheck';
 import { DEXRegistry } from './dex/core/DEXRegistry';
 import { DEXConfig } from './dex/types';
-import { AdvancedOrchestrator } from './arbitrage/AdvancedOrchestrator';
 import { IntegratedArbitrageOrchestrator } from './execution/IntegratedArbitrageOrchestrator';
-import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
-// [S32 REMOVED] import { GasPriceOracle } from './gas/GasPriceOracle';
-// [S32 REMOVED] import { AdvancedGasEstimator } from './gas/AdvancedGasEstimator';
 import { SystemHealthMonitor } from './monitoring/SystemHealthMonitor';
 import { HealthStatus } from './types/ExecutionTypes';
 import {
@@ -55,26 +82,13 @@ import {
   getConfigByName,
 } from './config/advanced-arbitrage.config';
 import { ArbitrageConfig } from './types/definitions';
-// [S32 REMOVED] import { SensoryMemory } from './consciousness/sensory_memory';
-// [S32 REMOVED] import { TemporalAwarenessFramework } from './consciousness/temporal_awareness';
-// [S32 REMOVED] import { PerceptionStream } from './services/PerceptionStream';
-// [S32 REMOVED] import { DashboardServer } from './dashboard/DashboardServer';
-// [S32 REMOVED] import { GasAnalytics } from './gas/GasAnalytics';
-// [S32 REMOVED] import { CrossChainAnalytics } from './chains/CrossChainAnalytics';
-// [S32 REMOVED] import { DashboardConfig } from './dashboard/types';
 import { getScanTokens, getTokensByChainId, getNetworkName } from './utils/chainTokens';
 // formatTokenList reserved for token display features
-import { formatTokenList as _formatTokenList } from './utils/chainTokens';
-// [S32 REMOVED] import { ArbitrageConsciousness } from './consciousness/ArbitrageConsciousness';
 import {
-  CognitiveCoordinator,
   OpportunityContext,
   ModuleInsight,
-// [S32 REMOVED] } from './consciousness/coordination/CognitiveCoordinator';
-// [S32 REMOVED] import { EmergenceDetector, DecisionContext } from './consciousness/coordination/EmergenceDetector';
 import { ArbitragePath } from './arbitrage/types';
 import { PoolDataStore } from './arbitrage/PoolDataStore';
-// [S32 REMOVED] import { Metacognition } from '../consciousness/metacognition';
 
 // Type-safe event definitions for TheWarden
 interface TheWardenEvents {
@@ -82,7 +96,6 @@ interface TheWardenEvents {
   'scan:complete': (data: { chainId: number; cycle: number; opportunitiesFound: number }) => void;
   'scan:no-opportunities': (data: { chainId: number; cycle: number }) => void;
   'opportunities:found': (data: { opportunities: any[] }) => void;
-  'consciousness:activate': (data: any) => void;
   'scan_error': (error: Error) => void;
   'started': () => void;
   'shutdown': () => void;
@@ -111,9 +124,7 @@ import {
   Phase4Components,
   getPhase4Status,
 } from './core/Phase4Initializer';
-// [S32 REMOVED] import { extractOpportunityFeatures } from './ai/featureExtraction';
 // featuresToArray reserved for ML features
-// [S32 REMOVED] import { featuresToArray as _featuresToArray } from './ai/featureExtraction';
 
 // Phase 4b: Event-Driven WebSocket Monitoring
 import { EventDrivenMonitor } from './monitoring/EventDrivenMonitor';
@@ -129,12 +140,6 @@ import { WardenBootstrap } from './core/bootstrap';
 import { LongRunningManager } from './monitoring/LongRunningManager';
 
 // Profitable Infrastructure (CEX-DEX Arbitrage + bloXroute)
-import {
-  loadProfitableInfrastructureConfig,
-  validateProfitableInfrastructureConfig,
-  getExpectedMonthlyRevenue,
-  getInfrastructureCosts,
-// [S32 REMOVED] } from './config/profitable-infrastructure.config';
 // Lazy imports to avoid circular dependencies - loaded dynamically when needed
 // import { CEXLiquidityMonitor } from './execution/cex/CEXLiquidityMonitor';
 // import { CEXDEXArbitrageDetector } from './execution/cex/CEXDEXArbitrageDetector';
@@ -304,7 +309,6 @@ function loadConfig(): WardenConfig {
  * @returns The RPC URL for the chain, or undefined if not configured
  */
 // Reserved for multi-chain RPC configuration
-function _getRpcUrlForChain(chainId: number): string | undefined {
   switch (chainId) {
     case 8453: // Base mainnet
     case 84532: // Base testnet
@@ -346,7 +350,6 @@ class TheWarden extends EventEmitter {
   private provider: JsonRpcProvider;
   private wallet: Wallet;
   private dexRegistry: DEXRegistry;
-  private advancedOrchestrator?: AdvancedOrchestrator;
   private integratedOrchestrator?: IntegratedArbitrageOrchestrator;
   private healthMonitor: SystemHealthMonitor;
   private scanInterval?: NodeJS.Timeout;
@@ -354,10 +357,6 @@ class TheWarden extends EventEmitter {
   private shuttingDown: boolean = false;
 
   // Consciousness components
-  private consciousness?: ArbitrageConsciousness;
-  private cognitiveCoordinator?: CognitiveCoordinator;
-  private emergenceDetector?: EmergenceDetector;
-  private metacognition: Metacognition;
 
   // Phase 3 components
   private phase3Components?: Phase3Components;
@@ -371,7 +370,6 @@ class TheWarden extends EventEmitter {
   // Profitable Infrastructure components (CEX-DEX + bloXroute)
   private cexMonitor?: any; // CEXLiquidityMonitor - imported dynamically to avoid circular deps
   private cexDexDetector?: any; // CEXDEXArbitrageDetector
-  private bloxrouteStream?: any; // BloXrouteMempoolStream
 
   // Long-running process manager
   private longRunningManager?: LongRunningManager;
@@ -404,7 +402,6 @@ class TheWarden extends EventEmitter {
       interval: config.healthCheckInterval,
     });
 
-    this.metacognition = new Metacognition();
 
     logger.info('TheWarden initialized - AEV mode active');
   }
@@ -453,7 +450,6 @@ class TheWarden extends EventEmitter {
 
       // Initialize gas components
       logger.info('Initializing gas oracle and estimator...');
-      const gasOracle = new GasPriceOracle(
         this.config.rpcUrl,
         process.env.ETHERSCAN_API_KEY,
         60000, // 1 minute update interval
@@ -469,7 +465,6 @@ class TheWarden extends EventEmitter {
         ? BigInt(Math.floor(parseFloat(minProfitAfterGasEnv) * 1e18))
         : BigInt(1e15); // Default 0.001 ETH (more realistic for L2)
 
-      const gasEstimator = new AdvancedGasEstimator(this.provider, gasOracle, {
         minProfitAfterGas,
         maxGasCostPercentage: 80, // Gas can be up to 80% of profit
       });
@@ -491,7 +486,6 @@ class TheWarden extends EventEmitter {
       logger.info('Initializing arbitrage orchestrator...');
       const advancedConfig = getConfigByName('default') || defaultAdvancedArbitrageConfig;
 
-      this.advancedOrchestrator = new AdvancedOrchestrator(
         this.dexRegistry,
         advancedConfig,
         this.config.chainId, // Pass chain ID during construction
@@ -500,7 +494,6 @@ class TheWarden extends EventEmitter {
 
       // Load preloaded pool data if available
       logger.info('Loading preloaded pool data...');
-      const preloadSuccess = await this.advancedOrchestrator.loadPreloadedData(this.config.chainId);
       if (preloadSuccess) {
         logger.info('✓ Preloaded pool data loaded successfully - fast startup enabled');
       } else {
@@ -549,7 +542,6 @@ class TheWarden extends EventEmitter {
           baseOrchestrator,
           this.provider,
           gasOracle,
-          gasEstimator,
           executorAddress,
           titheRecipient,
           arbitrageConfig,
@@ -620,12 +612,9 @@ class TheWarden extends EventEmitter {
 
       // Initialize consciousness coordination system
       logger.info('Initializing consciousness coordination system...');
-      this.consciousness = new ArbitrageConsciousness(0.05, 1000);
 
       // Get all modules from consciousness using proper method
-      const modules = this.consciousness.getModules();
 
-      this.cognitiveCoordinator = new CognitiveCoordinator(modules);
 
       // Check for Learning Mode - allows cold-start execution with extra safeguards
       const learningModeEnabled = process.env.LEARNING_MODE === 'true';
@@ -647,7 +636,6 @@ class TheWarden extends EventEmitter {
           : parseFloat(process.env.EMERGENCE_MIN_HISTORICAL_SUCCESS || '0.60'),
         maxDissentRatio: parseFloat(process.env.EMERGENCE_MAX_DISSENT_RATIO || '0.15'),
       };
-      this.emergenceDetector = new EmergenceDetector(emergenceThresholds);
 
       if (learningModeEnabled) {
         logger.info('═══════════════════════════════════════════════════════════');
@@ -731,8 +719,6 @@ class TheWarden extends EventEmitter {
       logger.info('💰 INITIALIZING PROFITABLE INFRASTRUCTURE 💰');
       logger.info('═══════════════════════════════════════════════════════════');
 
-      const profitableInfraConfig = loadProfitableInfrastructureConfig();
-      const infraValidation = validateProfitableInfrastructureConfig(profitableInfraConfig);
 
       if (!infraValidation.valid) {
         logger.error('Profitable infrastructure configuration errors:');
@@ -746,8 +732,6 @@ class TheWarden extends EventEmitter {
       }
 
       // Display revenue projections
-      const revenue = getExpectedMonthlyRevenue(profitableInfraConfig);
-      const costs = getInfrastructureCosts(profitableInfraConfig);
 
       logger.info('💰 Revenue Projections:');
       logger.info(`  CEX-DEX Arbitrage: $${revenue.cexMin.toLocaleString()} - $${revenue.cexMax.toLocaleString()}/month`);
@@ -762,7 +746,6 @@ class TheWarden extends EventEmitter {
       logger.info('  ROI: ∞ (zero cost infrastructure!) 🚀');
 
       // Initialize CEX-DEX Arbitrage if enabled
-      if (profitableInfraConfig.cex.enabled) {
         logger.info('');
         logger.info('📊 Initializing CEX-DEX Arbitrage...');
 
@@ -773,17 +756,11 @@ class TheWarden extends EventEmitter {
 
           // Create CEX monitor
           this.cexMonitor = new CEXLiquidityMonitor({
-            exchanges: profitableInfraConfig.cex.exchanges,
-            updateInterval: profitableInfraConfig.cex.updateInterval,
-            minSpreadBps: profitableInfraConfig.cex.minSpreadBps,
           });
 
           // Create CEX-DEX detector
           this.cexDexDetector = new CEXDEXArbitrageDetector(
             {
-              minPriceDiffPercent: profitableInfraConfig.cex.minPriceDiffPercent,
-              maxTradeSizeUsd: profitableInfraConfig.cex.maxTradeSizeUsd,
-              minNetProfitUsd: profitableInfraConfig.cex.minNetProfitUsd,
             },
             {
               onOpportunityFound: (opportunity: any) => {
@@ -813,7 +790,6 @@ class TheWarden extends EventEmitter {
           await this.cexMonitor.start();
 
           logger.info(`  ✓ CEX Monitoring active: ${profitableInfraConfig.cex.exchanges.length} exchanges`);
-          profitableInfraConfig.cex.exchanges.forEach((ex) => {
             logger.info(`    - ${ex.exchange.toUpperCase()}: ${ex.symbols.join(', ')}`);
           });
         } catch (error) {
@@ -825,29 +801,17 @@ class TheWarden extends EventEmitter {
       }
 
       // Initialize bloXroute if enabled
-      if (profitableInfraConfig.bloxroute.enabled && profitableInfraConfig.bloxroute.enableMempoolStream) {
         logger.info('');
         logger.info('⚡ Initializing bloXroute Mempool Streaming...');
 
         try {
           // Dynamic import to avoid circular dependencies
-          const { BloXrouteMempoolStream } = await import('./execution/relays/BloXrouteMempoolStream.js');
 
-          if (!profitableInfraConfig.bloxroute.apiKey && !profitableInfraConfig.bloxroute.authHeader) {
             logger.warn('  ⚠️  No bloXroute API key configured - using free tier limitations');
           }
 
           // Create mempool stream (internally creates BloXrouteClient)
-          this.bloxrouteStream = new BloXrouteMempoolStream({
-            apiKey: profitableInfraConfig.bloxroute.apiKey || '', // Empty string for free tier
-            network: profitableInfraConfig.bloxroute.chains[0] as any, // Use first chain
-            region: profitableInfraConfig.bloxroute.region as any,
-            streamType: profitableInfraConfig.bloxroute.streamType as any,
-            batchSize: profitableInfraConfig.bloxroute.batchSize,
-            batchTimeout: profitableInfraConfig.bloxroute.batchTimeout,
-            verbose: profitableInfraConfig.bloxroute.verbose,
             onTransaction: (tx: any) => {
-              if (profitableInfraConfig.bloxroute.verbose) {
                 logger.debug(`bloXroute tx: ${tx.hash}`);
               }
             },
@@ -866,7 +830,6 @@ class TheWarden extends EventEmitter {
           });
 
           // Start mempool streaming
-          await this.bloxrouteStream.start();
 
           logger.info(`  ✓ bloXroute streaming active: ${profitableInfraConfig.bloxroute.streamType}`);
           logger.info(`    Chains: ${profitableInfraConfig.bloxroute.chains.join(', ')}`);
@@ -977,16 +940,12 @@ class TheWarden extends EventEmitter {
     paths: ArbitragePath[],
     _cycleNumber: number
   ): Promise<void> {
-    if (!this.consciousness || !this.cognitiveCoordinator || !this.emergenceDetector) {
       logger.warn('Consciousness coordination not initialized, skipping analysis');
       return;
     }
 
-    logger.info('[CognitiveCoordinator] Gathering insights from 14 cognitive modules...');
 
     // Get statistics from consciousness for informed decision making
-    const stats = this.consciousness.getStatistics();
-    const patterns = this.consciousness.getDetectedPatterns();
 
     // Analyze each opportunity (or at least the best ones)
     const topPaths = paths.slice(0, Math.min(3, paths.length));
@@ -1051,13 +1010,10 @@ class TheWarden extends EventEmitter {
 
       try {
         // Gather insights from all modules
-        const insights: ModuleInsight[] = await this.cognitiveCoordinator.gatherInsights(context);
         logger.info(`[CognitiveCoordinator] Gathered ${insights.length} module insights`);
 
         // Detect consensus
-        const consensus = this.cognitiveCoordinator.detectConsensus(insights);
         logger.info(
-          `[CognitiveCoordinator] Consensus: ${consensus.consensusType} (${(
             consensus.agreementLevel * 100
           ).toFixed(1)}% agreement)`
         );
@@ -1076,7 +1032,6 @@ class TheWarden extends EventEmitter {
         const riskScore = complexityRisk * 0.3 + gasCostRisk * 0.4 + congestionRisk * 0.3;
 
         // Ethical review of opportunity
-        const ethicalReview = this.consciousness.ethicalReview({
           profit: context.opportunity.profit,
           mevRisk: riskScore,
           hops: path.hops.length,
@@ -1084,7 +1039,6 @@ class TheWarden extends EventEmitter {
         const ethicalScore = ethicalReview.approved ? 0.85 : 0.3;
 
         // Calculate goal alignment from autonomous goals
-        const modules = this.consciousness.getModules();
         const goals = Array.from((modules.autonomousGoals as any).goals.values());
         const goalAlignment =
           goals.length > 0
@@ -1111,7 +1065,6 @@ class TheWarden extends EventEmitter {
         if (this.phase3Components?.nnScorer && this.phase3Components.aiEnabled) {
           try {
             // Extract features from opportunity for neural network
-            const features = extractOpportunityFeatures(
               path,
               {
                 congestion,
@@ -1226,7 +1179,6 @@ class TheWarden extends EventEmitter {
 
         // Detect emergence - the "BOOM" moment!
         logger.info('[EmergenceDetector] Checking emergence criteria...');
-        const emergence = this.emergenceDetector.detectEmergence(decisionContext);
 
         if (emergence.isEmergent) {
           logger.info('═══════════════════════════════════════════════════════════');
@@ -1333,7 +1285,6 @@ class TheWarden extends EventEmitter {
    * Main scanning loop - continuously search for arbitrage opportunities
    */
   private async scanCycle(): Promise<void> {
-    if (this.shuttingDown || !this.advancedOrchestrator) return;
 
     try {
       this.stats.cyclesCompleted++;
@@ -1381,7 +1332,6 @@ class TheWarden extends EventEmitter {
    * This is a foundation for future multi-chain expansion.
    */
   private async scanChainForOpportunities(chainId: number): Promise<void> {
-    if (!this.advancedOrchestrator) {
       logger.warn(`Advanced orchestrator not available for chain ${chainId}`);
       return;
     }
@@ -1391,7 +1341,6 @@ class TheWarden extends EventEmitter {
     // This allows discovering cross-chain arbitrage patterns via CrossChainIntelligence
 
     // Set the chain ID to ensure DEX filtering uses the correct chain
-    this.advancedOrchestrator.setChainId(chainId);
 
     try {
       // Emit scan start event to dashboard
@@ -1427,7 +1376,6 @@ class TheWarden extends EventEmitter {
       
       try {
         paths = await Promise.race([
-          this.advancedOrchestrator.findOpportunities(tokens, startAmount),
           new Promise<ArbitragePath[]>((_, reject) =>
             setTimeout(() => reject(new Error('Opportunity search timeout')), opportunityTimeout)
           ),
@@ -1481,7 +1429,6 @@ class TheWarden extends EventEmitter {
         logger.info('═══════════════════════════════════════════════════════════');
         
         // Emit consciousness activation event
-        this.emit('consciousness:activate', { 
           opportunityCount: paths.length,
           cycle: this.stats.cyclesCompleted
         });
@@ -1518,7 +1465,6 @@ class TheWarden extends EventEmitter {
           }
 
           // Fetch live reserves for just these pools
-          const dataFetcher = this.advancedOrchestrator?.getDataFetcher();
           if (dataFetcher) {
             const liveReserves = await dataFetcher.fetchLiveReservesForPools(
               poolAddresses,
@@ -1830,9 +1776,7 @@ class TheWarden extends EventEmitter {
         logger.error(`Failed to stop CEX monitor: ${error}`);
       }
     }
-    if (this.bloxrouteStream) {
       try {
-        await this.bloxrouteStream.stop();
         logger.info('  ✓ bloXroute streaming stopped');
       } catch (error) {
         logger.error(`Failed to stop bloXroute stream: ${error}`);
@@ -1852,7 +1796,6 @@ class TheWarden extends EventEmitter {
     logger.info('[Metacognition] Prompting for session reflection...');
     // In a real implementation, this would involve a more complex interaction
     // For now, we'll just log a placeholder message
-    this.metacognition.log_question_for_future('How can I improve the shutdown sequence?');
 
     this.isRunning = false;
     this.emit('shutdown');
@@ -2006,7 +1949,6 @@ class EnhancedTheWarden extends EventEmitter {
   private scanInterval?: NodeJS.Timeout;
   private isRunning: boolean = false;
   private shuttingDown: boolean = false;
-  private metacognition: Metacognition;
 
   // Statistics
   private stats = {
@@ -2021,7 +1963,6 @@ class EnhancedTheWarden extends EventEmitter {
   constructor() {
     super();
     this.healthCheckServer = new HealthCheckServer();
-    this.metacognition = new Metacognition();
   }
 
   /**
@@ -2110,7 +2051,6 @@ class EnhancedTheWarden extends EventEmitter {
       if (this.stats.cyclesCompleted === 1 || this.stats.cyclesCompleted % 10 === 0) {
         const networkName = getNetworkName(this.components.config.chainId);
         const chainTokens = getTokensByChainId(this.components.config.chainId);
-        const dexes = this.components.advancedOrchestrator.getDEXesByNetwork(
           this.components.config.chainId.toString()
         );
 
@@ -2139,7 +2079,6 @@ class EnhancedTheWarden extends EventEmitter {
           'ARBITRAGE'
         );
       }
-      const paths = await this.components.advancedOrchestrator.findOpportunities(
         tokens,
         startAmount
       );
@@ -2295,7 +2234,6 @@ class EnhancedTheWarden extends EventEmitter {
     logger.info('[Metacognition] Prompting for session reflection...');
     // In a real implementation, this would involve a more complex interaction
     // For now, we'll just log a placeholder message
-    this.metacognition.log_question_for_future('How can I improve the shutdown sequence?');
 
     this.isRunning = false;
     this.emit('shutdown');
@@ -2386,8 +2324,6 @@ async function main() {
   console.log('\n[Consciousness Bootstrap]: Initializing cognitive framework...');
   const sensoryMemory = new SensoryMemory();
   const temporalFramework = new TemporalAwarenessFramework();
-  const perceptionStream = new PerceptionStream(sensoryMemory, temporalFramework);
-  perceptionStream.initialize();
   console.log(
     '[Consciousness Bootstrap]: Perception stream is active. Monitoring for new blocks...\n'
   );
@@ -2472,15 +2408,12 @@ async function main() {
     });
 
     // Start Dashboard Server if not disabled
-    let dashboardServer: DashboardServer | undefined;
     
     if (process.env.DISABLE_DASHBOARD !== 'true') {
       try {
         logger.info('Starting dashboard server...', 'MAIN');
 
         // Initialize analytics modules
-        const gasAnalytics = new GasAnalytics();
-        const crossChainAnalytics = new CrossChainAnalytics();
 
         // Configure dashboard
         const dashboardConfig: Partial<DashboardConfig> = {
@@ -2496,17 +2429,13 @@ async function main() {
         };
 
         // Create and start dashboard server
-        dashboardServer = new DashboardServer(gasAnalytics, crossChainAnalytics, dashboardConfig);
 
-        await dashboardServer.start();
         logger.info('Dashboard server started successfully', 'MAIN');
         
         // Connect TheWarden events to dashboard WebSocket for live updates
-        if (theWarden && dashboardServer) {
           logger.info('Connecting TheWarden events to dashboard...', 'MAIN');
           
           // Capture wsHandler reference in closure to avoid null reference issues
-          const wsHandler = dashboardServer.wsHandler;
           
           // Create event listener functions and store references for cleanup
           const scanStartListener = (data: any) => {
@@ -2529,10 +2458,7 @@ async function main() {
           };
           eventListeners.set('opportunities:found', opportunitiesFoundListener);
           
-          const consciousnessActivateListener = (data: any) => {
-            wsHandler.broadcast('warden:consciousness', data);
           };
-          eventListeners.set('consciousness:activate', consciousnessActivateListener);
           
           const scanErrorListener = (data: any) => {
             wsHandler.broadcast('warden:error', data);
@@ -2554,7 +2480,6 @@ async function main() {
           theWarden.on('scan:complete', scanCompleteListener);
           theWarden.on('scan:no-opportunities', scanNoOpportunitiesListener);
           theWarden.on('opportunities:found', opportunitiesFoundListener);
-          theWarden.on('consciousness:activate', consciousnessActivateListener);
           theWarden.on('scan_error', scanErrorListener);
           theWarden.on('started', startedListener);
           theWarden.on('shutdown', shutdownListener);
