@@ -457,7 +457,7 @@ export class MultiHopDataFetcher {
 
         if (poolData.reserve0 > threshold) {
           poolsFound++;
-          // Create edge for this token pair direction
+          // Create edge for token0 → token1 direction
           edges.push({
             poolAddress: poolData.poolAddress,
             dexName: dex.name,
@@ -465,6 +465,19 @@ export class MultiHopDataFetcher {
             tokenOut: token1,
             reserve0: poolData.reserve0,
             reserve1: poolData.reserve1,
+            fee: this.getDEXFee(dex),
+            gasEstimate: dex.gasEstimate || 150000,
+          });
+
+          // Create REVERSE edge for token1 → token0 direction (S38 fix)
+          // Swap reserves so reserve0=input side, reserve1=output side
+          edges.push({
+            poolAddress: poolData.poolAddress,
+            dexName: dex.name,
+            tokenIn: token1,
+            tokenOut: token0,
+            reserve0: poolData.reserve1,
+            reserve1: poolData.reserve0,
             fee: this.getDEXFee(dex),
             gasEstimate: dex.gasEstimate || 150000,
           });
