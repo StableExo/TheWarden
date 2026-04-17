@@ -384,10 +384,10 @@ export class MultiHopDataFetcher {
     // Generate all token pair + DEX combinations for parallel fetching
     const fetchTasks: Array<{ token0: string; token1: string; dex: DEXConfig }> = [];
 
+    // S39 Fix: Only iterate unique pairs (i < j) since reverse edges handle both directions.
+    // This eliminates duplicate edges with wrong reserve mapping AND halves the fetch count.
     for (let i = 0; i < tokens.length; i++) {
-      for (let j = 0; j < tokens.length; j++) {
-        if (i === j) continue;
-
+      for (let j = i + 1; j < tokens.length; j++) {
         const token0 = tokens[i];
         const token1 = tokens[j];
 
@@ -606,12 +606,29 @@ export class MultiHopDataFetcher {
           return null;
         }
 
-        // Use liquidity value for both reserves as a proxy
-        // This allows threshold comparisons while acknowledging the limitation
-        // TODO: Implement proper V3 reserve calculation using sqrtPriceX96 and tick data
+        // S39 Fix: Proper V3 virtual reserve calculation using sqrtPriceX96
+        // sqrtPriceX96 = sqrt(token1/token0) * 2^96
+        // Virtual reserves for constant product approximation:
+        //   reserve0 (token0) = L * 2^96 / sqrtPriceX96
+        //   reserve1 (token1) = L * sqrtPriceX96 / 2^96
+        const sqrtPriceX96BigInt = BigInt(_slot0[0].toString());
+        const Q96 = BigInt(2) ** BigInt(96);
+
+        if (sqrtPriceX96BigInt === BigInt(0)) {
+          return null;
+        }
+
+        const reserve0 = (liquidityBigInt * Q96) / sqrtPriceX96BigInt;
+        const reserve1 = (liquidityBigInt * sqrtPriceX96BigInt) / Q96;
+
+        // Reject pools with zero virtual reserves
+        if (reserve0 === BigInt(0) || reserve1 === BigInt(0)) {
+          return null;
+        }
+
         return {
-          reserve0: liquidityBigInt,
-          reserve1: liquidityBigInt,
+          reserve0,
+          reserve1,
         };
       }
 
