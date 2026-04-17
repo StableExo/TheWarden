@@ -93,6 +93,26 @@
       "address": "0x667701e51b4d1ca244f17c78f7ab8744b4c99f9b",
       "decimals": 18,
       "symbol": "WSTETH"
+    },
+    "DEGEN": {
+      "address": "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed",
+      "decimals": 18,
+      "symbol": "DEGEN"
+    },
+    "BRETT": {
+      "address": "0x532f27101965dd16442E59d40670FaF5eBB142E4",
+      "decimals": 18,
+      "symbol": "BRETT"
+    },
+    "TOSHI": {
+      "address": "0xAC1Bd2486aAf3B5C0fc3Fd868558b082a531B2B4",
+      "decimals": 18,
+      "symbol": "TOSHI"
+    },
+    "WELL": {
+      "address": "0xA88594D404727625A9437C3f886C7643872296AE",
+      "decimals": 18,
+      "symbol": "WELL"
     }
   },
   "optimism": {
