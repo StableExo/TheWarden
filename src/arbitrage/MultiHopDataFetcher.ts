@@ -13,6 +13,7 @@ import {
   getCreate2Address,
   keccak256,
   solidityPacked,
+  Network,
 } from 'ethers';
 import { DEXRegistry } from '../dex/core/DEXRegistry';
 import { DEXConfig } from '../dex/types';
@@ -191,7 +192,10 @@ export class MultiHopDataFetcher {
           logger.warn('Unknown network "' + network + '" — falling back to BASE_RPC_URL', 'DATAFETCH');
       }
 
-      const provider = new JsonRpcProvider(rpcUrl);
+      // [S35] Use staticNetwork to skip async network auto-detection (prevents timeout)
+      const chainIdNum = parseInt(network) || 8453;
+      const ethersNetwork = Network.from(chainIdNum);
+      const provider = new JsonRpcProvider(rpcUrl, ethersNetwork, { staticNetwork: true });
       this.providers.set(network, provider);
     }
 
@@ -745,7 +749,9 @@ export class MultiHopDataFetcher {
 
     logger.info(`[JIT] Fetching live reserves for ${poolAddresses.length} pools`, 'DATAFETCH');
 
-    const provider = new JsonRpcProvider(rpcUrl);
+    // [S35] Static network to avoid detection timeout
+    const jitNetwork = Network.from(8453);
+    const provider = new JsonRpcProvider(rpcUrl, jitNetwork, { staticNetwork: true });
 
     // Fetch reserves in parallel for speed
     const fetchPromises = poolAddresses.map(async (poolAddress) => {
