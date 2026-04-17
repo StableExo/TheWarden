@@ -188,7 +188,7 @@ export class MultiHopDataFetcher {
         default:
           // Default to BASE_RPC_URL since TheWarden targets Base chain
           rpcUrl = process.env.BASE_RPC_URL || process.env.RPC_URL || 'https://mainnet.base.org';
-          logger.warn(\`Unknown network "\${network}" — falling back to BASE_RPC_URL\`, 'DATAFETCH');
+          logger.warn('Unknown network "' + network + '" — falling back to BASE_RPC_URL', 'DATAFETCH');
       }
 
       const provider = new JsonRpcProvider(rpcUrl);
