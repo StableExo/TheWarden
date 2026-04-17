@@ -1464,7 +1464,11 @@ export class DEXRegistry {
   }
 
   getAllDEXes(): DEXConfig[] {
-    return Array.from(this.dexes.values()).sort((a, b) => a.priority - b.priority);
+    // [S35] Base-only: filter out non-Base DEXes (Solana, BSC, Arbitrum, etc.)
+    // TheWarden currently targets Base chain (8453) exclusively
+    return Array.from(this.dexes.values())
+      .filter((dex) => dex.network === '8453')
+      .sort((a, b) => a.priority - b.priority);
   }
 
   getTopDEXes(count: number = 5): DEXConfig[] {
