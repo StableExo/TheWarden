@@ -177,7 +177,7 @@ export class PathFinder {
     }
 
     const totalFees = hops.reduce((sum, hop) => sum + hop.fee, 0);
-    const totalGas = hops.reduce((sum, hop) => BigInt(hop.gasEstimate), BigInt(0));
+    const totalGas = hops.reduce((sum, hop) => sum + BigInt(hop.gasEstimate), BigInt(0));
     const totalGasCost = totalGas * this.config.gasPrice;
 
     const startAmount = hops[0].amountIn;
