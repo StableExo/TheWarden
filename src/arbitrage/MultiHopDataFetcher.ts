@@ -229,12 +229,16 @@ export class MultiHopDataFetcher {
         return null;
       }
 
+      // S39 Fix: Align reserves to caller's token order, not pool's native order.
+      // getReserves() returns reserves in pool-native order (sorted by address).
+      // If caller's token0 has a HIGHER address than token1, reserves are swapped.
+      const isNativeOrder = token0.toLowerCase() < token1.toLowerCase();
       const poolData: PoolData = {
         poolAddress,
         token0,
         token1,
-        reserve0: reserves.reserve0,
-        reserve1: reserves.reserve1,
+        reserve0: isNativeOrder ? reserves.reserve0 : reserves.reserve1,
+        reserve1: isNativeOrder ? reserves.reserve1 : reserves.reserve0,
       };
 
       // Cache the result with timestamp
