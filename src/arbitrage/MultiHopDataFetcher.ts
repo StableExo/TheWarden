@@ -158,27 +158,37 @@ export class MultiHopDataFetcher {
       // Get RPC URL from environment variables based on network/chainId
       let rpcUrl: string;
 
-      switch (network) {
+      // [S35] Added 'base' alias + better default fallback to BASE_RPC_URL
+      switch (network.toLowerCase()) {
         case '1':
+        case 'ethereum':
+        case 'mainnet':
           rpcUrl =
             process.env.ETHEREUM_RPC_URL ||
             process.env.MAINNET_RPC_URL ||
             'https://eth.llamarpc.com';
           break;
         case '8453':
+        case 'base':
+        case 'base-mainnet':
           rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
           break;
         case '42161':
+        case 'arbitrum':
           rpcUrl = process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc';
           break;
         case '10':
+        case 'optimism':
           rpcUrl = process.env.OPTIMISM_RPC_URL || 'https://mainnet.optimism.io';
           break;
         case '137':
+        case 'polygon':
           rpcUrl = process.env.POLYGON_RPC_URL || 'https://polygon-rpc.com';
           break;
         default:
-          rpcUrl = process.env.RPC_URL || 'https://eth.llamarpc.com';
+          // Default to BASE_RPC_URL since TheWarden targets Base chain
+          rpcUrl = process.env.BASE_RPC_URL || process.env.RPC_URL || 'https://mainnet.base.org';
+          logger.warn(\`Unknown network "\${network}" — falling back to BASE_RPC_URL\`, 'DATAFETCH');
       }
 
       const provider = new JsonRpcProvider(rpcUrl);
