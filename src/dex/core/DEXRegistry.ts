@@ -1472,7 +1472,21 @@ export class DEXRegistry {
   }
 
   getDEXesByNetwork(network: string): DEXConfig[] {
-    return this.getAllDEXes().filter((dex) => dex.network === network);
+    // [S35] Chain-aware filtering: match both chain ID and network name
+    const networkAliases: Record<string, string[]> = {
+      '8453': ['8453', 'base', 'base-mainnet'],
+      'base': ['8453', 'base', 'base-mainnet'],
+      '1': ['1', 'ethereum', 'mainnet', 'eth'],
+      'ethereum': ['1', 'ethereum', 'mainnet', 'eth'],
+      '42161': ['42161', 'arbitrum', 'arbitrum-one'],
+      'arbitrum': ['42161', 'arbitrum', 'arbitrum-one'],
+      '10': ['10', 'optimism'],
+      'optimism': ['10', 'optimism'],
+      '137': ['137', 'polygon', 'matic'],
+      'polygon': ['137', 'polygon', 'matic'],
+    };
+    const aliases = networkAliases[network.toLowerCase()] || [network];
+    return this.getAllDEXes().filter((dex) => aliases.includes(dex.network?.toLowerCase?.() || dex.network));
   }
 
   async validateDEXes(): Promise<boolean> {
