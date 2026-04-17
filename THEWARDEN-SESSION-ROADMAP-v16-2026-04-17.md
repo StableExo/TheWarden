@@ -30,7 +30,7 @@
 - See S38 details below
 
 ## ✅ COMPLETED: S39 — The Mathematician
-- **1 commit** — 3 critical profit calculation bugs fixed
+- **2 commits** — 3 profit bugs fixed + BigInt type mismatch resolved
 - See S39 details below
 
 ---
@@ -51,6 +51,7 @@
 | # | Commit | Change |
 |---|--------|--------|
 | 1 | `e51279f1` | Fix profit=0: deduplicate loop (i<j) + proper V3 reserves from sqrtPriceX96 |
+| 2 | `313860c5` | Fix BigInt type mismatch: gasPrice and minProfitThreshold must be bigint, not string/number |
 
 ### S39 Phase Summary — "The Mathematician"
 
@@ -60,6 +61,7 @@
 | **Bug 1** | V3 reserve proxy broken | ✅ Fixed: now uses sqrtPriceX96 for real virtual reserves |
 | **Bug 2** | Reserve direction mismatch | ✅ Fixed: loop deduplication (i<j) eliminates wrong-direction edges |
 | **Bug 3** | Duplicate edges after S38 reverse fix | ✅ Fixed: i<j + reverse edges = exactly 2 correct edges per pool |
+| **Bug 4** | BigInt type mismatch in config | ✅ Fixed: gasPrice (string→BigInt) + minProfitThreshold (number→BigInt) |
 
 ### S39 Bug Details
 
@@ -85,24 +87,34 @@
 
 ---
 
-## 🟢 CURRENT STATUS — Fixes Deployed, Monitoring Needed
+## 🟢 CURRENT STATUS — Engine Coming Alive
 
 ### What's Working
-- ✅ Service is **LIVE on Railway** (deployment triggered)
+- ✅ Service is **LIVE on Railway** (latest deploy: `313860c5`)
 - ✅ **ZERO scan timeouts** (since S37)
 - ✅ All 13 tokens loaded, all 16 DEXes active
 - ✅ V3 pools now have **real virtual reserves** from sqrtPriceX96
 - ✅ Pool edges deduplicated — exactly 2 per pool (forward + reverse)
-- ✅ Gas price correct: 0.005 Gwei for Base
+- ✅ Gas price correct: 0.005 Gwei for Base (now properly BigInt)
 - ✅ Gas accumulator properly sums all hops
 - ✅ Reverse edges enable bidirectional arbitrage
-- ✅ Pool scan 50% faster (~1,248 checks instead of ~2,496)
+- ✅ Pool scan **confirmed 50% faster** — logs show 1,248 checks (was 2,496)
+- ✅ **67 valid pools found** with sufficient liquidity
+- ✅ All Phase 3 (AI + Security) and Phase 4 (Production) subsystems initializing cleanly
+- ✅ BigInt type mismatch in gasPrice/minProfitThreshold **FIXED**
 
 ### What Needs Monitoring
-- 🔍 **Does PathFinder now find profit > 0?** — The V3 reserve fix + deduplication should surface real opportunities
+- 🔍 **Does PathFinder now find profit > 0?** — BigInt fix was the last type error blocking profit calc
 - 🔍 **Are the V3 virtual reserves accurate enough?** — Concentrated liquidity approximation may need refinement
 - 🔍 **Pool preloading** still not wired into startup (preload script needs tsx)
-- 🔍 **Memory usage** — should improve with deduplicated edges (fewer objects)
+- 🔍 **Memory at ~82.7%** — stable but tight (48.7MB / 58.8MB)
+- 🔍 **Heartbeat timeouts during pool fetch** — cosmetic issue, doesn't affect scan completion
+
+### Live Log Observations (post-deploy)
+- Pool scan: **1,248 checked → 67 valid pools** (confirmed dedup working)
+- Boot sequence: All 13 tokens, 16 DEXes, Phase 3 AI + Security, Phase 4 Production — all clean
+- First error hit: `Cannot mix BigInt and other types` — **FIXED** in commit `313860c5`
+- Engine is coming alive — each deploy cycle gets further into the pipeline
 
 ### Current Railway Env Vars (unchanged from S37)
 ```
