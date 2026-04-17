@@ -442,7 +442,7 @@ class TheWarden extends EventEmitter {
   // Profitable Infrastructure components (CEX-DEX + bloXroute)
   private cexMonitor?: any; // CEXLiquidityMonitor - imported dynamically to avoid circular deps
   private cexDexDetector?: any; // CEXDEXArbitrageDetector
-  private bloxrouteStream?: any; // BloXrouteMempoolStream
+  // bloXroute removed for Base (S38)
 
   // Long-running process manager
   private longRunningManager?: LongRunningManager;
@@ -824,12 +824,10 @@ class TheWarden extends EventEmitter {
 
       logger.info('💰 Revenue Projections:');
       logger.info(`  CEX-DEX Arbitrage: $${revenue.cexMin.toLocaleString()} - $${revenue.cexMax.toLocaleString()}/month`);
-      logger.info(`  bloXroute Advantage: $${revenue.bloxrouteMin.toLocaleString()} - $${revenue.bloxrouteMax.toLocaleString()}/month`);
       logger.info(`  Total Potential: $${revenue.totalMin.toLocaleString()} - $${revenue.totalMax.toLocaleString()}/month`);
       logger.info('');
       logger.info('💸 Infrastructure Costs:');
       logger.info(`  CEX Monitoring: $${costs.cex.toLocaleString()}/month (FREE - WebSocket APIs)`);
-      logger.info(`  bloXroute: $${costs.bloxroute.toLocaleString()}/month (FREE tier for now)`);
       logger.info(`  Total Cost: $${costs.total.toLocaleString()}/month`);
       logger.info(`  Net Revenue: $${(revenue.totalMin - costs.total).toLocaleString()} - $${(revenue.totalMax - costs.total).toLocaleString()}/month`);
       logger.info('  ROI: ∞ (zero cost infrastructure!) 🚀');
@@ -897,8 +895,8 @@ class TheWarden extends EventEmitter {
         logger.info('📊 CEX-DEX Arbitrage: Disabled');
       }
 
-      // Initialize bloXroute if enabled
-      if (profitableInfraConfig.bloxroute.enabled && profitableInfraConfig.bloxroute.enableMempoolStream) {
+      // bloXroute removed for Base (no mempool on L2) — S38 cleanup
+      if (false) { // was: profitableInfraConfig.bloxroute.enabled
         logger.info('');
         logger.info('⚡ Initializing bloXroute Mempool Streaming...');
 
@@ -951,7 +949,7 @@ class TheWarden extends EventEmitter {
           logger.warn('Continuing without bloXroute mempool streaming...');
         }
       } else {
-        logger.info('⚡ bloXroute Mempool Streaming: Disabled');
+        // bloXroute stripped for Base — no mempool on L2
       }
 
       logger.info('═══════════════════════════════════════════════════════════');
