@@ -163,10 +163,11 @@ const CrossChainAnalytics = _createStubClass('CrossChainAnalytics');
 const SensoryMemory = _createStubClass('SensoryMemory');
 const TemporalAwarenessFramework = _createStubClass('TemporalAwarenessFramework');
 const PerceptionStream = _createStubClass('PerceptionStream');
-const ArbitrageConsciousness = _createStubClass('ArbitrageConsciousness');
-const CognitiveCoordinator = _createStubClass('CognitiveCoordinator');
-const EmergenceDetector = _createStubClass('EmergenceDetector');
-const Metacognition = _createStubClass('Metacognition');
+// [S40] Restored real consciousness module imports
+import { ArbitrageConsciousness } from './consciousness/ArbitrageConsciousness';
+import { CognitiveCoordinator } from './consciousness/coordination/CognitiveCoordinator';
+import { EmergenceDetector } from './consciousness/coordination/EmergenceDetector';
+import { Metacognition } from '../consciousness/metacognition';
 const extractOpportunityFeatures = (..._args: any[]) => ({});
 const _featuresToArray = (..._args: any[]) => [];
 const _formatTokenList = (..._args: any[]) => '';
@@ -185,8 +186,7 @@ const WardenBootstrap = _createStubClass('WardenBootstrap');
 import { IntegratedArbitrageOrchestrator } from './execution/IntegratedArbitrageOrchestrator';
 // [S35] Restored real ArbitrageOrchestrator import
 import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
-type OpportunityContext = any;
-type ModuleInsight = any;
+import type { OpportunityContext, ModuleInsight } from './consciousness/coordination/CognitiveCoordinator';
 const getInfrastructureCosts = (..._args: any[]) => ({ cex: 0, bloxroute: 0, total: 0, monthly: 0, rpc: 0 });
 // === END S32 STUBS ===
 // === S33 STUBS: Additional dead module placeholders (deleted in Phase 6 cleanup) ===
