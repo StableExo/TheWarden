@@ -24,3 +24,33 @@ The Axion Citadel repository contains a wide range of components and functionali
 
 ## Conclusion
 The Axion Citadel repository offers valuable components for integration. By following the proposed timeline and strategic recommendations, we can achieve a successful integration process.
+
+---
+
+## ✅ S41 — The Apothecary (COMPLETE)
+
+### Theme: Fix the fee tier mismatch preventing on-chain execution
+
+### What Was Fixed
+- 🔲→✅ **"Execution reverted" (data: 0x)** — Root cause: fee tier mismatch
+  - ALL swap steps sent fee=3000 regardless of actual pool fee (10000, 500, 100)
+  - SwapRouter uses `Factory.getPool(tokenIn, tokenOut, fee)` — wrong fee = address(0) = revert
+  - Fixed across 4 layers of the data pipeline + on-chain fee query as nuclear fallback
+
+### 4 Commits
+| # | SHA | Change |
+|---|-----|--------|
+| 1 | `993e5668` | feeBps * 100 conversion in FlashSwapV3Executor |
+| 2 | `15d0b88f` | Pass actual V3 pool fee from factory discovery to graph edges |
+| 3 | `bf62954a` | On-chain fee query in executor (backup code path) |
+| 4 | `3eeba865` | On-chain fee query in IntegratedArbitrageOrchestrator (actual code path) |
+
+### What Remains for S42
+- 🔲 Verify first successful on-chain swap execution
+- 🔲 Propagate fee through full PoolEdge→PoolState pipeline (remove on-chain query dependency)
+- 🔲 Profit validation accuracy — cached ~0.087 ETH drops 95% to ~0.004 ETH after JIT
+- 🔲 Memory at ~86% — stable but tight
+- 🔲 Profit withdrawal mechanism (UserOp to sweep Smart Wallet → EOA)
+
+---
+
