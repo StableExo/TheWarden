@@ -181,7 +181,8 @@ const loadBloXrouteConfig = (..._args: any[]) => ({});
 type DecisionContext = any;
 type GasEstimationResult = any;
 const WardenBootstrap = _createStubClass('WardenBootstrap');
-const IntegratedArbitrageOrchestrator = _createStubClass('IntegratedArbitrageOrchestrator');
+// [S40] Restored real IntegratedArbitrageOrchestrator from Git history
+import { IntegratedArbitrageOrchestrator } from './execution/IntegratedArbitrageOrchestrator';
 // [S35] Restored real ArbitrageOrchestrator import
 import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
 type OpportunityContext = any;
