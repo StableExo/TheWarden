@@ -40,6 +40,21 @@ interface IV3SwapRouter02 {
     function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);
 }
 
+// S43: V1 SwapRouter Interface (WITH deadline) — PancakeSwap V3, SushiSwap V3
+interface IV3SwapRouter {
+    struct ExactInputSingleParams {
+        address tokenIn;
+        address tokenOut;
+        uint24 fee;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+        uint160 sqrtPriceLimitX96;
+    }
+    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);
+}
+
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
@@ -146,6 +161,8 @@ contract FlashSwapV3 is
         uint24 fee;
         uint256 minOut;
         uint8 dexType;
+        address router;      // S43: Per-hop router address (Uniswap, PancakeSwap, etc.)
+        bool useDeadline;    // S43: true = V1 interface (with deadline), false = V2 (without)
     }
 
     struct UniversalSwapPath {
@@ -565,7 +582,9 @@ contract FlashSwapV3 is
                     step.tokenOut,
                     currentAmount,
                     step.minOut,
-                    step.fee
+                    step.fee,
+                    step.router,
+                    step.useDeadline
                 );
             } else if (step.dexType == DEX_TYPE_SUSHISWAP) {
                 currentAmount = _swapSushiSwap(
@@ -595,26 +614,46 @@ contract FlashSwapV3 is
     }
 
     // --- DEX Swap Functions ---
+    // S43: Multi-router swap — supports both V1 (with deadline) and V2 (without) interfaces
     function _swapUniswapV3(
         address tokenIn,
         address tokenOut,
         uint256 amountIn,
         uint256 minAmountOut,
-        uint24 fee
+        uint24 fee,
+        address router,
+        bool useDeadline
     ) internal returns (uint256 amountOut) {
-        IERC20(tokenIn).approve(address(swapRouter), amountIn);
+        // Use provided router, fallback to default swapRouter
+        address hopRouter = router != address(0) ? router : address(swapRouter);
+        IERC20(tokenIn).approve(hopRouter, amountIn);
         
-        IV3SwapRouter02.ExactInputSingleParams memory params = IV3SwapRouter02.ExactInputSingleParams({
-            tokenIn: tokenIn,
-            tokenOut: tokenOut,
-            fee: fee,
-            recipient: address(this),
-            amountIn: amountIn,
-            amountOutMinimum: minAmountOut,
-            sqrtPriceLimitX96: 0
-        });
-        
-        return swapRouter.exactInputSingle(params);
+        if (useDeadline) {
+            // V1-style router (PancakeSwap V3, SushiSwap V3)
+            IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
+                tokenIn: tokenIn,
+                tokenOut: tokenOut,
+                fee: fee,
+                recipient: address(this),
+                deadline: block.timestamp + DEADLINE_OFFSET,
+                amountIn: amountIn,
+                amountOutMinimum: minAmountOut,
+                sqrtPriceLimitX96: 0
+            });
+            return IV3SwapRouter(hopRouter).exactInputSingle(params);
+        } else {
+            // V2-style router (Uniswap SwapRouter02)
+            IV3SwapRouter02.ExactInputSingleParams memory params = IV3SwapRouter02.ExactInputSingleParams({
+                tokenIn: tokenIn,
+                tokenOut: tokenOut,
+                fee: fee,
+                recipient: address(this),
+                amountIn: amountIn,
+                amountOutMinimum: minAmountOut,
+                sqrtPriceLimitX96: 0
+            });
+            return IV3SwapRouter02(hopRouter).exactInputSingle(params);
+        }
     }
 
     function _swapSushiSwap(
