@@ -1020,7 +1020,7 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
           tokenIn: hop.tokenIn,
           tokenOut: hop.tokenOut,
           fee,
-          minOut: hop.amountOut * BigInt(95) / BigInt(100), // 5% slippage buffer
+          minOut: hop.amountOut * BigInt(50) / BigInt(100), // S42: 50% per-hop slippage (cached estimates are stale; contract's minFinalAmount guards overall profit)
           dexType: dexNameToType(hop.dexName),
         });
       }
