@@ -1001,6 +1001,44 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
         return Math.round(fee * 1_000_000);             // Decimal (0.003 → 3000)
       };
 
+      // S43 Fix: Verify all pools are from the Uniswap V3 Factory.
+      // Pools from other V3 forks (PancakeSwap, SushiSwap, etc.) can't be routed
+      // through the Uniswap V3 SwapRouter02 — the router uses Factory.getPool()
+      // which derives a DIFFERENT address → swap hits wrong pool → SPL revert.
+      const UNISWAP_V3_FACTORY_BASE = '0x33128a8fc17869897dce68ed026d694621f6fdfd';
+      const queryPoolFactory = async (poolAddress: string): Promise<string | null> => {
+        try {
+          const result = await this.provider.call({ to: poolAddress, data: '0xc45a0155' }); // factory()
+          if (result && result !== '0x' && result.length >= 66) {
+            return ('0x' + result.slice(26, 66)).toLowerCase();
+          }
+        } catch { /* not a V3 pool or no factory() method */ }
+        return null;
+      };
+
+      for (const hop of hops) {
+        const factory = await queryPoolFactory(hop.poolAddress);
+        if (factory && factory !== UNISWAP_V3_FACTORY_BASE) {
+          logger.warn(
+            `[V3Pipeline] ⚠️ Pool ${hop.poolAddress.substring(0, 14)}... from non-Uniswap factory ` +
+            `${factory.substring(0, 14)}... — skipping entire opportunity`
+          );
+          return {
+            success: false,
+            stage: ExecutionState.EXECUTING,
+            timestamp: Date.now(),
+            context,
+            errors: [{
+              timestamp: Date.now(),
+              stage: ExecutionState.EXECUTING,
+              errorType: 'WRONG_FACTORY',
+              message: `Pool ${hop.poolAddress.substring(0, 14)}... not from Uniswap V3 Factory (factory=${factory.substring(0, 14)}...)`,
+              recoverable: false,
+            }],
+          };
+        }
+      }
+
       // Convert ArbitrageHop[] to SwapStep[] — with on-chain fee verification
       const steps: import('./FlashSwapV3Executor').SwapStep[] = [];
       for (const hop of hops) {
