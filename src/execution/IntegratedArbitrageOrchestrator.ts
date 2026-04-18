@@ -984,22 +984,46 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
         return 0; // Default: UNISWAP_V3
       };
 
-      // Convert fee from decimal (0.003) to uint24 fee tier (3000)
+      // S41 Fix: Query actual pool fee on-chain for V3-style pools.
+      // The data pipeline may pass 0.003 (default) instead of actual fee.
+      // The SwapRouter uses Factory.getPool(tokenIn, tokenOut, fee) — wrong fee = revert(0x).
+      const queryPoolFee = async (poolAddress: string): Promise<number | null> => {
+        try {
+          const result = await this.provider.call({ to: poolAddress, data: '0xddca3f43' }); // fee()
+          if (result && result !== '0x') return parseInt(result, 16);
+        } catch { /* not a V3 pool */ }
+        return null;
+      };
+
       const feeToUint24 = (fee: number): number => {
         if (fee >= 100) return Math.round(fee);         // Already uint24 (e.g. 3000)
-        if (fee >= 1) return Math.round(fee * 100);     // Percentage (e.g. 0.3 → 30 — unlikely)
+        if (fee >= 1) return Math.round(fee * 100);     // Percentage
         return Math.round(fee * 1_000_000);             // Decimal (0.003 → 3000)
       };
 
-      // Convert ArbitrageHop[] to SwapStep[]
-      const steps: import('./FlashSwapV3Executor').SwapStep[] = hops.map((hop) => ({
-        pool: hop.poolAddress,
-        tokenIn: hop.tokenIn,
-        tokenOut: hop.tokenOut,
-        fee: feeToUint24(hop.fee),
-        minOut: hop.amountOut * BigInt(95) / BigInt(100), // 5% slippage buffer
-        dexType: dexNameToType(hop.dexName),
-      }));
+      // Convert ArbitrageHop[] to SwapStep[] — with on-chain fee verification
+      const steps: import('./FlashSwapV3Executor').SwapStep[] = [];
+      for (const hop of hops) {
+        let fee = feeToUint24(hop.fee);
+
+        // If fee would be the common default (3000), verify against on-chain
+        if (fee === 3000) {
+          const onChainFee = await queryPoolFee(hop.poolAddress);
+          if (onChainFee !== null && onChainFee !== 3000) {
+            logger.info(`[V3Pipeline] Fee override: pool ${hop.poolAddress.substring(0, 14)}... pipeline=${fee} → on-chain=${onChainFee}`);
+            fee = onChainFee;
+          }
+        }
+
+        steps.push({
+          pool: hop.poolAddress,
+          tokenIn: hop.tokenIn,
+          tokenOut: hop.tokenOut,
+          fee,
+          minOut: hop.amountOut * BigInt(95) / BigInt(100), // 5% slippage buffer
+          dexType: dexNameToType(hop.dexName),
+        });
+      }
 
       const borrowToken = path.startToken;
       const borrowAmount = hops[0].amountIn;
