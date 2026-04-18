@@ -332,11 +332,22 @@ export class FlashSwapV3Executor {
         ? (baseAmount * BigInt(Math.floor((1 - slippage) * 10000))) / BASIS_POINTS_DIVISOR
         : 0n;
 
+      // S41 Fix: Convert feeBps (basis points, e.g. 30 = 0.3%) to Uniswap V3 fee units
+      // (e.g. 3000 = 0.3%). Uniswap V3 fee = feeBps * 100.
+      // The SwapRouter uses Factory.getPool(tokenIn, tokenOut, fee) — wrong fee = pool not found = revert(0x).
+      let v3Fee: number;
+      if (swap.feeBps && swap.feeBps > 0) {
+        v3Fee = swap.feeBps * 100;
+      } else {
+        logger.warn(`[constructSwapPath] Missing feeBps for ${swap.tokenIn.substring(0, 10)}→${swap.tokenOut.substring(0, 10)} on ${swap.protocol}, defaulting to 3000`);
+        v3Fee = DEFAULT_FEE_BPS;
+      }
+
       steps.push({
         pool: swap.poolAddress,
         tokenIn: swap.tokenIn,
         tokenOut: swap.tokenOut,
-        fee: swap.feeBps || DEFAULT_FEE_BPS,
+        fee: v3Fee,
         minOut,
         dexType,
       });
