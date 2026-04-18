@@ -214,7 +214,8 @@ contract FlashSwapV3 is
         address _aaveAddressesProvider,
         address _v3Factory,
         address payable _titheRecipient,
-        uint16 _titheBps
+        uint16 _titheBps,
+        address payable _owner
     ) {
         require(_uniswapV3Router != address(0), "FSV3:IUR");
         require(_sushiRouter != address(0), "FSV3:ISR");
@@ -236,7 +237,8 @@ contract FlashSwapV3 is
         
         v3Factory = _v3Factory;
         aaveAddressesProvider = _aaveAddressesProvider;
-        owner = payable(msg.sender);
+        require(_owner != address(0), "FSV3:IOW");
+        owner = _owner;
         titheRecipient = _titheRecipient;
         titheBps = _titheBps;
     }
