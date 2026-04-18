@@ -25,7 +25,22 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // --- Uniswap Imports ---
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+// S42: Replaced ISwapRouter V1 (with deadline) → IV3SwapRouter02 V2 (without deadline)
+// --- SwapRouter02 Interface (V2 — no deadline, S42 fix) ---
+interface IV3SwapRouter02 {
+    struct ExactInputSingleParams {
+        address tokenIn;
+        address tokenOut;
+        uint24 fee;
+        address recipient;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+        uint160 sqrtPriceLimitX96;
+    }
+    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);
+}
+
+
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
@@ -104,7 +119,7 @@ contract FlashSwapV3 is
     uint8 constant DEX_TYPE_UNISWAP_V4 = 6;
 
     // --- State Variables ---
-    ISwapRouter public immutable swapRouter;
+    IV3SwapRouter02 public immutable swapRouter;
     IUniswapV2Router02 public immutable sushiRouter;
     IBalancerVault public immutable balancerVault;
     ISoloMargin public immutable dydxSoloMargin;
@@ -229,7 +244,7 @@ contract FlashSwapV3 is
             require(_titheRecipient != address(0), "FSV3:ITR");
         }
 
-        swapRouter = ISwapRouter(_uniswapV3Router);
+        swapRouter = IV3SwapRouter02(_uniswapV3Router);
         sushiRouter = IUniswapV2Router02(_sushiRouter);
         balancerVault = IBalancerVault(_balancerVault);
         dydxSoloMargin = ISoloMargin(_dydxSoloMargin);
@@ -589,12 +604,11 @@ contract FlashSwapV3 is
     ) internal returns (uint256 amountOut) {
         IERC20(tokenIn).approve(address(swapRouter), amountIn);
         
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+        IV3SwapRouter02.ExactInputSingleParams memory params = IV3SwapRouter02.ExactInputSingleParams({
             tokenIn: tokenIn,
             tokenOut: tokenOut,
             fee: fee,
             recipient: address(this),
-            deadline: block.timestamp + DEADLINE_OFFSET,
             amountIn: amountIn,
             amountOutMinimum: minAmountOut,
             sqrtPriceLimitX96: 0
