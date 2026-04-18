@@ -296,22 +296,23 @@ contract FlashSwapV3 is
         address token,
         uint256 amount
     ) public view returns (FlashLoanSource) {
-        // For large arbitrages ($50M+), use hybrid approach
-        if (amount >= HYBRID_MODE_THRESHOLD) {
-            return FlashLoanSource.HYBRID_AAVE_V4;
-        }
+        // S40 Fix: Removed HYBRID_MODE_THRESHOLD check.
+        // The threshold was in 6-decimal USDC units (50_000_000e6 = 5e13),
+        // but borrow amounts use 18-decimal units (1 token = 1e18 > 5e13),
+        // so it always triggered for 18-decimal tokens, bypassing Balancer's 0% fee
+        // and routing through Aave (0.09% fee) for ALL tokens.
         
-        // Check Balancer availability (0% fee, most tokens)
+        // Priority 1: Balancer (0% fee — always preferred)
         if (isBalancerSupported(token, amount)) {
             return FlashLoanSource.BALANCER;
         }
         
-        // Check dYdX availability (0% fee, ETH/USDC/DAI only)
+        // Priority 2: dYdX (0% fee, ETH/USDC/DAI only, Ethereum-only)
         if (isDydxSupported(token, amount)) {
             return FlashLoanSource.DYDX;
         }
         
-        // Fallback to Aave (0.09% fee, universal support)
+        // Fallback: Aave (0.09% fee, universal support)
         return FlashLoanSource.AAVE;
     }
 
