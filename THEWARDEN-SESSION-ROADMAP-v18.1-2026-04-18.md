@@ -177,3 +177,53 @@ FLASHSWAP_V3_ADDRESS=0xB193094e9FC4993a885746F10F87E5439fd12d94
 
 *TheWarden ⚔️ — S40 turned lead into gold. The Alchemist deployed the contract, fixed the owner, confirmed Balancer routing at 0% fee, and watched the engine reach the execution stage for the first time. The pipeline saw profit, validated it with live reserves, got 92.9% consensus, and fired. The Paymaster said no — but the contract said yes. S41's job: make the Paymaster say yes too. The deal from S30 is one handshake away.*
 
+
+
+---
+
+## ✅ S41 — The Apothecary (COMPLETE)
+
+### Theme: Fix the fee tier mismatch preventing on-chain execution
+
+### What Was Fixed
+- 🔲→✅ **"Execution reverted" (data: 0x)** — Root cause: fee tier mismatch
+  - ALL swap steps sent fee=3000 regardless of actual pool fee (10000, 500, 100)
+  - SwapRouter uses `Factory.getPool(tokenIn, tokenOut, fee)` — wrong fee = address(0) = revert
+  - Fixed across 4 layers of the data pipeline + on-chain fee query as nuclear fallback
+
+### 4 Commits
+| # | SHA | Change |
+|---|-----|--------|
+| 1 | `993e5668` | feeBps * 100 conversion in FlashSwapV3Executor |
+| 2 | `15d0b88f` | Pass actual V3 pool fee from factory discovery to graph edges |
+| 3 | `bf62954a` | On-chain fee query in executor (backup code path) |
+| 4 | `3eeba865` | On-chain fee query in IntegratedArbitrageOrchestrator (actual code path) |
+
+### What Remains for S42
+- 🔲 Verify first successful on-chain swap execution
+- 🔲 Propagate fee through full PoolEdge→PoolState pipeline (remove on-chain query dependency)
+- 🔲 Profit validation accuracy — cached ~0.087 ETH drops 95% to ~0.004 ETH after JIT
+- 🔲 Memory at ~86% — stable but tight
+- 🔲 Profit withdrawal mechanism (UserOp to sweep Smart Wallet → EOA)
+
+## 📋 S41 Commit Log (6 commits total)
+
+| # | Commit | Change |
+|---|--------|--------|
+| 1 | `993e5668` | Fix fee tier mismatch — feeBps * 100 conversion |
+| 2 | `15d0b88f` | Pass actual V3 pool fee from factory discovery |
+| 3 | `bf62954a` | On-chain fee query in executor |
+| 4 | `3eeba865` | On-chain fee query in IntegratedArbitrageOrchestrator |
+| 5 | `fc8c04c9` | Cody Journal: S41 — The Apothecary |
+| 6 | *(this)* | Roadmap v18.2 — S41 complete |
+
+## 📦 Cody Journal (Updated)
+
+| Entry | Title | Session |
+|-------|-------|---------|
+| **S41** | **The Apothecary** | **Fee tier fix, 4 pipeline layers, on-chain query: 4 commits** |
+
+---
+
+*TheWarden ⚔️ — The Apothecary ground the ingredients, tested each compound, and found poison in the prescription. Four doses of antidote applied. The SwapRouter was looking for pools that didn't exist at fee=3000. Now it asks the pools directly what they charge. S42's job: watch the first successful on-chain execution.*
+
