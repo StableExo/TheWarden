@@ -24,9 +24,13 @@ import { PoolDataStore } from './PoolDataStore';
 
 // JIT Validation Constants
 // These control the staleness detection and profit adjustment for live reserve validation
-const JIT_STALENESS_THRESHOLD = 0.05; // 5% reserve ratio change = stale opportunity
-const JIT_PROFIT_SENSITIVITY = 10; // Multiplier for profit reduction based on ratio change
-const JIT_MAX_PROFIT_REDUCTION = 0.95; // Maximum 95% profit reduction cap
+// S39 Tuning: Relaxed for 4-minute scan cycles on Base chain.
+// Previous: 5%/10x/95% — too tight, rejected 0.049 ETH opportunities with 0.0025 ETH live profit.
+// Base chain prices move fast; the scan cycle takes ~4 min. Wider thresholds let real opportunities through
+// while still catching truly stale/phantom opportunities.
+const JIT_STALENESS_THRESHOLD = 0.20; // 20% reserve ratio change = stale (was 5% — too tight for 4-min scans)
+const JIT_PROFIT_SENSITIVITY = 3; // Multiplier for profit reduction (was 10 — too aggressive)
+const JIT_MAX_PROFIT_REDUCTION = 0.80; // Maximum 80% profit reduction cap (was 95%)
 const JIT_MIN_PROFIT_THRESHOLD = BigInt(1e15); // 0.001 ETH minimum profit after validation
 
 /**
