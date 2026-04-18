@@ -157,8 +157,9 @@ function _createStubClass(name: string) {
 const DashboardServer = _createStubClass('DashboardServer');
 const DashboardConfig = null as any; // not constructed, just config object
 const GasAnalytics = _createStubClass('GasAnalytics');
-const GasPriceOracle = _createStubClass('GasPriceOracle');
-const AdvancedGasEstimator = _createStubClass('AdvancedGasEstimator');
+// [S40] Restored real gas module imports
+import { GasPriceOracle } from './gas/GasPriceOracle';
+import { AdvancedGasEstimator } from './gas/AdvancedGasEstimator';
 const CrossChainAnalytics = _createStubClass('CrossChainAnalytics');
 const SensoryMemory = _createStubClass('SensoryMemory');
 const TemporalAwarenessFramework = _createStubClass('TemporalAwarenessFramework');
