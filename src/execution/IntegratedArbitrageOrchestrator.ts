@@ -942,6 +942,133 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
   }
 
   /**
+   * Phase 3: Execute via V3 executor (UserOps + CDP Paymaster)
+   * Converts pipeline ArbitragePath to V3 UniversalSwapPath format.
+   */
+  private async executeViaV3(context: ExecutionContext): Promise<CheckpointResult> {
+    if (!this.v3Executor) {
+      return {
+        success: false,
+        stage: ExecutionState.EXECUTING,
+        timestamp: Date.now(),
+        context,
+        errors: [{
+          timestamp: Date.now(),
+          stage: ExecutionState.EXECUTING,
+          errorType: 'NO_V3_EXECUTOR',
+          message: 'V3 executor not initialized',
+          recoverable: false,
+        }],
+      };
+    }
+
+    try {
+      this.activeExecutions.set(context.id, context);
+
+      const path = context.path;
+      const hops = path.hops;
+
+      if (!hops || hops.length === 0) {
+        throw new Error('No hops in arbitrage path');
+      }
+
+      // Map dexName string to DexType enum value (see FlashSwapV3Executor.DexType)
+      const dexNameToType = (name: string): number => {
+        const n = name.toLowerCase().replace(/[\s_-]/g, '');
+        if (n.includes('sushi')) return 1;       // SUSHISWAP
+        if (n.includes('dodo')) return 2;        // DODO
+        if (n.includes('aerodrome')) return 3;   // AERODROME
+        if (n.includes('balancer')) return 4;    // BALANCER
+        if (n.includes('curve')) return 5;       // CURVE
+        if (n.includes('uniswapv4') || n.includes('univ4')) return 6; // UNISWAP_V4
+        return 0; // Default: UNISWAP_V3
+      };
+
+      // Convert fee from decimal (0.003) to uint24 fee tier (3000)
+      const feeToUint24 = (fee: number): number => {
+        if (fee >= 100) return Math.round(fee);         // Already uint24 (e.g. 3000)
+        if (fee >= 1) return Math.round(fee * 100);     // Percentage (e.g. 0.3 → 30 — unlikely)
+        return Math.round(fee * 1_000_000);             // Decimal (0.003 → 3000)
+      };
+
+      // Convert ArbitrageHop[] to SwapStep[]
+      const steps: import('./FlashSwapV3Executor').SwapStep[] = hops.map((hop) => ({
+        pool: hop.poolAddress,
+        tokenIn: hop.tokenIn,
+        tokenOut: hop.tokenOut,
+        fee: feeToUint24(hop.fee),
+        minOut: hop.amountOut * BigInt(95) / BigInt(100), // 5% slippage buffer
+        dexType: dexNameToType(hop.dexName),
+      }));
+
+      const borrowToken = path.startToken;
+      const borrowAmount = hops[0].amountIn;
+
+      const swapPath: UniversalSwapPath = {
+        steps,
+        borrowAmount,
+        minFinalAmount: borrowAmount, // Must at least recover borrowed amount
+      };
+
+      logger.info(
+        `[IntegratedOrchestrator] V3 pipeline execution: ` +
+        `token=${borrowToken.substring(0, 10)}... amount=${borrowAmount} hops=${steps.length}`
+      );
+
+      // Execute via V3 executor — routes through Smart Wallet + CDP Paymaster
+      const result = await this.v3Executor.executeArbitrage(borrowToken, borrowAmount, swapPath);
+
+      // Update context with transaction identifiers
+      context.transactionHash = result.txHash || result.userOpHash;
+
+      if (result.success) {
+        logger.info(
+          `[IntegratedOrchestrator] ✅ V3 pipeline SUCCESS: ` +
+          `txHash=${result.txHash} profit=${result.netProfit} method=${result.executionMethod}`
+        );
+      } else {
+        logger.error(`[IntegratedOrchestrator] ❌ V3 pipeline FAILED: ${result.error}`);
+      }
+
+      return {
+        success: result.success,
+        stage: ExecutionState.EXECUTING,
+        timestamp: Date.now(),
+        context,
+        errors: result.success ? undefined : [{
+          timestamp: Date.now(),
+          stage: ExecutionState.EXECUTING,
+          errorType: 'V3_EXECUTION_FAILED',
+          message: result.error || 'V3 execution failed',
+          recoverable: true,
+        }],
+      };
+    } catch (error) {
+      logger.error(
+        `[IntegratedOrchestrator] V3 execution error: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+
+      return {
+        success: false,
+        stage: ExecutionState.EXECUTING,
+        timestamp: Date.now(),
+        context,
+        errors: [{
+          timestamp: Date.now(),
+          stage: ExecutionState.EXECUTING,
+          errorType: 'V3_EXECUTION_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown V3 error',
+          recoverable: true,
+        }],
+      };
+    } finally {
+      this.activeExecutions.delete(context.id);
+    }
+  }
+
+  /**
    * Monitoring stage implementation
    */
   private async monitorStage(context: ExecutionContext): Promise<CheckpointResult> {
