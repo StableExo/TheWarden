@@ -395,8 +395,8 @@ export class OptimizedPoolScanner {
               if (meetsThreshold) {
                 poolsFound++;
                 dexStat.found++;
-                edges.push(this.createEdge(poolData, dex, token0, token1));
-                edges.push(this.createEdge(poolData, dex, token1, token0));
+                edges.push(this.createEdge(poolData, dex, token0, token1, discovery.fee));
+                edges.push(this.createEdge(poolData, dex, token1, token0, discovery.fee));
                 this.updateTokenPairStats(tokenPairStats, pairKey, dex.name);
 
                 logger.debug(
@@ -832,8 +832,13 @@ export class OptimizedPoolScanner {
     poolData: { poolAddress: string; reserve0: bigint; reserve1: bigint },
     dex: DEXConfig,
     tokenIn: string,
-    tokenOut: string
+    tokenOut: string,
+    actualFee?: number
   ): PoolEdge {
+    // S41 Fix: Use actual on-chain pool fee when available (from V3 factory discovery),
+    // instead of static getDEXFee default. The fee is in V3 format (e.g., 3000 = 0.3%).
+    // Convert to decimal for PoolEdge.fee (e.g., 0.003 = 0.3%).
+    const fee = actualFee !== undefined ? actualFee / 1_000_000 : this.getDEXFee(dex);
     return {
       poolAddress: poolData.poolAddress,
       dexName: dex.name,
@@ -841,7 +846,7 @@ export class OptimizedPoolScanner {
       tokenOut,
       reserve0: poolData.reserve0,
       reserve1: poolData.reserve1,
-      fee: this.getDEXFee(dex),
+      fee,
       gasEstimate: dex.gasEstimate || 150000,
     };
   }
