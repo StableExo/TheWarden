@@ -28,10 +28,10 @@ import { PoolDataStore } from './PoolDataStore';
 // Previous: 5%/10x/95% — too tight, rejected 0.049 ETH opportunities with 0.0025 ETH live profit.
 // Base chain prices move fast; the scan cycle takes ~4 min. Wider thresholds let real opportunities through
 // while still catching truly stale/phantom opportunities.
-const JIT_STALENESS_THRESHOLD = 0.20; // 20% reserve ratio change = stale (was 5% — too tight for 4-min scans)
-const JIT_PROFIT_SENSITIVITY = 3; // Multiplier for profit reduction (was 10 — too aggressive)
-const JIT_MAX_PROFIT_REDUCTION = 0.80; // Maximum 80% profit reduction cap (was 95%)
-const JIT_MIN_PROFIT_THRESHOLD = BigInt(1e15); // 0.001 ETH minimum profit after validation
+const JIT_STALENESS_THRESHOLD = 5.0; // 500% — effectively disabled. Virtual reserve drift is expected, not a sign of staleness. S40: the real validation is profit > gas cost.
+const JIT_PROFIT_SENSITIVITY = 1; // S40: 1x — direct pass-through. The ratio change IS the reduction, no amplification.
+const JIT_MAX_PROFIT_REDUCTION = 0.95; // S40: 95% cap. Even a 95% reduced opportunity at $0 gas is worth taking.
+const JIT_MIN_PROFIT_THRESHOLD = BigInt(1e14); // S40: 0.0001 ETH min (~$0.18). Gas is free via CDP Paymaster — any profit is profit.
 
 /**
  * Interface for pool data
@@ -881,8 +881,10 @@ export class MultiHopDataFetcher {
     const newNetProfit = BigInt(Math.floor(Number(path.netProfit) * profitReductionFactor));
 
     // Profitable if: not stale, covers gas, exceeds minimum threshold
+    // S40: Removed !isStale gate. Virtual reserve drift doesn't mean the opportunity is fake.
+    // The ONLY thing that matters: does the JIT-validated profit exceed gas + minimum threshold?
     const isStillProfitable =
-      !isStale && newNetProfit > path.totalGasCost && newNetProfit > JIT_MIN_PROFIT_THRESHOLD;
+      newNetProfit > path.totalGasCost && newNetProfit > JIT_MIN_PROFIT_THRESHOLD;
 
     return {
       isStillProfitable,
