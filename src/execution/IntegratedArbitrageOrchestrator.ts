@@ -1004,6 +1004,30 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
       const borrowToken = path.startToken;
       const borrowAmount = hops[0].amountIn;
 
+      // S40: Balancer-only strategy — 0% flash loan fee.
+      // Skip tokens Balancer can't lend (meme tokens like DEGEN, BRETT, TOSHI).
+      // This avoids Aave's 0.09% fee which eats ~40% of typical profit.
+      const balancerOk = await this.v3Executor!.isBalancerSupported(borrowToken, borrowAmount);
+      if (!balancerOk) {
+        logger.warn(
+          `[IntegratedOrchestrator] Skipping: Balancer does not support ` +
+          `${borrowToken.substring(0, 10)}... for flash loan. Balancer-only strategy.`
+        );
+        return {
+          success: false,
+          stage: ExecutionState.EXECUTING,
+          timestamp: Date.now(),
+          context,
+          errors: [{
+            timestamp: Date.now(),
+            stage: ExecutionState.EXECUTING,
+            errorType: 'BALANCER_UNSUPPORTED',
+            message: `Token ${borrowToken.substring(0, 10)}... not supported by Balancer flash loans`,
+            recoverable: false,
+          }],
+        };
+      }
+
       const swapPath: UniversalSwapPath = {
         steps,
         borrowAmount,
