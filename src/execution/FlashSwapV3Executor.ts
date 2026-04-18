@@ -287,6 +287,24 @@ export class FlashSwapV3Executor {
     logger.info(`Smart Wallet ready: eoa=${owner.address}, smartWallet=${smartAccount.address}, contract=${this.config.contractAddress}`);
   }
 
+  /**
+   * S41: Query actual fee tier from a V3 pool contract on-chain
+   */
+  private async queryPoolFee(poolAddress: string): Promise<number | null> {
+    try {
+      const result = await this.config.provider.call({
+        to: poolAddress,
+        data: '0xddca3f43', // fee() selector
+      });
+      if (result && result !== '0x') {
+        return parseInt(result, 16);
+      }
+    } catch {
+      // Not a V3 pool or call failed
+    }
+    return null;
+  }
+
   async selectOptimalSource(borrowToken: string, borrowAmount: bigint): Promise<SourceSelection> {
     try {
       const sourceId = await this.contract.selectOptimalSource(borrowToken, borrowAmount);
@@ -317,7 +335,7 @@ export class FlashSwapV3Executor {
     catch { return false; }
   }
 
-  constructSwapPath(opportunity: ArbitrageOpportunity): UniversalSwapPath {
+  async constructSwapPath(opportunity: ArbitrageOpportunity): Promise<UniversalSwapPath> {
     const steps: SwapStep[] = [];
     for (const swap of opportunity.path) {
       let dexType: DexType;
@@ -332,15 +350,27 @@ export class FlashSwapV3Executor {
         ? (baseAmount * BigInt(Math.floor((1 - slippage) * 10000))) / BASIS_POINTS_DIVISOR
         : 0n;
 
-      // S41 Fix: Convert feeBps (basis points, e.g. 30 = 0.3%) to Uniswap V3 fee units
-      // (e.g. 3000 = 0.3%). Uniswap V3 fee = feeBps * 100.
-      // The SwapRouter uses Factory.getPool(tokenIn, tokenOut, fee) — wrong fee = pool not found = revert(0x).
+      // S41 Fix (v3): Convert feeBps to Uniswap V3 fee units.
+      // The data pipeline has multiple fee representations — feeBps may be:
+      //   - Correct bps from Supabase (e.g. 100 for 1%, 5 for 0.05%)
+      //   - Default 30 (0.3%) from arb engine fallback when scanner didn't propagate actual fee
+      // For V3 pools, the fee MUST match exactly or Factory.getPool returns address(0) → revert(0x).
+      // Strategy: Use feeBps*100, but for the common default of 30, query the pool contract on-chain.
       let v3Fee: number;
-      if (swap.feeBps && swap.feeBps > 0) {
+      if (swap.feeBps && swap.feeBps > 0 && swap.feeBps !== 30) {
+        // Non-default fee — trust it and convert bps → V3 units
         v3Fee = swap.feeBps * 100;
+        logger.info(`[constructSwapPath] Using feeBps=${swap.feeBps} → V3 fee=${v3Fee} for ${swap.protocol}`);
       } else {
-        logger.warn(`[constructSwapPath] Missing feeBps for ${swap.tokenIn.substring(0, 10)}→${swap.tokenOut.substring(0, 10)} on ${swap.protocol}, defaulting to 3000`);
-        v3Fee = DEFAULT_FEE_BPS;
+        // Default or missing feeBps — query the actual pool fee on-chain
+        const onChainFee = await this.queryPoolFee(swap.poolAddress);
+        if (onChainFee !== null && onChainFee > 0) {
+          v3Fee = onChainFee;
+          logger.info(`[constructSwapPath] On-chain fee=${v3Fee} for pool ${swap.poolAddress.substring(0, 14)}...`);
+        } else {
+          v3Fee = DEFAULT_FEE_BPS;
+          logger.warn(`[constructSwapPath] Could not query fee for ${swap.poolAddress.substring(0, 14)}..., defaulting to ${v3Fee}`);
+        }
       }
 
       steps.push({
@@ -512,7 +542,7 @@ export class FlashSwapV3Executor {
     const borrowToken = opportunity.flashLoanToken || opportunity.tokenAddresses[0];
     const selection = await this.selectOptimalSource(borrowToken, borrowAmount);
     const flashLoanFee = selection.estimatedCost;
-    const path = this.constructSwapPath(opportunity);
+    const path = await this.constructSwapPath(opportunity);
     const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path).catch(() => 500000n);
 
     let estimatedGasCost: bigint;
