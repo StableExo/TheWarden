@@ -30,8 +30,8 @@ COPY . .
 # Build application
 RUN npm run build
 
-# Remove development dependencies
-RUN npm prune --omit=dev
+# Keep dev dependencies for one-time deploy script (ts-node + viem)
+# RUN npm prune --omit=dev  # Disabled for S44 deploy
 
 
 # Final stage for app image
@@ -43,4 +43,7 @@ COPY --from=build /app /app
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-CMD [ "npm", "run", "start" ]
+# S44: Use wrapper that can optionally deploy multi-router contract
+COPY scripts/start-with-deploy.sh /app/scripts/start-with-deploy.sh
+RUN chmod +x /app/scripts/start-with-deploy.sh
+CMD [ "/app/scripts/start-with-deploy.sh" ]
