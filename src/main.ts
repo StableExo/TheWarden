@@ -606,7 +606,11 @@ class TheWarden extends EventEmitter {
           advancedConfig.pathfinding.gasPrice
         );
 
-        const executorAddress = this.config.executorAddress || this.wallet.address;
+        // S44 fix: When V3 is enabled, use V3 contract address for gas estimation
+        // Without this, gas estimator falls back to wallet.address (EOA) when FLASHSWAP_V2_ADDRESS is unset
+        const executorAddress = (this.config.enableV3 && this.config.flashSwapV3Address)
+          ? this.config.flashSwapV3Address
+          : (this.config.executorAddress || this.wallet.address);
         const titheRecipient = this.config.titheRecipient || this.wallet.address;
 
         logger.info(`Executor address: ${executorAddress}`);
