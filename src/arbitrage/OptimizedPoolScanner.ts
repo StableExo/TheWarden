@@ -99,6 +99,20 @@ const POOL_TOKEN_ABI = [
 /**
  * V2 Pool ABI for getReserves
  */
+// S43: Factory ABI for upstream pool filtering
+const FACTORY_ABI = [
+  {
+    inputs: [],
+    name: 'factory',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
+// S43: Only accept pools from the Uniswap V3 Factory on Base
+const UNISWAP_V3_FACTORY_BASE = '0x33128a8fc17869897dce68ed026d694621f6fdfd';
+
 const V2_POOL_ABI = [
   {
     inputs: [],
@@ -657,6 +671,15 @@ export class OptimizedPoolScanner {
           }),
           allowFailure: true,
         });
+        // S43: Also query factory() to filter non-Uniswap pools upstream
+        calls.push({
+          target: poolAddress,
+          callData: encodeFunctionData({
+            abi: FACTORY_ABI,
+            functionName: 'factory',
+          }),
+          allowFailure: true,
+        });
       } else {
         calls.push({
           target: poolAddress,
@@ -698,6 +721,24 @@ export class OptimizedPoolScanner {
         }) as bigint;
         reserve0 = liquidity;
         reserve1 = liquidity;
+
+        // S43: Factory filter — reject V3 pools not from Uniswap V3 Factory
+        if (results[3] && results[3].success) {
+          try {
+            const factory = decodeFunctionResult({
+              abi: FACTORY_ABI,
+              functionName: 'factory',
+              data: results[3].returnData as Hex,
+            }) as Address;
+            if (factory.toLowerCase() !== UNISWAP_V3_FACTORY_BASE) {
+              logger.debug(
+                `⊘ Pool ${poolAddress.substring(0, 14)}... from non-Uniswap factory ${factory.substring(0, 14)}... — filtered upstream`,
+                'POOLSCAN'
+              );
+              return null; // Reject pool — not from Uniswap V3 Factory
+            }
+          } catch { /* factory decode failed — allow pool through */ }
+        }
       } else {
         const reserves = decodeFunctionResult({
           abi: V2_POOL_ABI,
