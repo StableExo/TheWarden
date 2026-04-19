@@ -138,7 +138,7 @@ export class OpportunityPipeline extends EventEmitter {
       minProfitAmount: config?.minProfitAmount ?? BigInt(process.env.PIPELINE_MIN_PROFIT || (process.env.GASLESS_MODE === 'true' ? '100000' : '1000000')),
       minSpreadPercent: config?.minSpreadPercent ?? 0.2,
       defaultBorrowAmount: config?.defaultBorrowAmount ?? 10_000_000_000n, // 10,000 USDC
-      slippageTolerance: config?.slippageTolerance ?? 0.001, // S48: 0.1% (was 0.5%, too aggressive for sub-1% spreads)
+      slippageTolerance: config?.slippageTolerance ?? 0.0005, // S48: 0.05% — Base L2 pools have low slippage on reasonable trade sizes
       maxPriceAge: config?.maxPriceAge ?? 5000,
       gasPerStep: config?.gasPerStep ?? 200_000,
       gasPriceWei: config?.gasPriceWei ?? 50_000_000n, // 0.05 gwei (Base L2)
@@ -408,7 +408,9 @@ export class OpportunityPipeline extends EventEmitter {
       logger.info(`[Pipeline-DEBUG] borrowToken=${borrowToken} borrowAmount=${borrowAmount.toString()}`);
       logger.info(`[Pipeline-DEBUG] Step1: sellPool.price=${sellPool.price} rawStep1=${rawStep1Output.toFixed(0)} afterSlip=${step1OutputWithSlippage.toFixed(0)} minOut=${step1MinOut.toString()}`);
       logger.info(`[Pipeline-DEBUG] Step2: buyPool.inversePrice=${buyPool.inversePrice} rawStep2=${rawStep2Output.toFixed(0)} afterSlip=${step2OutputWithSlippage.toFixed(0)} minOut=${step2MinOut.toString()}`);
+      const roundTripRatio = (Number(step2MinOut) / Number(borrowAmount));
       logger.info(`[Pipeline-DEBUG] grossProfit=${grossProfit.toString()} netProfit=${estimatedNetProfit.toString()} minRequired=${this.config.minProfitAmount.toString()}`);
+      logger.info(`[Pipeline-DEBUG] roundTrip=${roundTripRatio.toFixed(6)} (needs >1.0) spread=${signal.spreadPercent.toFixed(4)}% slippage=${this.config.slippageTolerance}`);
       
       const id = `opp_${++this.executionCounter}_${Date.now()}`;
       
