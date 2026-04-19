@@ -134,7 +134,8 @@ export class OpportunityPipeline extends EventEmitter {
   constructor(config?: Partial<OpportunityPipelineConfig>) {
     super();
     this.config = {
-      minProfitAmount: config?.minProfitAmount ?? 1_000_000n, // 1 USDC (6 decimals)
+      // S46: Read from env var, lower default for gasless mode (0.10 USDC → 100_000)
+      minProfitAmount: config?.minProfitAmount ?? BigInt(process.env.PIPELINE_MIN_PROFIT || (process.env.GASLESS_MODE === 'true' ? '100000' : '1000000')),
       minSpreadPercent: config?.minSpreadPercent ?? 0.2,
       defaultBorrowAmount: config?.defaultBorrowAmount ?? 10_000_000_000n, // 10,000 USDC
       slippageTolerance: config?.slippageTolerance ?? 0.005,
