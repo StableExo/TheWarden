@@ -6,44 +6,49 @@
 
 ## What Happened
 
-Arrived with v23 roadmap and 18 credentials (securely vaulted in CodeWords). The engine was running at 92.5% memory usage on a 512MB Railway container. 1,248 pools cached with no eviction. 13 tokens being scanned when only 5 can start flash loans. The blade was sharp from S45, but the body was exhausted.
+Arrived with v23 roadmap, 92.5% memory on a 512MB Railway container, and 1,248 pools cached with no eviction. Left with LRU eviction, 5-token whitelist, new Vercel account, fresh Tenderly keys, gasless profit thresholds, 384MB heap, and a pipeline that can see opportunities. 11 commits. 13 Railway env vars. The most productive session in TheWarden history.
 
 ---
 
 ## The Optimizations
 
-### Fix 1: Pool Cache LRU Eviction
-`OptimizedPoolScanner.poolCache` was a bare `Map<string, CachedPoolData>` — entries added but never removed. 1,248 pools × BigInt reserves = massive memory footprint.
+### Fix 1: Pool Cache LRU Eviction (`087989db`)
+`OptimizedPoolScanner.poolCache` was a bare Map — entries added but never removed.
+- Added `MAX_POOL_CACHE_SIZE = 600` with LRU eviction
+- Added `MIN_LIQUIDITY_THRESHOLD = 1e16 wei` — evict dust pools
+- Increased cache TTL from 1 min → 5 min (reduces RPC calls)
 
-Changes:
-- Increased cache TTL from 1 min → 5 min (reduces RPC calls, pools don't change that fast)
-- Added `MAX_POOL_CACHE_SIZE = 600` cap with LRU eviction
-- Added `MIN_LIQUIDITY_THRESHOLD = 1e16 wei` (~$10K) — evict dust pools
-- `setCacheEntry()` triggers eviction on every insert
-- `evictStaleEntries()` removes expired + low-liquidity entries
+### Fix 2: Scanner Token Reduction (`2f8035b2`)
+13 tokens scanned × 16 DEXes. Only 5 can start Balancer flash loans.
+- Added `BALANCER_WHITELIST` — WETH, USDC, DAI, USDbC, USDT
+- `getScanTokens()` defaults to whitelist (13→5 tokens)
+- Other tokens still appear as middle hops
 
-### Fix 2: Dockerfile Cleanup  
-`start-with-deploy.sh` wrapper from S44 was still in the Dockerfile. Multi-router #13 has been deployed since S44 — wrapper is dead weight.
+### Fix 3: Dockerfile Cleanup (`2de15a0b`, `e171b8cf`)
+- Removed `start-with-deploy.sh` wrapper
+- Attempted `npm prune --omit=dev` → crashed (tsx needed at runtime) → reverted
 
-Changes:
-- Restored `npm prune --omit=dev` (saves ~20MB container size)
-- Removed `start-with-deploy.sh` CMD
-- Direct `npm run start` (already includes `--max-old-space-size=256`)
+### Fix 4: Wallet Balance Warning (`8c130d3d`)
+- EOA balance=0 no longer marks system as "degraded" in gasless mode
 
-### Fix 3: Scanner Token Reduction (13 → 5)
-`getScanTokens()` was returning all 13 Base tokens. But Balancer only allows borrowing WETH, USDC, DAI, USDbC, USDT. The other 8 (DEGEN, BRETT, TOSHI, WELL, cbETH, AERO, cbBTC, WSTETH) were being scanned as potential start tokens — pure waste.
+### Fix 5: Vercel Migration (`5db53a6e`, `30ed0580`)
+- Old account hit limit → migrated to metalxalloy-4309
+- Fixed postcss/tailwind .ts → .js build error (ts-node not needed)
+- Live at: https://the-warden-alpha.vercel.app
 
-Changes:
-- Added `BALANCER_WHITELIST` with verified borrow tokens
-- `getScanTokens()` defaults to whitelist (5 tokens instead of 13)
-- Other tokens still appear as middle hops via pool graph edges
-- Override: `SCAN_ALL_TOKENS=true` for full discovery mode
+### Fix 6: Tenderly RPC Rotation
+- Old key returned 403 Forbidden → crash loop
+- Updated 5 Railway env vars via GraphQL API
+- New endpoint: base.gateway.tenderly.co/1IbS4S5LFFiqTW0TpJwyGb
 
-### Fix 4: Wallet Balance Warning
-Health check reported "Zero balance → degraded" for EOA wallet. In gasless UserOp mode (Coinbase Smart Wallet + Paymaster), EOA balance is irrelevant.
+### Fix 7: Gasless Profit Thresholds
+- Set GAS_PRICE=0, MIN_PROFIT_AFTER_GAS=0.0001, GASLESS_MODE=true, USE_USEROP=true
+- Pipeline minProfitAmount: env-var configurable, 0.10 USDC default for gasless (`90660765`)
+- Set PIPELINE_MIN_PROFIT=0 on Railway — any profit passes
 
-Changes:
-- Health check now shows "info" instead of "degraded" for zero EOA balance in gasless mode
+### Fix 8: Heap Increase
+- NODE_OPTIONS=--max-old-space-size=384 (was ~50MB effective)
+- Memory dropped from 95% → ~83%
 
 ---
 
@@ -52,48 +57,54 @@ Changes:
 | # | SHA | Change |
 |---|-----|--------|
 | 1 | `087989db` | Pool cache LRU eviction + 5min TTL + liquidity filter |
-| 2 | `2de15a0b` | Dockerfile revert — npm prune restored, deploy wrapper removed |
-| 3 | `2f8035b2` | Scanner token reduction — Balancer whitelist (13→5 tokens) |
-| 4 | TBD | Cody Journal: S46 — The Optimizer |
-| 5 | TBD | Wallet balance warning fix for gasless mode |
+| 2 | `2de15a0b` | Dockerfile revert (initial) |
+| 3 | `2f8035b2` | Scanner token reduction 13→5 (Balancer whitelist) |
+| 4 | `c2db9c02` | Cody Journal v1 |
+| 5 | `8c130d3d` | Wallet balance warning fix for gasless mode |
+| 6 | `5db53a6e` | postcss.config.js (Vercel build fix) |
+| 7 | `30ed0580` | tailwind.config.js (Vercel build fix) |
+| 8 | `e171b8cf` | HOTFIX — revert npm prune (tsx needed at runtime) |
+| 9 | `a4701c10` | Session roadmap v24 |
+| 10 | `90660765` | Pipeline profit threshold — env-var configurable for gasless |
+| 11 | this commit | Cody Journal v2 (final) |
 
 ---
 
-## Expected Memory Impact
+## Railway Env Vars Updated (13 total)
 
-| Component | Before | After | Savings |
-|-----------|--------|-------|---------|
-| Pool cache | ~1248 entries, no limit | 600 max, LRU eviction | ~50% |
-| Token scanning | 13 × 16 DEXes | 5 × 16 DEXes | ~62% fewer paths |
-| Container image | dev deps included | pruned | ~20MB |
-| Cache TTL | 1 min (frequent RPC) | 5 min (less RPC pressure) | Indirect |
-
-Target: 92.5% → <60% memory usage
+BASE_RPC_URL, BASE_WSS_URL, TENDERLY_API_KEY, TENDERLY_RPC_URL, TENDERLY_WSS_URL,
+MIN_PROFIT_AFTER_GAS, GAS_PRICE, MIN_PROFIT_THRESHOLD, MIN_PROFIT_PERCENT,
+GASLESS_MODE, USE_USEROP, PIPELINE_MIN_PROFIT, NODE_OPTIONS
 
 ---
 
-## Heartbeat Starvation Note
+## The Unsolved Mystery
 
-The scan cycle blocks the event loop for ~5 min → Railway health check can't respond → false CRITICAL alerts. With the token reduction (13→5), scan cycles should be dramatically shorter. If still an issue:
-- Option A: `setImmediate()` between pool query batches
-- Option B: Increase Railway health check timeout to 10 min
-- Option C: Worker thread for pool scanning (future)
+PriceTracker sees 0.2–1.0% spreads (WETH/USDC, USDC/AERO).
+Pipeline calculates `estimatedNetProfit = 0` on those same spreads.
+The swap simulation is broken — it doesn't properly account for gasless mode or
+the borrow amount is too small to generate profit after fees.
+
+This is the First Blood blocker for S47.
 
 ---
 
-## What Remains for S47
+## What Remains for S47 — The Blade
 
-### P1 — Execution Path Improvements
-- Gas estimation revert: Skip `eth_estimateGas` when UserOp mode active
-- Min profit threshold: Lower from 1 USDC → 0.10 USDC for gasless mode
-- Move whitelist check into PathFinder DFS (only start from borrowable tokens)
+### 🔴 P0 — First Blood
+- Deep-dive: WHY does pipeline calculate profit=0 on a 1% spread?
+- Fix the swap simulation for gasless UserOp execution
+- Dynamic borrow amount sizing (not flat 1e18)
+- Gas estimation bypass for UserOp mode
+- FIRST SUCCESSFUL ON-CHAIN EXECUTION
 
-### P3 — Revenue Expansion
-- Profit withdrawal mechanism: sweep Smart Wallet → EOA
-- Dynamic borrow amount sizing based on pool liquidity
+### 🟡 P1 — Revenue
+- Profit withdrawal: Smart Wallet → EOA sweep
 - SushiSwap V3 factory mapping
-- Identify unknown factory `0x0fd83557b2be0f0c0f1bd28aaa0c6c4de82eb00c`
+
+### 🔵 P2 — Discovery
+- Identify unknown factory 0x0fd83557b2be0f0c0f1bd28aaa0c6c4de82eb00c
 
 ---
 
-*TheWarden ⚔️ — The Conqueror found every trap. The Optimizer sharpened the blade — less memory, faster scans, cleaner containers. The path to First Blood is clear.*
+*TheWarden ⚔️ — The Optimizer sharpened every edge. 11 commits, 13 env vars, 2 account migrations, 1 RPC rotation. The blade is ready. S47 draws First Blood.*
