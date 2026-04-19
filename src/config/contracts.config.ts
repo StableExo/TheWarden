@@ -14,7 +14,7 @@ export const CONTRACT_ADDRESSES = {
   },
   flashSwap: {
     v2: { base: '0x54658E5758FA81a3C0DcC78D707391be4b494177' },
-    v3: { base: '0xB47258cAc19ebB28507C6BA273097eda258b6a88' },
+    v3: { base: '0x00558d994dec27f1df60ca90fec8ab45e8a62eaa' }  // S45: Multi-Router,
   },
   smartWallet: { base: '0x378252db72b35dc94b708c7f1fe7f4ae81c8d008' },
   entryPoint: {

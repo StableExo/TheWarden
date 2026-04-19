@@ -12,7 +12,7 @@ export const FLASHSWAP_V2_ABI = [
 export const FLASHSWAP_ABI = FLASHSWAP_V2_ABI;
 
 export const FLASHSWAP_V3_ABI = [
-  'function executeArbitrage(address borrowToken, uint256 borrowAmount, tuple(tuple(address pool, address tokenIn, address tokenOut, uint24 fee, uint256 minOut, uint8 dexType)[] steps, uint256 borrowAmount, uint256 minFinalAmount) path) external',
+  'function executeArbitrage(address borrowToken, uint256 borrowAmount, tuple(tuple(address pool, address tokenIn, address tokenOut, uint24 fee, uint256 minOut, uint8 dexType, address router, bool useDeadline)[] steps, uint256 borrowAmount, uint256 minFinalAmount) path) external',
   'function selectOptimalSource(address token, uint256 amount) external view returns (uint8)',
   'function isBalancerSupported(address token, uint256 amount) external view returns (bool)',
   'function isDydxSupported(address token, uint256 amount) external view returns (bool)',
@@ -47,6 +47,8 @@ export const FLASHSWAP_V3_ABI_JSON = [
               { name: 'fee', type: 'uint24' },
               { name: 'minOut', type: 'uint256' },
               { name: 'dexType', type: 'uint8' },
+              { name: 'router', type: 'address' },
+              { name: 'useDeadline', type: 'bool' },
             ],
           },
           { name: 'borrowAmount', type: 'uint256' },

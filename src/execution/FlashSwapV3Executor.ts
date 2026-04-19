@@ -12,7 +12,7 @@
  * Architecture:
  *   EOA (0x9358) signs UserOp
  *     → Smart Wallet (0x378252) owns contract
- *       → FlashSwapV3 (0xB47258) executeArbitrage
+ *       → FlashSwapV3 (0x00558d) executeArbitrage
  *         → Balancer flash loan → DEX swaps → profit
  */
 
@@ -58,6 +58,8 @@ export interface SwapStep {
   fee: number;       // Fee tier (for Uniswap V3)
   minOut: bigint;    // Minimum output amount
   dexType: DexType;
+  router: string;       // S45: Per-hop router address (address(0) = use contract default)
+  useDeadline: boolean; // S45: true = V1 interface (PancakeSwap), false = V2 (Uniswap)
 }
 
 /**
@@ -168,6 +170,8 @@ const FLASH_SWAP_V3_ABI_VIEM = [
               { name: 'fee', type: 'uint24' as const },
               { name: 'minOut', type: 'uint256' as const },
               { name: 'dexType', type: 'uint8' as const },
+              { name: 'router', type: 'address' as const },
+              { name: 'useDeadline', type: 'bool' as const },
             ],
           },
           { name: 'borrowAmount', type: 'uint256' as const },
@@ -184,7 +188,7 @@ const FLASH_SWAP_V3_ABI_VIEM = [
  * FlashSwapV3 contract ABI (ethers.js human-readable — for read calls)
  */
 const FLASH_SWAP_V3_ABI = [
-  'function executeArbitrage(address borrowToken, uint256 borrowAmount, tuple(tuple(address pool, address tokenIn, address tokenOut, uint24 fee, uint256 minOut, uint8 dexType)[] steps, uint256 borrowAmount, uint256 minFinalAmount) path) external',
+  'function executeArbitrage(address borrowToken, uint256 borrowAmount, tuple(tuple(address pool, address tokenIn, address tokenOut, uint24 fee, uint256 minOut, uint8 dexType, address router, bool useDeadline)[] steps, uint256 borrowAmount, uint256 minFinalAmount) path) external',
   'function selectOptimalSource(address token, uint256 amount) external view returns (uint8)',
   'function isBalancerSupported(address token, uint256 amount) external view returns (bool)',
   'function isDydxSupported(address token, uint256 amount) external view returns (bool)',

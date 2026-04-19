@@ -1001,11 +1001,19 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
         return Math.round(fee * 1_000_000);             // Decimal (0.003 → 3000)
       };
 
-      // S43 Fix: Verify all pools are from the Uniswap V3 Factory.
-      // Pools from other V3 forks (PancakeSwap, SushiSwap, etc.) can't be routed
-      // through the Uniswap V3 SwapRouter02 — the router uses Factory.getPool()
-      // which derives a DIFFERENT address → swap hits wrong pool → SPL revert.
-      const UNISWAP_V3_FACTORY_BASE = '0x33128a8fc17869897dce68ed026d694621f6fdfd';
+      // S45: Multi-factory routing — look up factory to determine per-hop router + interface
+      const FACTORY_ROUTER_MAP: Record<string, { name: string; router: string; useDeadline: boolean }> = {
+        '0x33128a8fc17869897dce68ed026d694621f6fdfd': {
+          name: 'Uniswap V3',
+          router: '0x0000000000000000000000000000000000000000', // default (contract uses swapRouter)
+          useDeadline: false,
+        },
+        '0x0bfbcf9fa4f9c56b0f40a671ad40e0805a091865': {
+          name: 'PancakeSwap V3',
+          router: '0x1b81D678ffb9C0263b24A97847620C99d213eB14',
+          useDeadline: true, // V1 interface (with deadline)
+        },
+      };
       const queryPoolFactory = async (poolAddress: string): Promise<string | null> => {
         try {
           const result = await this.provider.call({ to: poolAddress, data: '0xc45a0155' }); // factory()
@@ -1016,32 +1024,44 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
         return null;
       };
 
+      // Resolve factory → router for each hop
+      const hopRouting: Array<{ router: string; useDeadline: boolean }> = [];
       for (const hop of hops) {
         const factory = await queryPoolFactory(hop.poolAddress);
-        if (factory && factory !== UNISWAP_V3_FACTORY_BASE) {
-          logger.warn(
-            `[V3Pipeline] ⚠️ Pool ${hop.poolAddress.substring(0, 14)}... from non-Uniswap factory ` +
-            `${factory.substring(0, 14)}... — skipping entire opportunity`
-          );
-          return {
-            success: false,
-            stage: ExecutionState.EXECUTING,
-            timestamp: Date.now(),
-            context,
-            errors: [{
-              timestamp: Date.now(),
+        if (factory) {
+          const mapping = FACTORY_ROUTER_MAP[factory];
+          if (mapping) {
+            logger.info(`[V3Pipeline] Pool ${hop.poolAddress.substring(0, 14)}... → ${mapping.name}`);
+            hopRouting.push({ router: mapping.router, useDeadline: mapping.useDeadline });
+          } else {
+            logger.warn(
+              `[V3Pipeline] ⚠️ Pool ${hop.poolAddress.substring(0, 14)}... from unknown factory ` +
+              `${factory.substring(0, 14)}... — skipping entire opportunity`
+            );
+            return {
+              success: false,
               stage: ExecutionState.EXECUTING,
-              errorType: 'WRONG_FACTORY',
-              message: `Pool ${hop.poolAddress.substring(0, 14)}... not from Uniswap V3 Factory (factory=${factory.substring(0, 14)}...)`,
-              recoverable: false,
-            }],
-          };
+              timestamp: Date.now(),
+              context,
+              errors: [{
+                timestamp: Date.now(),
+                stage: ExecutionState.EXECUTING,
+                errorType: 'UNKNOWN_FACTORY',
+                message: `Pool ${hop.poolAddress.substring(0, 14)}... from unknown factory (${factory.substring(0, 14)}...)`,
+                recoverable: false,
+              }],
+            };
+          }
+        } else {
+          // No factory() method — assume Uniswap V3 default
+          hopRouting.push({ router: '0x0000000000000000000000000000000000000000', useDeadline: false });
         }
       }
 
-      // Convert ArbitrageHop[] to SwapStep[] — with on-chain fee verification
+      // Convert ArbitrageHop[] to SwapStep[] — with on-chain fee verification + per-hop routing
       const steps: import('./FlashSwapV3Executor').SwapStep[] = [];
-      for (const hop of hops) {
+      for (let i = 0; i < hops.length; i++) {
+        const hop = hops[i];
         let fee = feeToUint24(hop.fee);
 
         // If fee would be the common default (3000), verify against on-chain
@@ -1060,6 +1080,8 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
           fee,
           minOut: hop.amountOut * BigInt(50) / BigInt(100), // S42: 50% per-hop slippage (cached estimates are stale; contract's minFinalAmount guards overall profit)
           dexType: dexNameToType(hop.dexName),
+          router: hopRouting[i].router,       // S45: factory-derived router
+          useDeadline: hopRouting[i].useDeadline, // S45: V1 (PancakeSwap) vs V2 (Uniswap) interface
         });
       }
 
