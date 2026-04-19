@@ -30,8 +30,9 @@ COPY . .
 # Build application
 RUN npm run build
 
-# Keep dev dependencies for one-time deploy script (ts-node + viem)
-# RUN npm prune --omit=dev  # Disabled for S44 deploy
+# S46: Restore dev dependency pruning — saves ~20MB container size
+# S44 deploy wrapper no longer needed (multi-router #13 already deployed)
+RUN npm prune --omit=dev
 
 
 # Final stage for app image
@@ -43,7 +44,6 @@ COPY --from=build /app /app
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-# S44: Use wrapper that can optionally deploy multi-router contract
-COPY scripts/start-with-deploy.sh /app/scripts/start-with-deploy.sh
-RUN chmod +x /app/scripts/start-with-deploy.sh
-CMD [ "/app/scripts/start-with-deploy.sh" ]
+# S46: Direct start — no more deploy wrapper (S44 deployment complete)
+# npm run start already includes --max-old-space-size=256
+CMD [ "npm", "run", "start" ]
