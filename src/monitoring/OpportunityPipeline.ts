@@ -138,7 +138,7 @@ export class OpportunityPipeline extends EventEmitter {
       minProfitAmount: config?.minProfitAmount ?? BigInt(process.env.PIPELINE_MIN_PROFIT || (process.env.GASLESS_MODE === 'true' ? '100000' : '1000000')),
       minSpreadPercent: config?.minSpreadPercent ?? 0.2,
       defaultBorrowAmount: config?.defaultBorrowAmount ?? 10_000_000_000n, // 10,000 USDC
-      slippageTolerance: config?.slippageTolerance ?? 0.005,
+      slippageTolerance: config?.slippageTolerance ?? 0.001, // S48: 0.1% (was 0.5%, too aggressive for sub-1% spreads)
       maxPriceAge: config?.maxPriceAge ?? 5000,
       gasPerStep: config?.gasPerStep ?? 200_000,
       gasPriceWei: config?.gasPriceWei ?? 50_000_000n, // 0.05 gwei (Base L2)
@@ -291,53 +291,56 @@ export class OpportunityPipeline extends EventEmitter {
   private buildExecutionRequest(signal: OpportunitySignal): ExecutionRequest | null {
     try {
       const { buyPool, sellPool } = signal;
-      const borrowToken = buyPool.token0; // Borrow token0 (e.g., USDC)
+      const borrowToken = buyPool.token0; // Borrow token0
       const borrowAmount = this.config.defaultBorrowAmount;
       
-      // Calculate expected output from buy step
-      // buyPool price = token1 per token0. Buying token1 with token0.
-      // expectedToken1 = borrowAmount * price (adjusted for decimals)
-      const buyPriceRatio = buyPool.price; // token1 per token0
-      const rawBuyOutput = Number(borrowAmount) * buyPriceRatio;
+      // S48 FIX: Correct swap direction for arbitrage profit
+      // Strategy: Sell token0 at HIGH-price pool (sellPool) first → get MORE token1
+      //           Buy token0 at LOW-price pool (buyPool) second → spend LESS token1
+      // Previous code was INVERTED: swapped at low first, high second → guaranteed loss
       
-      // Apply slippage to buy output
-      const buyOutputWithSlippage = rawBuyOutput * (1 - this.config.slippageTolerance);
-      const buyMinOut = BigInt(Math.floor(buyOutputWithSlippage));
+      // Step 1: Swap token0→token1 at sellPool (HIGHER price = more token1 per token0)
+      const step1PriceRatio = sellPool.price; // token1 per token0 (HIGHER)
+      const rawStep1Output = Number(borrowAmount) * step1PriceRatio;
       
-      // Calculate expected output from sell step
-      // sellPool price = token1 per token0. Selling token1 for token0.
-      // We have token1 and want token0. Use inversePrice.
-      const sellPriceRatio = sellPool.inversePrice; // token0 per token1
-      const rawSellOutput = buyOutputWithSlippage * sellPriceRatio;
+      // Apply slippage to step 1 output
+      const step1OutputWithSlippage = rawStep1Output * (1 - this.config.slippageTolerance);
+      const step1MinOut = BigInt(Math.floor(step1OutputWithSlippage));
       
-      // Apply slippage to sell output
-      const sellOutputWithSlippage = rawSellOutput * (1 - this.config.slippageTolerance);
-      const sellMinOut = BigInt(Math.floor(sellOutputWithSlippage));
+      // Step 2: Swap token1→token0 at buyPool (LOWER price = higher inversePrice = more token0 per token1)
+      const step2PriceRatio = buyPool.inversePrice; // token0 per token1 (HIGHER because price is lower)
+      const rawStep2Output = step1OutputWithSlippage * step2PriceRatio;
       
-      // Build swap steps
+      // Apply slippage to step 2 output
+      const step2OutputWithSlippage = rawStep2Output * (1 - this.config.slippageTolerance);
+      const step2MinOut = BigInt(Math.floor(step2OutputWithSlippage));
+      
+      // Build swap steps — CORRECTED DIRECTION
       const buyDexType = DEX_TYPE_MAP[buyPool.dex] ?? DexType.UNISWAP_V3;
       const sellDexType = DEX_TYPE_MAP[sellPool.dex] ?? DexType.UNISWAP_V3;
       
       const steps: SwapStep[] = [
         {
-          pool: buyPool.pool,
-          tokenIn: buyPool.token0,
-          tokenOut: buyPool.token1,
-          fee: buyPool.fee,
-          minOut: buyMinOut,
-          dexType: buyDexType,
-          router: '0x0000000000000000000000000000000000000000', // S45: default router (Uniswap V3)
-          useDeadline: false, // S45: V2 interface (no deadline)
+          // S48: Step 1 — Sell token0 at HIGH-price pool (get more token1)
+          pool: sellPool.pool,
+          tokenIn: sellPool.token0,
+          tokenOut: sellPool.token1,
+          fee: sellPool.fee,
+          minOut: step1MinOut,
+          dexType: sellDexType,
+          router: '0x0000000000000000000000000000000000000000',
+          useDeadline: false,
         },
         {
-          pool: sellPool.pool,
-          tokenIn: sellPool.token1, // We now have token1, sell it
-          tokenOut: sellPool.token0, // Get back token0
-          fee: sellPool.fee,
-          minOut: sellMinOut,
-          dexType: sellDexType,
-          router: '0x0000000000000000000000000000000000000000', // S45: default router (Uniswap V3)
-          useDeadline: false, // S45: V2 interface (no deadline)
+          // S48: Step 2 — Buy token0 at LOW-price pool (spend less token1)
+          pool: buyPool.pool,
+          tokenIn: buyPool.token1,
+          tokenOut: buyPool.token0,
+          fee: buyPool.fee,
+          minOut: step2MinOut,
+          dexType: buyDexType,
+          router: '0x0000000000000000000000000000000000000000',
+          useDeadline: false,
         },
       ];
       
@@ -356,8 +359,9 @@ export class OpportunityPipeline extends EventEmitter {
       const estimatedGasCost = totalGasUnits * this.config.gasPriceWei;
       const flashLoanFee = 0n; // Balancer = 0% fee
       
-      // Estimate profit: sellOutput - borrowAmount - gasCost (gas in ETH, approximate)
-      const grossProfit = sellMinOut > borrowAmount ? sellMinOut - borrowAmount : 0n;
+      // S48: Estimate profit from corrected direction
+      // step2MinOut = token0 received after round trip. Profit = received - borrowed.
+      const grossProfit = step2MinOut > borrowAmount ? step2MinOut - borrowAmount : 0n;
       const estimatedNetProfit = grossProfit; // Gas is paid by paymaster ($0.00)
       
       const id = `opp_${++this.executionCounter}_${Date.now()}`;
