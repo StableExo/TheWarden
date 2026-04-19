@@ -159,8 +159,16 @@ export class HealthCheckServer {
           this.components.wallet.address
         );
         if (balance === 0n) {
-          components.wallet = { status: 'degraded', message: 'Zero balance' };
-          if (overallStatus === 'healthy') overallStatus = 'degraded';
+          // S46: In gasless UserOp mode (Coinbase Smart Wallet + Paymaster),
+          // EOA balance of 0 is expected and not degraded.
+          // Only warn, don't mark as degraded.
+          const useUserOps = process.env.USE_USEROP === 'true' || process.env.GASLESS_MODE === 'true';
+          if (useUserOps) {
+            components.wallet = { status: 'healthy', message: 'EOA balance 0 (gasless mode — Smart Wallet active)' };
+          } else {
+            components.wallet = { status: 'degraded', message: 'Zero balance — bot cannot execute trades' };
+            if (overallStatus === 'healthy') overallStatus = 'degraded';
+          }
         } else {
           components.wallet = { status: 'healthy' };
         }
