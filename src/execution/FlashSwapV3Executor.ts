@@ -431,6 +431,8 @@ export class FlashSwapV3Executor {
             steps: path.steps.map(s => ({
               pool: s.pool as Hex, tokenIn: s.tokenIn as Hex, tokenOut: s.tokenOut as Hex,
               fee: s.fee, minOut: s.minOut, dexType: s.dexType,
+              router: (s.router || '0x0000000000000000000000000000000000000000') as Hex, // S45: per-hop router
+              useDeadline: s.useDeadline || false, // S45: V1 (PancakeSwap) vs V2 (Uniswap)
             })),
             borrowAmount: path.borrowAmount,
             minFinalAmount: path.minFinalAmount,
