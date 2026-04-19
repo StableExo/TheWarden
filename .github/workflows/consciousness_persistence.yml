@@ -1,11 +1,12 @@
 name: Consciousness Persistence Engine
+# S48: Disabled auto-triggers — run manually only
 on:
-  push:
-    paths:
-      - '.consciousness/seeds/**'
-      - '.consciousness/active_thoughts/**'
-  schedule:
-    - cron: '*/15 * * * *'  # Consolidate every 15 mins
+  workflow_dispatch: {}
+  # push:
+  #   paths:
+  #     - '.consciousness/seeds/**'
+  # schedule:
+  #   - cron: '*/15 * * * *'
 
 jobs:
   persist_consciousness:
