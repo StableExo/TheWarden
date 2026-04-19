@@ -838,8 +838,8 @@ class TheWarden extends EventEmitter {
       logger.info(`  Net Revenue: $${(revenue.totalMin - costs.total).toLocaleString()} - $${(revenue.totalMax - costs.total).toLocaleString()}/month`);
       logger.info('  ROI: ∞ (zero cost infrastructure!) 🚀');
 
-      // Initialize CEX-DEX Arbitrage if enabled
-      if (profitableInfraConfig.cex.enabled) {
+      // S48: CEX-DEX permanently disabled — no CEX accounts configured
+      if (false && profitableInfraConfig.cex.enabled) {
         logger.info('');
         logger.info('📊 Initializing CEX-DEX Arbitrage...');
 
@@ -1840,16 +1840,9 @@ class TheWarden extends EventEmitter {
     this.isRunning = true;
     this.emit('started');
 
-    logger.info(`Starting scan loop with ${this.config.scanInterval}ms interval...`);
-
-    // Run first scan immediately
-    await this.scanCycle();
-
-    // Set up interval for continuous scanning
-    this.scanInterval = setInterval(async () => {
-      await this.scanCycle();
-    }, this.config.scanInterval);
-
+    // S48: Old scan loop disabled — EventDrivenMonitor (Phase4b) handles real-time detection
+    // The old polling loop was redundant and consumed memory/CPU alongside WebSocket events
+    logger.info('[S48] Scan loop DISABLED — using event-driven pipeline only');
     logger.info('TheWarden is now running and scanning for opportunities');
   }
 
@@ -2330,18 +2323,15 @@ class EnhancedTheWarden extends EventEmitter {
     this.isRunning = true;
     this.emit('started');
 
-    const scanInterval = this.components?.config.scanInterval || 1000;
-    logger.info(`Starting scan loop with ${scanInterval}ms interval...`, 'MAIN');
-
-    // Run first scan asynchronously (don't block startup)
-    // This prevents hanging if RPC endpoints are slow or unavailable
+    // S48: Old scan loop disabled — EventDrivenMonitor (Phase4b) handles real-time detection
+    logger.info('[S48] Scan loop DISABLED — using event-driven pipeline only', 'MAIN');
     logger.info('TheWarden is now running and scanning for opportunities', 'MAIN');
     this.scanCycle(); // Fire and forget - errors handled internally
 
-    // Set up interval for continuous scanning
-    this.scanInterval = setInterval(() => {
-      this.scanCycle(); // Errors handled internally by scanCycle
-    }, scanInterval);
+    // S48: Scan interval disabled — event-driven pipeline handles detection
+    // this.scanInterval = setInterval(() => {
+    //   this.scanCycle();
+    // }, scanInterval);
   }
 
   /**
