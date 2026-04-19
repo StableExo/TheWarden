@@ -2,7 +2,8 @@ name: Autonomous Lightning Network Testing ⚡
 
 on:
   # Run on schedule (every 6 hours)
-  schedule:
+  # S48: schedule disabled
+  # schedule:
     - cron: '0 */6 * * *'
   
   # Allow manual trigger from GitHub UI or phone
