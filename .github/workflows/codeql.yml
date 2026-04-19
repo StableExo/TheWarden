@@ -1,13 +1,12 @@
 name: "CodeQL Security Analysis"
 
+# S48: Disabled auto-triggers — run manually only
 on:
-  push:
-    branches: [ "main", "develop" ]
-  pull_request:
-    branches: [ "main", "develop" ]
-  schedule:
-    # Run every Wednesday at 12:41 UTC for weekly security scans
-    - cron: '41 12 * * 3'
+  workflow_dispatch: {}
+  # push:
+  #   branches: [ "main", "develop" ]
+  # schedule:
+  #   - cron: '41 12 * * 3'
   workflow_dispatch:  # Allow manual triggers
 
 jobs:
