@@ -43,7 +43,7 @@ export interface EventDrivenMonitorConfig {
   executionCooldown?: number;
   /** Default borrow amount. Default: 10_000_000_000 (10k USDC) */
   defaultBorrowAmount?: bigint;
-  /** Slippage tolerance. Default: 0.005 (0.5%) */
+  /** Slippage tolerance. Default: 0.0005 (0.05%) */
   slippageTolerance?: number;
   /** Minimum profit in borrow token units. Default: 1_000_000 (1 USDC) */
   minProfitAmount?: bigint;
@@ -113,7 +113,7 @@ export class EventDrivenMonitor extends EventEmitter {
       minSpreadPercent: config.minExecuteSpread ?? 0.2,
       maxPriceAge: config.maxExecutePriceAge ?? 5000,
       defaultBorrowAmount: config.defaultBorrowAmount ?? 10_000_000_000n,
-      slippageTolerance: config.slippageTolerance ?? 0.005,
+      slippageTolerance: config.slippageTolerance ?? 0.0005, // S49: 0.05% — matches OpportunityPipeline default. Base L2 has low slippage.
       minProfitAmount: config.minProfitAmount ?? 1_000_000n,
       executionCooldown: config.executionCooldown ?? 10_000,
       executionEnabled: config.executionEnabled ?? false, // Safe default
