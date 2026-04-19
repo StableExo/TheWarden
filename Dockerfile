@@ -30,9 +30,9 @@ COPY . .
 # Build application
 RUN npm run build
 
-# S46: Restore dev dependency pruning — saves ~20MB container size
-# S44 deploy wrapper no longer needed (multi-router #13 already deployed)
-RUN npm prune --omit=dev
+# S46: Cannot prune dev deps — `tsx` is needed at runtime by `npm run start`
+# The prestart script installs tsx but it's more reliable to keep it from build
+# TODO: Move tsx to production deps or compile to JS for a smaller image
 
 
 # Final stage for app image
