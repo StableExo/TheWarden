@@ -1,10 +1,12 @@
 name: Build and Deploy
 
+# S48: Disabled auto-triggers — Railway handles deploy. Run manually only.
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch: {}
+  # push:
+  #   branches: [ main, develop ]
+  # pull_request:
+  #   branches: [ main ]
 
 env:
   REGISTRY: ghcr.io
