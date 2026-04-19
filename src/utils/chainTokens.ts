@@ -60,9 +60,41 @@ export function getTokensByChainId(chainId: number): ChainTokens {
 }
 
 /**
+ * S46: Balancer-whitelisted borrow tokens per chain
+ * Only these tokens can be flash-borrowed from Balancer Vault
+ * Other tokens can still appear as middle hops in triangular arb paths
+ */
+const BALANCER_WHITELIST: Record<number, string[]> = {
+  8453: ['WETH', 'USDC', 'DAI', 'USDbC', 'USDT'], // Base mainnet — verified on-chain S45
+};
+
+/**
+ * Get tokens that Balancer allows as flash loan borrow tokens
+ * These are the only valid startTokens for PathFinder
+ */
+export function getBalancerWhitelistedTokens(chainId: number): string[] {
+  const tokens = getTokensByChainId(chainId);
+  const whitelist = BALANCER_WHITELIST[chainId] || Object.keys(tokens);
+  const addresses: string[] = [];
+
+  for (const symbol of whitelist) {
+    const tokenInfo = tokens[symbol];
+    if (tokenInfo && tokenInfo.address) {
+      addresses.push(tokenInfo.address);
+    }
+  }
+
+  return addresses;
+}
+
+/**
  * Get an array of token addresses for scanning
  * Returns limited tokens for faster scanning during development
  * Can be configured via SCAN_TOKENS environment variable
+ *
+ * S46: When SCAN_TOKENS is not set, defaults to Balancer whitelist
+ * to avoid scanning tokens that can't start flash loans.
+ * Set SCAN_ALL_TOKENS=true to scan all tokens (for discovery only).
  */
 export function getScanTokens(chainId: number): string[] {
   const tokens = getTokensByChainId(chainId);
@@ -81,14 +113,19 @@ export function getScanTokens(chainId: number): string[] {
     return addresses;
   }
 
-  // Default: include all available tokens for the chain
-  for (const [_symbol, tokenInfo] of Object.entries(tokens)) {
-    if (tokenInfo && tokenInfo.address) {
-      addresses.push(tokenInfo.address);
+  // S46: If SCAN_ALL_TOKENS is set, scan everything (for pool discovery)
+  if (process.env.SCAN_ALL_TOKENS === 'true') {
+    for (const [_symbol, tokenInfo] of Object.entries(tokens)) {
+      if (tokenInfo && tokenInfo.address) {
+        addresses.push(tokenInfo.address);
+      }
     }
+    return addresses;
   }
 
-  return addresses;
+  // S46: Default to Balancer whitelist — only scan borrowable start tokens
+  // Other tokens still appear as middle hops via pool graph edges
+  return getBalancerWhitelistedTokens(chainId);
 }
 
 /**
