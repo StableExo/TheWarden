@@ -292,7 +292,46 @@ export class OpportunityPipeline extends EventEmitter {
     try {
       const { buyPool, sellPool } = signal;
       const borrowToken = buyPool.token0; // Borrow token0
-      const borrowAmount = this.config.defaultBorrowAmount;
+      
+      // S48: Dynamic borrow amount based on token decimals + pool liquidity
+      // The old flat 10B (10,000 USDC) was wrong for non-6-decimal tokens:
+      //   WETH (18 dec): 10B wei = 0.00000001 ETH → dust profit
+      //   USDC (6 dec):  10B = 10,000 USDC → reasonable
+      const token0Decimals = buyPool.token0Decimals;
+      
+      // Target borrow: ~$5,000 worth of token0
+      // For stablecoins (6 dec): 5000 * 10^6 = 5,000,000,000
+      // For WETH (18 dec): ~2.2 ETH at $2280 = 2.2 * 10^18 ≈ 2,200,000,000,000,000,000
+      // For other tokens: scale by decimals, use price to approximate
+      let borrowAmount: bigint;
+      
+      if (token0Decimals <= 8) {
+        // Stablecoin-like (USDC=6, USDT=6, WBTC=8)
+        borrowAmount = BigInt(5000) * BigInt(10 ** token0Decimals);
+      } else {
+        // ETH-like tokens (18 decimals)
+        // Use the pool price to estimate: if price = token1/token0,
+        // and token1 is a stablecoin, then 1 token0 = price USD
+        // We want ~$5000 worth: borrowAmount = 5000 / price * 10^decimals
+        const pricePerToken0 = sellPool.price > 0 ? sellPool.price : buyPool.price;
+        if (pricePerToken0 > 0) {
+          const tokensNeeded = 5000 / pricePerToken0; // how many token0 for $5000
+          borrowAmount = BigInt(Math.floor(tokensNeeded * (10 ** token0Decimals)));
+        } else {
+          // Fallback: 1 token0
+          borrowAmount = BigInt(10 ** token0Decimals);
+        }
+      }
+      
+      // Cap at 2% of the smaller pool's liquidity to limit price impact
+      const minLiquidity = buyPool.liquidity < sellPool.liquidity ? buyPool.liquidity : sellPool.liquidity;
+      if (minLiquidity > 0n && borrowAmount > minLiquidity / 50n) {
+        borrowAmount = minLiquidity / 50n; // 2% of liquidity
+        logger.info(`[Pipeline] Borrow capped to 2% of pool liquidity: ${borrowAmount.toString()}`);
+      }
+      
+      // Floor: minimum 1 token unit
+      if (borrowAmount <= 0n) borrowAmount = BigInt(10 ** token0Decimals);
       
       // S48 FIX: Correct swap direction for arbitrage profit
       // Strategy: Sell token0 at HIGH-price pool (sellPool) first → get MORE token1
