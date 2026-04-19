@@ -2,7 +2,8 @@ name: Autonomous Base Network - TheWarden
 
 on:
   # Run on a schedule - every hour for active arbitrage monitoring
-  schedule:
+  # S48: schedule disabled
+  # schedule:
     - cron: '0 * * * *'  # At the start of every hour
   
   # Allow manual triggering for on-demand runs
