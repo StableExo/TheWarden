@@ -1088,28 +1088,31 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
       const borrowToken = path.startToken;
       const borrowAmount = hops[0].amountIn;
 
-      // S40: Balancer-only strategy — 0% flash loan fee.
-      // Skip tokens Balancer can't lend (meme tokens like DEGEN, BRETT, TOSHI).
-      // This avoids Aave's 0.09% fee which eats ~40% of typical profit.
-      const balancerOk = await this.v3Executor!.isBalancerSupported(borrowToken, borrowAmount);
-      if (!balancerOk) {
-        logger.warn(
-          `[IntegratedOrchestrator] Skipping: Balancer does not support ` +
-          `${borrowToken.substring(0, 10)}... for flash loan. Balancer-only strategy.`
-        );
-        return {
-          success: false,
-          stage: ExecutionState.EXECUTING,
-          timestamp: Date.now(),
-          context,
-          errors: [{
-            timestamp: Date.now(),
-            stage: ExecutionState.EXECUTING,
-            errorType: 'BALANCER_UNSUPPORTED',
-            message: `Token ${borrowToken.substring(0, 10)}... not supported by Balancer flash loans`,
-            recoverable: false,
-          }],
-        };
+      // S45: Check Balancer Vault balance on-chain (the Solidity isBalancerSupported is a stub).
+      // Query ERC20.balanceOf(BalancerVault) to see if Balancer can lend the borrow token.
+      // If insufficient, fall back to Aave (0.09% fee) instead of wasting a UserOp on BAL#528.
+      const BALANCER_VAULT_ADDRESS = '0xBA12222222228d8Ba445958a75a0704d566BF2C8';
+      let useBalancer = true;
+      try {
+        const balanceResult = await this.provider.call({
+          to: borrowToken,
+          data: '0x70a08231' + BALANCER_VAULT_ADDRESS.slice(2).padStart(64, '0'), // balanceOf(vault)
+        });
+        const vaultBalance = balanceResult && balanceResult !== '0x' ? BigInt(balanceResult) : 0n;
+        if (vaultBalance < borrowAmount) {
+          logger.info(
+            `[IntegratedOrchestrator] Balancer Vault has ${vaultBalance} of token ${borrowToken.substring(0, 10)}... ` +
+            `(need ${borrowAmount}) — will use Aave fallback`
+          );
+          useBalancer = false;
+        } else {
+          logger.info(
+            `[IntegratedOrchestrator] Balancer Vault balance OK: ${vaultBalance} >= ${borrowAmount} for ${borrowToken.substring(0, 10)}...`
+          );
+        }
+      } catch {
+        logger.warn(`[IntegratedOrchestrator] Failed to check Balancer balance for ${borrowToken.substring(0, 10)}... — using Aave fallback`);
+        useBalancer = false;
       }
 
       const swapPath: UniversalSwapPath = {
