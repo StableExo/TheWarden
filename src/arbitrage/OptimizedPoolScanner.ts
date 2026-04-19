@@ -141,11 +141,17 @@ const V2_POOL_ABI = [
   },
 ] as const;
 
+// S46: Max pool cache entries before LRU eviction kicks in
+const MAX_POOL_CACHE_SIZE = 600;
+// S46: Minimum liquidity (in wei) to keep in hot cache (~$10K equivalent)
+// For V3 pools: liquidity > 1e12; For V2 pools: reserve > 1e16
+const MIN_LIQUIDITY_THRESHOLD = BigInt('10000000000000000'); // 1e16 wei
+
 export class OptimizedPoolScanner {
   private registry: DEXRegistry;
   private publicClient: PublicClient;
   private poolCache: Map<string, CachedPoolData>;
-  private cacheTTL: number = 60000; // 1 minute default TTL
+  private cacheTTL: number = 300000; // S46: 5 minutes (was 1 min) — reduces RPC calls, pools don't change that fast
   private currentChainId?: number;
   private multicallBatcher?: ViemMulticallBatcher;
 
@@ -401,7 +407,7 @@ export class OptimizedPoolScanner {
                 ...poolData,
                 timestamp: Date.now(),
               };
-              this.poolCache.set(cacheKey, poolCacheData);
+              this.setCacheEntry(cacheKey, poolCacheData);
 
               const meetsThreshold = this.meetsLiquidityThreshold(poolData.reserve0, dex, true);
               const threshold = dex.liquidityThreshold / BigInt(V3_LIQUIDITY_SCALE_FACTOR);
@@ -586,7 +592,7 @@ export class OptimizedPoolScanner {
             ...poolData,
             timestamp: Date.now(),
           };
-          this.poolCache.set(cacheKey, poolCacheData);
+          this.setCacheEntry(cacheKey, poolCacheData);
 
           const meetsThreshold = this.meetsLiquidityThreshold(poolData.reserve0, dex, false);
 
@@ -920,6 +926,64 @@ export class OptimizedPoolScanner {
   }
 
   /**
+   * S46: Set cache entry with LRU eviction
+   * Removes expired entries first, then evicts oldest if over MAX_POOL_CACHE_SIZE
+   */
+  private setCacheEntry(key: string, data: CachedPoolData): void {
+    this.poolCache.set(key, data);
+
+    // Evict if over limit
+    if (this.poolCache.size > MAX_POOL_CACHE_SIZE) {
+      this.evictStaleEntries();
+    }
+
+    // If still over limit after evicting stale, remove oldest entries (LRU)
+    if (this.poolCache.size > MAX_POOL_CACHE_SIZE) {
+      const entriesToRemove = this.poolCache.size - MAX_POOL_CACHE_SIZE;
+      let removed = 0;
+      for (const [k] of this.poolCache) {
+        if (removed >= entriesToRemove) break;
+        this.poolCache.delete(k);
+        removed++;
+      }
+      logger.info(
+        `[S46] LRU evicted ${removed} oldest cache entries (cap: ${MAX_POOL_CACHE_SIZE})`,
+        'POOLSCAN'
+      );
+    }
+  }
+
+  /**
+   * S46: Remove expired and low-liquidity entries from cache
+   */
+  private evictStaleEntries(): void {
+    const now = Date.now();
+    let expiredCount = 0;
+    let lowLiqCount = 0;
+
+    for (const [key, entry] of this.poolCache) {
+      // Remove expired entries (older than TTL)
+      if (now - entry.timestamp > this.cacheTTL) {
+        this.poolCache.delete(key);
+        expiredCount++;
+        continue;
+      }
+      // Remove low-liquidity pools (both reserves below threshold)
+      if (entry.reserve0 < MIN_LIQUIDITY_THRESHOLD && entry.reserve1 < MIN_LIQUIDITY_THRESHOLD) {
+        this.poolCache.delete(key);
+        lowLiqCount++;
+      }
+    }
+
+    if (expiredCount > 0 || lowLiqCount > 0) {
+      logger.info(
+        `[S46] Cache eviction: ${expiredCount} expired, ${lowLiqCount} low-liquidity removed. Remaining: ${this.poolCache.size}`,
+        'POOLSCAN'
+      );
+    }
+  }
+
+  /**
    * Clear the pool data cache
    */
   clearCache(): void {
@@ -947,6 +1011,7 @@ export class OptimizedPoolScanner {
       validEntries,
       expiredEntries,
       cacheTTL: this.cacheTTL,
+      maxCacheSize: MAX_POOL_CACHE_SIZE,
     };
   }
 }
