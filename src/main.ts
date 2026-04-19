@@ -330,7 +330,7 @@ function loadConfig(): WardenConfig {
     flashSwapV3Address: process.env.FLASHSWAP_V3_ADDRESS,
     enableV3: process.env.ENABLE_FLASHSWAP_V3 === 'true',
 
-    scanInterval: parseInt(process.env.SCAN_INTERVAL || '1000'),
+    scanInterval: parseInt(process.env.SCAN_INTERVAL || '60000'), // S48: 60s batch scan
     concurrency: parseInt(process.env.CONCURRENCY || '10'),
 
     minProfitThreshold: parseFloat(process.env.MIN_PROFIT_THRESHOLD || '0.01'),
@@ -1840,9 +1840,18 @@ class TheWarden extends EventEmitter {
     this.isRunning = true;
     this.emit('started');
 
-    // S48: Old scan loop disabled — EventDrivenMonitor (Phase4b) handles real-time detection
-    // The old polling loop was redundant and consumed memory/CPU alongside WebSocket events
-    logger.info('[S48] Scan loop DISABLED — using event-driven pipeline only');
+    // S48: Batch scan every 60s — system catches more opportunities per cycle than real-time streaming
+    const scanIntervalMs = parseInt(process.env.SCAN_INTERVAL || '60000'); // 60s default
+    logger.info(`[S48] Starting batch scan loop with ${scanIntervalMs / 1000}s interval`);
+
+    // Run first scan immediately
+    await this.scanCycle();
+
+    // Set up interval for continuous batch scanning
+    this.scanInterval = setInterval(async () => {
+      await this.scanCycle();
+    }, scanIntervalMs);
+
     logger.info('TheWarden is now running and scanning for opportunities');
   }
 
