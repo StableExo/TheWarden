@@ -1088,32 +1088,37 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
       const borrowToken = path.startToken;
       const borrowAmount = hops[0].amountIn;
 
-      // S45: Check Balancer Vault balance on-chain (the Solidity isBalancerSupported is a stub).
-      // Query ERC20.balanceOf(BalancerVault) to see if Balancer can lend the borrow token.
-      // If insufficient, fall back to Aave (0.09% fee) instead of wasting a UserOp on BAL#528.
-      const BALANCER_VAULT_ADDRESS = '0xBA12222222228d8Ba445958a75a0704d566BF2C8';
-      let useBalancer = true;
-      try {
-        const balanceResult = await this.provider.call({
-          to: borrowToken,
-          data: '0x70a08231' + BALANCER_VAULT_ADDRESS.slice(2).padStart(64, '0'), // balanceOf(vault)
-        });
-        const vaultBalance = balanceResult && balanceResult !== '0x' ? BigInt(balanceResult) : 0n;
-        if (vaultBalance < borrowAmount) {
-          logger.info(
-            `[IntegratedOrchestrator] Balancer Vault has ${vaultBalance} of token ${borrowToken.substring(0, 10)}... ` +
-            `(need ${borrowAmount}) — will use Aave fallback`
-          );
-          useBalancer = false;
-        } else {
-          logger.info(
-            `[IntegratedOrchestrator] Balancer Vault balance OK: ${vaultBalance} >= ${borrowAmount} for ${borrowToken.substring(0, 10)}...`
-          );
-        }
-      } catch {
-        logger.warn(`[IntegratedOrchestrator] Failed to check Balancer balance for ${borrowToken.substring(0, 10)}... — using Aave fallback`);
-        useBalancer = false;
+      // S45: Balancer borrow token whitelist — only borrow tokens Balancer Vault carries on Base.
+      // Verified on-chain: WETH (53 ETH), USDC ($175K), DAI ($984), USDbC ($2.5K), USDT ($65).
+      // Tokens NOT in this list get skipped entirely (Balancer-only strategy for 0% fees).
+      // This eliminates BAL#528 errors from borrowing obscure tokens Balancer doesn't hold.
+      const BALANCER_BORROW_WHITELIST: Set<string> = new Set([
+        '0x4200000000000000000000000000000000000006', // WETH (53+ ETH)
+        '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC ($175K+)
+        '0x50c5725949a6f0c72e6c4a641f24049a917db0cb', // DAI ($984)
+        '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca', // USDbC ($2.5K)
+        '0xfde4c96c8593536e31f229ea8f37b2ada2699bb2', // USDT ($65)
+      ]);
+
+      if (!BALANCER_BORROW_WHITELIST.has(borrowToken.toLowerCase())) {
+        logger.info(
+          `[IntegratedOrchestrator] ⏭️ Skipping: ${borrowToken.substring(0, 10)}... not in Balancer whitelist — Balancer-only strategy`
+        );
+        return {
+          success: false,
+          stage: ExecutionState.EXECUTING,
+          timestamp: Date.now(),
+          context,
+          errors: [{
+            timestamp: Date.now(),
+            stage: ExecutionState.EXECUTING,
+            errorType: 'NOT_IN_BALANCER_WHITELIST',
+            message: `Token ${borrowToken.substring(0, 10)}... not in Balancer borrow whitelist (WETH, USDC, DAI, USDbC, USDT)`,
+            recoverable: false,
+          }],
+        };
       }
+      logger.info(`[IntegratedOrchestrator] ✅ Borrow token ${borrowToken.substring(0, 10)}... is Balancer-whitelisted — 0% flash loan fee`);
 
       const swapPath: UniversalSwapPath = {
         steps,
