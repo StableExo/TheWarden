@@ -2,7 +2,8 @@ name: Autonomous Ankr Bug Attack
 
 on:
   # Run on a schedule - every 8 hours for safety and rate limiting
-  schedule:
+  # S48: schedule disabled
+  # schedule:
     - cron: '0 */8 * * *'  # At minute 0 past every 8th hour
   
   # Allow manual triggering
