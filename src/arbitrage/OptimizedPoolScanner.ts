@@ -97,6 +97,42 @@ const POOL_TOKEN_ABI = [
 ] as const;
 
 /**
+ * V3 slot0 ABI for sqrtPriceX96
+ */
+const SLOT0_ABI = [
+  {
+    inputs: [],
+    name: 'slot0',
+    outputs: [
+      { name: 'sqrtPriceX96', type: 'uint160' },
+      { name: 'tick', type: 'int24' },
+      { name: 'observationIndex', type: 'uint16' },
+      { name: 'observationCardinality', type: 'uint16' },
+      { name: 'observationCardinalityNext', type: 'uint16' },
+      { name: 'feeProtocol', type: 'uint8' },
+      { name: 'unlocked', type: 'bool' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
+/**
+ * Compute V3 virtual reserves from liquidity and sqrtPriceX96.
+ * reserve0 = L * 2^96 / sqrtPriceX96
+ * reserve1 = L * sqrtPriceX96 / 2^96
+ */
+function computeV3VirtualReserves(liquidity: bigint, sqrtPriceX96: bigint): { reserve0: bigint; reserve1: bigint } {
+  const Q96 = BigInt(1) << BigInt(96);
+  if (sqrtPriceX96 === BigInt(0)) {
+    return { reserve0: liquidity, reserve1: liquidity };
+  }
+  const reserve0 = (liquidity * Q96) / sqrtPriceX96;
+  const reserve1 = (liquidity * sqrtPriceX96) / Q96;
+  return { reserve0, reserve1 };
+}
+
+/**
  * V2 Pool ABI for getReserves
  */
 // S43: Factory ABI for upstream pool filtering
@@ -725,8 +761,22 @@ export class OptimizedPoolScanner {
           functionName: 'liquidity',
           data: results[2].returnData as Hex,
         }) as bigint;
-        reserve0 = liquidity;
-        reserve1 = liquidity;
+        // S47: Read sqrtPriceX96 from slot0 for accurate V3 virtual reserves
+        try {
+          const slot0Data = await this.publicClient.readContract({
+            address: poolAddress as Address,
+            abi: SLOT0_ABI,
+            functionName: 'slot0',
+          });
+          const sqrtPriceX96 = (slot0Data as any)[0] as bigint;
+          const virtReserves = computeV3VirtualReserves(liquidity, sqrtPriceX96);
+          reserve0 = virtReserves.reserve0;
+          reserve1 = virtReserves.reserve1;
+        } catch {
+          // Fallback: use liquidity as equal reserves (old behavior)
+          reserve0 = liquidity;
+          reserve1 = liquidity;
+        }
 
         // S43: Factory filter — reject V3 pools not from Uniswap V3 Factory
         if (results[3] && results[3].success) {
@@ -805,8 +855,22 @@ export class OptimizedPoolScanner {
           abi: POOL_TOKEN_ABI,
           functionName: 'liquidity',
         });
-        reserve0 = liquidity;
-        reserve1 = liquidity;
+        // S47: Read sqrtPriceX96 from slot0 for accurate V3 virtual reserves
+        try {
+          const slot0Data = await this.publicClient.readContract({
+            address: poolAddress as Address,
+            abi: SLOT0_ABI,
+            functionName: 'slot0',
+          });
+          const sqrtPriceX96 = (slot0Data as any)[0] as bigint;
+          const virtReserves = computeV3VirtualReserves(liquidity as bigint, sqrtPriceX96);
+          reserve0 = virtReserves.reserve0;
+          reserve1 = virtReserves.reserve1;
+        } catch {
+          // Fallback: use liquidity as equal reserves (old behavior)
+          reserve0 = liquidity as bigint;
+          reserve1 = liquidity as bigint;
+        }
       } else {
         const reserves = await this.publicClient.readContract({
           address: poolAddress as Address,
