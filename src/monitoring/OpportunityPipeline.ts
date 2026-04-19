@@ -325,6 +325,8 @@ export class OpportunityPipeline extends EventEmitter {
           fee: buyPool.fee,
           minOut: buyMinOut,
           dexType: buyDexType,
+          router: '0x0000000000000000000000000000000000000000', // S45: default router (Uniswap V3)
+          useDeadline: false, // S45: V2 interface (no deadline)
         },
         {
           pool: sellPool.pool,
@@ -333,6 +335,8 @@ export class OpportunityPipeline extends EventEmitter {
           fee: sellPool.fee,
           minOut: sellMinOut,
           dexType: sellDexType,
+          router: '0x0000000000000000000000000000000000000000', // S45: default router (Uniswap V3)
+          useDeadline: false, // S45: V2 interface (no deadline)
         },
       ];
       
