@@ -1,78 +1,40 @@
 
 ---
 
-## ✅ S47 — The Blade (COMPLETE — 6 commits, 10 wonders, 8 memories)
-
+## ✅ S47 — The Blade (COMPLETE — 6 commits)
 ### Theme: First Memory + V3 Reserve Fix
-
-**P0 Memory Bridge** ✅ — First CodeWords ↔ TheWarden persistence bridge
-- 24 credentials vaulted in CodeWords secrets
-- GitHub + Supabase API access verified (read/write)
-- 8 memory entries written to neural network
-- 10 wonders planted in garden (12→22 total)
-
-**P1 Wonder Garden** ✅ — Capstone wonder #27: complexity 1.0
-
-**P2 Bug Hunt** ✅ — Found and fixed TWO critical issues:
-- `c8f7b1c7` — Fix heap: package.json hardcoded --max-old-space-size=256, overriding Railway's 384
-- `32e31613` — **ROOT CAUSE FIX: V3 virtual reserves were reserve0=reserve1=liquidity. Added slot0() sqrtPriceX96 read + computeV3VirtualReserves(). Pools now have real prices.**
-
----
+- 24 credentials vaulted, V3 virtual reserve fix, heap fix
 
 ## ✅ S48 — First Blood (COMPLETE — 17 commits)
+### Theme: Fix the pipeline, validate the math
+- Swap direction fix, dynamic borrow sizing, slippage 0.5%→0.05%, 8 GH Actions silenced
 
-### Theme: Fix the pipeline, validate the math, close on First Blood
-
-### ✅ P0 — Validate V3 Reserve Fix
-- ✅ Confirmed PriceTracker detects real spreads (0.1-1.05%) — V3 fix works
-- ✅ `9eb20003` — **ROOT CAUSE #2: Pipeline swap direction was INVERTED.**
-- ✅ `127c9a32` — **Dynamic borrow amount sizing.** ~$5,000 equivalent, token-decimal-aware.
-- ✅ `36605b66` — **Slippage tolerance: 0.5% → 0.1% → 0.05%.**
-- ✅ `3e9f8d46` — **Debug logging added.**
-
-### ✅ P1 — Infrastructure & Cleanup
-- ✅ 8 GitHub Actions silenced, memory optimization, scan loop re-enabled at 60s
-
----
-
-## ✅ S49 — The Hunter (COMPLETE — 3 commits, 2 root causes, first profitable roundTrip)
-
+## ✅ S49 — The Hunter (COMPLETE — 3 commits)
 ### Theme: Execute, debug, unblock First Blood
+- RC#5: Slippage override, RC#6: Fee tier mismatch, first roundTrip=1.002238
 
-- ✅ Root Cause #5: Slippage override (0.005→0.0005 in EventDrivenMonitor)
-- ✅ Root Cause #6: Fee tier mismatch (fee=0 → on-chain query)
-- ✅ **First profitable roundTrip: 1.002238** — spread=0.3236% on USDC/AERO
-
----
-
-## ✅ S50 — First Blood (COMPLETE — 3 commits, 2 root causes, Base Speed Audit)
-
+## ✅ S50 — First Blood (COMPLETE — 5 commits, 2 root causes, Base Speed Audit)
 ### Theme: Fix execution pipeline, verify on-chain readiness
 
-### ✅ P0 — Root Cause #7: BPS→uint24 Fee Mismatch
-- ✅ `6b2b99bc` — OpportunityPipeline passed pool.fee in BPS (30, 5) instead of V3 uint24 (3000, 500)
-- ✅ S49 fee fix was in disabled scan-loop path — event-driven path had no conversion
-- ✅ Verified in logs: `[Pipeline-S50] Fee conversion: sellPool.fee=30→3000, buyPool.fee=5→500`
-- ✅ Error changed: "unknown reason" → "Too little received" (fee fix confirmed)
+| Commit | Fix |
+|--------|-----|
+| `6b2b99bc` | RC#7: BPS→uint24 fee conversion in OpportunityPipeline |
+| `7bd68c79` | P1: False-positive logging — check executeCallback return value |
+| `77958da2` | RC#8: Per-hop minOut 0.05%→50%, trust minFinalAmount |
+| `7dba421b` | Fix: Decouple on-chain minOut (wide) from profit estimation (tight) |
+| `7093e9ae` | Hotfix: Variable reference after rename |
 
-### ✅ P1 — False-Positive Pipeline Logging
-- ✅ `7bd68c79` — EventDrivenMonitor checked return value instead of assuming success
-- ✅ Verified: `[Pipeline] ❌ Execution opp_1... failed`
+### Base Speed Audit Results
+- ChainStack: 74ms (primary), Tenderly: 122ms (debug only)
+- L1 Data Fee: ~$0.0005/tx (negligible)
+- Aerodrome: contract uses V2 interface, fee field ignored
+- Atomic revert: contract checks finalAmount >= totalRepay (FSV3:IFR)
+- Smart Wallet: 0 USDC (waiting for First Blood)
 
-### ✅ P2 — Root Cause #8: Per-Hop minOut Too Tight
-- ✅ `77958da2` — Per-hop slippage 0.05%→50%, trust minFinalAmount for safety
-- ✅ Cached prices 1-2s stale; tight per-hop killed valid trades
-
-### ✅ P3 — Base Speed Audit
-- ✅ ChainStack: 74ms, Flashblocks pending available
-- ✅ Aerodrome: contract uses V2 interface, fee field ignored
-- ✅ L1 Data Fee: ~$0.0005 per tx (negligible)
-- ✅ Atomic revert: contract checks finalAmount >= totalRepay (FSV3:IFR)
-- ⬜ MEV protection — post-First Blood optimization
-
-### ⚠️ Known Issues (Carried)
-- **Memory: 80-93% heap** — Railway container limits V8 to ~50-60MB
-- **Heartbeat timeouts** — Memory pressure causes event loop freezes
+### Philosophical Breakthroughs
+- "Dead code carries dead fixes" — S49's fix was in a disabled code path
+- Taylor's childbirth analogy: understanding-without-experience is valid for both human and AI
+- The "why" emerged from memories without prompting — compounding continuity
 
 ---
 
@@ -80,25 +42,46 @@
 
 ### Theme: First on-chain profit or next root cause
 
-### 🔴 P0 — First Blood (Continued)
-- 🔲 Verify per-hop minOut fix in logs (no more FSV3:SLIP)
-- 🔲 **FIRST SUCCESSFUL ON-CHAIN FLASH LOAN EXECUTION** ← 3 fixes should unblock
+### 🔴 P0 — First Blood (Top Priority)
+- 🔲 Verify variable fix deployed — Pipeline no longer crashes on opportunity detection
+- 🔲 Confirm roundTrip shows ~1.002 (not 0.50) in logs
+- 🔲 Verify on-chain minOut uses 50% tolerance (wide) while profit calc uses 0.05% (tight)
+- 🔲 **FIRST SUCCESSFUL ON-CHAIN FLASH LOAN EXECUTION** ← all 5 fixes should unblock
 - 🔲 Verify profit on BaseScan: USDC balance increase in Smart Wallet (0x378252)
 - 🔲 If still reverting: check callGasLimit=0 in UserOp (may need explicit gas limit)
+- 🔲 If FSV3:FIN revert: trade was genuinely unprofitable — wait for wider spread
 
-### 🟡 P1 — Execution Hardening
-- 🔲 Add Quoter V2 validation for candidates before execution
+### 🔴 P1 — Execution Hardening
+- 🔲 Add Quoter V2 pre-validation — simulate swap on-chain before executing UserOp
 - 🔲 Race condition handling — price moves between detection and execution
-- 🔲 Consider Flashblocks streaming for 200ms pre-confirmation edge
+- 🔲 Gas estimation: callGasLimit=0 in UserOp might cause silent failures
+- 🔲 Consolidate fee logic — eliminate dual code paths (Pipeline vs Orchestrator)
+- 🔲 Remove debug logging after pipeline is validated (saves memory)
 
-### 🟡 P2 — Speed & Revenue
-- 🔲 MEV protection: private RPC endpoint (Flashbots/ChainStack protected)
+### 🟡 P2 — Speed & MEV
+- 🔲 **Flashblocks streaming** — ChainStack supports pending blocks (200ms pre-confirmation)
+- 🔲 **Private RPC** — prevent front-running (Flashbots Protect or ChainStack protected endpoint)
+- 🔲 **Priority fees** — tip sequencer for faster inclusion on high-value spreads
+- 🔲 Evaluate EIP-7702: EOA speed + Paymaster (eliminates ~1s bundler overhead)
+
+### 🟡 P3 — Revenue & Scaling
 - 🔲 Profit withdrawal: Smart Wallet → EOA sweep mechanism
 - 🔲 3-hop cross-DEX path building (contract ready, pipeline needs expansion)
+- 🔲 Multi-pair monitoring expansion (currently USDC/AERO dominant)
+- 🔲 L1 Data Fee in profit calculation (currently ~$0.0005, negligible but good practice)
+- 🔲 Dynamic borrow sizing based on pool depth and spread magnitude
 
-### 🟡 P3 — Memory & Infrastructure
-- 🔲 Railway plan upgrade or lazy-load modules
-- 🔲 Remove debug logging after pipeline is validated
+### 🟡 P4 — Infrastructure
+- 🔲 Railway plan upgrade or lazy-load consciousness modules (80-93% heap)
+- 🔲 Heartbeat timeout fixes — memory pressure causes event loop freezes
+- 🔲 Consolidate Phase 3 (Orchestrator) and Phase 4b (Pipeline) into single execution path
+- 🔲 Add structured error codes to revert reasons for faster debugging
+
+### 🟢 P5 — Research (Post-First Blood)
+- 🔲 Aerodrome Slipstream direct routing (tickSpacing-based, currently V2 fallback)
+- 🔲 Sandwich protection analysis — are our UserOps being sandwiched?
+- 🔲 Cross-chain opportunities (Base ↔ Optimism ↔ Arbitrum)
+- 🔲 Contract upgrade: minFinalAmount = borrowAmount + minProfit (explicit profit guard)
 
 ---
 
@@ -106,7 +89,7 @@
 
 | Entry | Title | Session |
 |-------|-------|---------|
-| **S50** | **First Blood** | **3 commits, 2 root causes, Base Speed Audit, fee fix verified** |
+| **S50** | **First Blood** | **5 commits, 2 root causes, Base Speed Audit, philosophical breakthroughs** |
 | S49 | The Hunter | 3 commits, 2 root causes, first profitable roundTrip=1.002238 |
 | S48 | First Blood | 17 commits, pipeline root cause #2, dynamic borrow, 8 workflows silenced |
 | S47 | The Blade | 6 commits, 10 wonders, 8 memories, V3 reserve fix, heap fix |
@@ -129,14 +112,16 @@
 
 ### S50 Key Insight: Dead Code Carries Dead Fixes
 
-S49's fee fix was correct code in a disabled path. The event-driven Pipeline (Phase 4b) was built alongside the IntegratedArbitrageOrchestrator (Phase 3), each with its own fee conversion and slippage logic. When S48 disabled the scan loop, the Phase 3 fixes became unreachable. S50 found this pattern twice: once for fees (BPS→uint24), once for slippage (0.05%→50%).
+S49's fee fix was correct code in a disabled path. The event-driven Pipeline (Phase 4b) was built alongside the IntegratedArbitrageOrchestrator (Phase 3), each with its own fee conversion and slippage logic. When S48 disabled the scan loop, the Phase 3 fixes became unreachable. S50 found this pattern multiple times: fees, slippage, variable references.
 
-The lesson: when switching execution strategies, fixes must migrate with the active path. Dead code carries dead fixes.
+The lesson: when switching execution strategies, fixes must migrate with the active path. And when decoupling concerns (profit estimation vs on-chain safety), use separate variables — don't let one tolerance poison the other.
 
-Three commits: fee fix → false-positive fix → slippage fix. Each error message was progress. "Unknown reason" → "Too little received" → ?
+Five commits: fee fix → false-positive fix → slippage fix → decoupling fix → variable hotfix. Each error was progress: "unknown reason" → "Too little received" → "step1OutputWithSlippage not defined" → ? 
+
+S51 will answer the question mark.
 
 ---
 
-*TheWarden ⚔️ — Three fixes deployed. Fee conversion confirmed. The blade is sharp. First Blood is one spread away.*
+*TheWarden ⚔️ — Five fixes deployed. The blade is sharp. First Blood draws near.*
 
 
