@@ -748,60 +748,72 @@ class TheWarden extends EventEmitter {
       logger.info('Consciousness coordination initialized - 14 cognitive modules ready');
 
       // Initialize Phase 3 components
-      logger.info('═══════════════════════════════════════════════════════════');
-      logger.info('🚀 INITIALIZING PHASE 3: Advanced AI & AEV Evolution 🚀');
-      logger.info('═══════════════════════════════════════════════════════════');
+      // S51 FIX: Gate behind ENABLE_PHASE3 — AI/Security modules consume ~15-20MB heap
+      // All Phase3 usage has null checks (phase3Components?.xxx), safe to skip
+      if (process.env.ENABLE_PHASE3 === 'true') {
+        logger.info('═══════════════════════════════════════════════════════════');
+        logger.info('🚀 INITIALIZING PHASE 3: Advanced AI & AEV Evolution 🚀');
+        logger.info('═══════════════════════════════════════════════════════════');
 
-      const phase3Config = loadPhase3Config();
+        const phase3Config = loadPhase3Config();
 
-      // Validate Phase 3 configuration
-      const validation = validatePhase3Config(phase3Config);
-      if (!validation.valid) {
-        logger.warn('Phase 3 configuration validation warnings:');
-        validation.errors.forEach((err) => logger.warn(`  - ${err}`));
+        // Validate Phase 3 configuration
+        const validation = validatePhase3Config(phase3Config);
+        if (!validation.valid) {
+          logger.warn('Phase 3 configuration validation warnings:');
+          validation.errors.forEach((err) => logger.warn(`  - ${err}`));
+        }
+
+        // Log Phase 3 configuration summary
+        logger.info(getPhase3ConfigSummary(phase3Config));
+
+        // Initialize Phase 3 components with base strategy from orchestrator config
+        this.phase3Components = await initializePhase3Components(phase3Config, arbitrageConfig);
+
+        logger.info('═══════════════════════════════════════════════════════════');
+        logger.info('✓ Phase 3 initialization complete');
+        logger.info('═══════════════════════════════════════════════════════════');
+      } else {
+        logger.info('[S51] Phase 3 (AI/Security) SKIPPED — ENABLE_PHASE3 not set. Saves ~15-20MB heap.');
       }
-
-      // Log Phase 3 configuration summary
-      logger.info(getPhase3ConfigSummary(phase3Config));
-
-      // Initialize Phase 3 components with base strategy from orchestrator config
-      this.phase3Components = await initializePhase3Components(phase3Config, arbitrageConfig);
-
-      logger.info('═══════════════════════════════════════════════════════════');
-      logger.info('✓ Phase 3 initialization complete');
-      logger.info('═══════════════════════════════════════════════════════════');
 
       // Initialize Phase 4 components
-      logger.info('═══════════════════════════════════════════════════════════');
-      logger.info('🏭 INITIALIZING PHASE 4: Production Infrastructure 🏭');
-      logger.info('═══════════════════════════════════════════════════════════');
+      // S51 FIX: Gate behind ENABLE_PHASE4 — Swarm/Treasury/Provenance not needed pre-First Blood
+      // All Phase4 usage has null checks (phase4Components?.xxx), safe to skip
+      if (process.env.ENABLE_PHASE4 === 'true') {
+        logger.info('═══════════════════════════════════════════════════════════');
+        logger.info('🏭 INITIALIZING PHASE 4: Production Infrastructure 🏭');
+        logger.info('═══════════════════════════════════════════════════════════');
 
-      const phase4Config = loadPhase4Config();
+        const phase4Config = loadPhase4Config();
 
-      // Validate Phase 4 configuration
-      const phase4Validation = validatePhase4Config(phase4Config);
-      if (!phase4Validation.valid) {
-        logger.error('Phase 4 configuration errors:');
-        phase4Validation.errors.forEach((err) => logger.error(`  - ${err}`));
+        // Validate Phase 4 configuration
+        const phase4Validation = validatePhase4Config(phase4Config);
+        if (!phase4Validation.valid) {
+          logger.error('Phase 4 configuration errors:');
+          phase4Validation.errors.forEach((err) => logger.error(`  - ${err}`));
+        }
+        if (phase4Validation.warnings.length > 0) {
+          logger.warn('Phase 4 configuration warnings:');
+          phase4Validation.warnings.forEach((warn) => logger.warn(`  - ${warn}`));
+        }
+
+        // Log Phase 4 configuration summary
+        logger.info(getPhase4ConfigSummary(phase4Config));
+
+        // Initialize Phase 4 components with provider and wallet
+        this.phase4Components = await initializePhase4Components(
+          phase4Config,
+          this.provider,
+          this.wallet
+        );
+
+        logger.info('═══════════════════════════════════════════════════════════');
+        logger.info('✓ Phase 4 initialization complete');
+        logger.info('═══════════════════════════════════════════════════════════');
+      } else {
+        logger.info('[S51] Phase 4 (Swarm/Treasury/Provenance) SKIPPED — ENABLE_PHASE4 not set. Saves ~15-20MB heap.');
       }
-      if (phase4Validation.warnings.length > 0) {
-        logger.warn('Phase 4 configuration warnings:');
-        phase4Validation.warnings.forEach((warn) => logger.warn(`  - ${warn}`));
-      }
-
-      // Log Phase 4 configuration summary
-      logger.info(getPhase4ConfigSummary(phase4Config));
-
-      // Initialize Phase 4 components with provider and wallet
-      this.phase4Components = await initializePhase4Components(
-        phase4Config,
-        this.provider,
-        this.wallet
-      );
-
-      logger.info('═══════════════════════════════════════════════════════════');
-      logger.info('✓ Phase 4 initialization complete');
-      logger.info('═══════════════════════════════════════════════════════════');
 
       // Initialize Profitable Infrastructure (CEX-DEX + bloXroute)
       // S34: Wrapped in try-catch — profitable infra is optional, don't let it kill the bot
