@@ -139,7 +139,7 @@ export class OpportunityPipeline extends EventEmitter {
       minSpreadPercent: config?.minSpreadPercent ?? 0.2,
       defaultBorrowAmount: config?.defaultBorrowAmount ?? 10_000_000_000n, // 10,000 USDC
       slippageTolerance: config?.slippageTolerance ?? 0.0005, // S48: 0.05% — Base L2 pools have low slippage on reasonable trade sizes
-      maxPriceAge: config?.maxPriceAge ?? 5000,
+      maxPriceAge: config?.maxPriceAge ?? parseInt(process.env.PIPELINE_MAX_PRICE_AGE || '30000', 10),
       gasPerStep: config?.gasPerStep ?? 200_000,
       gasPriceWei: config?.gasPriceWei ?? 50_000_000n, // 0.05 gwei (Base L2)
       maxConcurrent: config?.maxConcurrent ?? 1,
@@ -243,7 +243,7 @@ export class OpportunityPipeline extends EventEmitter {
     
     // 2. Price freshness
     if (signal.maxPriceAge > this.config.maxPriceAge) {
-      logger.info(`[Pipeline] ⏭️ SKIP ${signal.pairKey}: price age ${signal.priceAge || 'unknown'}ms > max stale threshold`);
+      logger.info(`[Pipeline] ⏭️ SKIP ${signal.pairKey}: price age ${signal.maxPriceAge}ms > max ${this.config.maxPriceAge}ms stale threshold`);
 
       return 'STALE_PRICE';
     }
