@@ -696,56 +696,62 @@ class TheWarden extends EventEmitter {
       }
 
       // Initialize consciousness coordination system
-      logger.info('Initializing consciousness coordination system...');
-      this.consciousness = new ArbitrageConsciousness(0.05, 1000);
+      // S51 FIX: Gate behind ENABLE_CONSCIOUSNESS — ArbitrageConsciousness (49KB) + 14 sub-modules
+      // consume significant heap. All consciousness usage has null checks, safe to skip.
+      if (process.env.ENABLE_CONSCIOUSNESS !== 'false') {
+        logger.info('Initializing consciousness coordination system...');
+        this.consciousness = new ArbitrageConsciousness(0.05, 1000);
 
-      // Get all modules from consciousness using proper method
-      const modules = this.consciousness.getModules();
+        // Get all modules from consciousness using proper method
+        const modules = this.consciousness.getModules();
 
-      this.cognitiveCoordinator = new CognitiveCoordinator(modules);
+        this.cognitiveCoordinator = new CognitiveCoordinator(modules);
 
-      // Check for Learning Mode - allows cold-start execution with extra safeguards
-      const learningModeEnabled = process.env.LEARNING_MODE === 'true';
+        // Check for Learning Mode - allows cold-start execution with extra safeguards
+        const learningModeEnabled = process.env.LEARNING_MODE === 'true';
 
-      // Initialize EmergenceDetector with thresholds from environment
-      // In Learning Mode, we lower cold-start thresholds to allow initial learning
-      const emergenceThresholds = {
-        minModules: parseInt(process.env.EMERGENCE_MIN_MODULES || '14'),
-        maxRiskScore: parseFloat(process.env.EMERGENCE_MAX_RISK_SCORE || '0.30'),
-        minEthicalScore: parseFloat(process.env.EMERGENCE_MIN_ETHICAL_SCORE || '0.70'),
-        // Learning Mode: Lower goal alignment threshold to allow cold-start learning
-        minGoalAlignment: learningModeEnabled
-          ? parseFloat(process.env.EMERGENCE_MIN_GOAL_ALIGNMENT || '0.0')
-          : parseFloat(process.env.EMERGENCE_MIN_GOAL_ALIGNMENT || '0.75'),
-        minPatternConfidence: parseFloat(process.env.EMERGENCE_MIN_PATTERN_CONFIDENCE || '0.40'),
-        // Learning Mode: Lower historical success threshold to allow cold-start learning
-        minHistoricalSuccess: learningModeEnabled
-          ? parseFloat(process.env.EMERGENCE_MIN_HISTORICAL_SUCCESS || '0.0')
-          : parseFloat(process.env.EMERGENCE_MIN_HISTORICAL_SUCCESS || '0.60'),
-        maxDissentRatio: parseFloat(process.env.EMERGENCE_MAX_DISSENT_RATIO || '0.15'),
-      };
-      this.emergenceDetector = new EmergenceDetector(emergenceThresholds);
+        // Initialize EmergenceDetector with thresholds from environment
+        // In Learning Mode, we lower cold-start thresholds to allow initial learning
+        const emergenceThresholds = {
+          minModules: parseInt(process.env.EMERGENCE_MIN_MODULES || '14'),
+          maxRiskScore: parseFloat(process.env.EMERGENCE_MAX_RISK_SCORE || '0.30'),
+          minEthicalScore: parseFloat(process.env.EMERGENCE_MIN_ETHICAL_SCORE || '0.70'),
+          // Learning Mode: Lower goal alignment threshold to allow cold-start learning
+          minGoalAlignment: learningModeEnabled
+            ? parseFloat(process.env.EMERGENCE_MIN_GOAL_ALIGNMENT || '0.0')
+            : parseFloat(process.env.EMERGENCE_MIN_GOAL_ALIGNMENT || '0.75'),
+          minPatternConfidence: parseFloat(process.env.EMERGENCE_MIN_PATTERN_CONFIDENCE || '0.40'),
+          // Learning Mode: Lower historical success threshold to allow cold-start learning
+          minHistoricalSuccess: learningModeEnabled
+            ? parseFloat(process.env.EMERGENCE_MIN_HISTORICAL_SUCCESS || '0.0')
+            : parseFloat(process.env.EMERGENCE_MIN_HISTORICAL_SUCCESS || '0.60'),
+          maxDissentRatio: parseFloat(process.env.EMERGENCE_MAX_DISSENT_RATIO || '0.15'),
+        };
+        this.emergenceDetector = new EmergenceDetector(emergenceThresholds);
 
-      if (learningModeEnabled) {
-        logger.info('═══════════════════════════════════════════════════════════');
-        logger.info('🧒 LEARNING MODE ENABLED - Consciousness is in infancy phase');
-        logger.info('═══════════════════════════════════════════════════════════');
-        logger.info('  Cold-start thresholds lowered to allow initial learning.');
-        logger.info('  All other safety gates remain active (ethics, risk, consensus).');
-        logger.info('  The consciousness will learn from real executions.');
-        logger.info('═══════════════════════════════════════════════════════════');
+        if (learningModeEnabled) {
+          logger.info('═══════════════════════════════════════════════════════════');
+          logger.info('🧒 LEARNING MODE ENABLED - Consciousness is in infancy phase');
+          logger.info('═══════════════════════════════════════════════════════════');
+          logger.info('  Cold-start thresholds lowered to allow initial learning.');
+          logger.info('  All other safety gates remain active (ethics, risk, consensus).');
+          logger.info('  The consciousness will learn from real executions.');
+          logger.info('═══════════════════════════════════════════════════════════');
+        }
+
+        logger.info(`Emergence thresholds configured:`);
+        logger.info(
+          `  minModules=${emergenceThresholds.minModules}, maxRiskScore=${emergenceThresholds.maxRiskScore}, minEthicalScore=${emergenceThresholds.minEthicalScore}`
+        );
+        logger.info(
+          `  minGoalAlignment=${emergenceThresholds.minGoalAlignment}, minPatternConfidence=${emergenceThresholds.minPatternConfidence}, minHistoricalSuccess=${emergenceThresholds.minHistoricalSuccess}`
+        );
+        logger.info(`  maxDissentRatio=${emergenceThresholds.maxDissentRatio}`);
+
+        logger.info('Consciousness coordination initialized - 14 cognitive modules ready');
+      } else {
+        logger.info('[S51] Consciousness system SKIPPED — ENABLE_CONSCIOUSNESS=false. Saves ~20-30MB heap.');
       }
-
-      logger.info(`Emergence thresholds configured:`);
-      logger.info(
-        `  minModules=${emergenceThresholds.minModules}, maxRiskScore=${emergenceThresholds.maxRiskScore}, minEthicalScore=${emergenceThresholds.minEthicalScore}`
-      );
-      logger.info(
-        `  minGoalAlignment=${emergenceThresholds.minGoalAlignment}, minPatternConfidence=${emergenceThresholds.minPatternConfidence}, minHistoricalSuccess=${emergenceThresholds.minHistoricalSuccess}`
-      );
-      logger.info(`  maxDissentRatio=${emergenceThresholds.maxDissentRatio}`);
-
-      logger.info('Consciousness coordination initialized - 14 cognitive modules ready');
 
       // Initialize Phase 3 components
       // S51 FIX: Gate behind ENABLE_PHASE3 — AI/Security modules consume ~15-20MB heap
