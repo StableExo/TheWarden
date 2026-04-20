@@ -34,12 +34,12 @@ const CONSTRUCTOR_ARGS = {
 };
 
 async function main() {
-  const privateKey = process.env.PRIVATE_KEY || process.env.COINBASE_WALLET_KEY;
+  const privateKey = process.env.DEPLOYER_PRIVATE_KEY || process.env.PRIVATE_KEY || process.env.COINBASE_WALLET_KEY;
   const cdpUrl = process.env.CDP_PAYMASTER_URL || process.env.COINBASE_PAYMASTER_URL;
   const rpcUrl = process.env.CHAINSTACK_HTTPS || process.env.CHAINSTACK_HTTPS_ENDPOINT || 'https://mainnet.base.org';
 
   if (!privateKey) {
-    console.error('ERROR: PRIVATE_KEY or COINBASE_WALLET_KEY required');
+    console.error('ERROR: DEPLOYER_PRIVATE_KEY, PRIVATE_KEY, or COINBASE_WALLET_KEY required');
     process.exit(1);
   }
   if (!cdpUrl) {
@@ -50,22 +50,22 @@ async function main() {
   // Read compiled bytecode from Hardhat artifacts
   const artifactPath = path.join(__dirname, '..', 'artifacts', 'contracts', 'FlashSwapV3.sol', 'FlashSwapV3.json');
   if (!fs.existsSync(artifactPath)) {
-    console.error(`ERROR: Artifact not found at ${artifactPath}. Run 'npx hardhat compile' first.`);
+    console.error('ERROR: Artifact not found at ' + artifactPath + ". Run 'npx hardhat compile' first.");
     process.exit(1);
   }
   const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf-8'));
   const bytecode = artifact.bytecode as Hex;
-  console.log(\`Bytecode loaded: \${bytecode.length / 2} bytes\`);
+  console.log('Bytecode loaded: ' + (bytecode.length / 2) + ' bytes');
 
-  const pk = (privateKey.startsWith('0x') ? privateKey : \`0x\${privateKey}\`) as Hex;
+  const pk = (privateKey.startsWith('0x') ? privateKey : '0x' + privateKey) as Hex;
   const owner = privateKeyToAccount(pk);
 
   console.log('=== S52: FlashSwapV3 Contract #14 Deployment ===');
-  console.log(\`  EOA: \${owner.address}\`);
+  console.log('  EOA: ' + owner.address);
 
   const publicClient = createPublicClient({ chain: base, transport: http(rpcUrl) });
   const smartAccount = await toCoinbaseSmartAccount({ client: publicClient, owners: [owner] });
-  console.log(\`  Smart Wallet: \${smartAccount.address}\`);
+  console.log('  Smart Wallet: ' + smartAccount.address);
 
   // Encode constructor arguments
   const encodedArgs = encodeAbiParameters(
@@ -85,7 +85,7 @@ async function main() {
   );
 
   // Build CREATE2 deployment data: salt (32 bytes) + bytecode + constructor args
-  const saltHex = \`0x\${SALT.toString(16).padStart(64, '0')}\` as Hex;
+  const saltHex = ('0x' + SALT.toString(16).padStart(64, '0')) as Hex;
   const initCode = concat([bytecode, encodedArgs]);
   const deployData = concat([saltHex, initCode]);
 
@@ -97,13 +97,13 @@ async function main() {
     opcode: 'CREATE2',
     salt: saltHex,
   });
-  console.log(\`  Expected address: \${expectedAddress}\`);
+  console.log('  Expected address: ' + expectedAddress);
 
   // Check if already deployed
   const existingCode = await publicClient.getCode({ address: expectedAddress });
   if (existingCode && existingCode !== '0x') {
-    console.log(\`  ✅ Contract already deployed at \${expectedAddress} (\${existingCode.length / 2} bytes)\`);
-    console.log(\`  Set FLASHSWAP_V3_ADDRESS=\${expectedAddress} in Railway\`);
+    console.log('  Contract already deployed at ' + expectedAddress + ' (' + (existingCode.length / 2) + ' bytes)');
+    console.log('  Set FLASHSWAP_V3_ADDRESS=' + expectedAddress + ' in Railway');
     return;
   }
 
@@ -122,17 +122,17 @@ async function main() {
     verificationGasLimit: 500000n,
     preVerificationGas: 200000n,
   });
-  console.log(\`  UserOp hash: \${userOpHash}\`);
+  console.log('  UserOp hash: ' + userOpHash);
 
   const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
   if (receipt.success) {
     const code = await publicClient.getCode({ address: expectedAddress });
-    console.log(\`  ✅ Contract #14 deployed at \${expectedAddress} (\${(code?.length ?? 0) / 2} bytes)\`);
-    console.log(\`  TX: \${receipt.receipt.transactionHash}\`);
-    console.log(\`  Gas: \${receipt.receipt.gasUsed} (sponsored by Paymaster)\`);
-    console.log(\`\n  >>> Set FLASHSWAP_V3_ADDRESS=\${expectedAddress} in Railway <<<\`);
+    console.log('  Contract #14 deployed at ' + expectedAddress + ' (' + ((code?.length ?? 0) / 2) + ' bytes)');
+    console.log('  TX: ' + receipt.receipt.transactionHash);
+    console.log('  Gas: ' + receipt.receipt.gasUsed + ' (sponsored by Paymaster)');
+    console.log('  >>> Set FLASHSWAP_V3_ADDRESS=' + expectedAddress + ' in Railway <<<');
   } else {
-    console.error(\`  ❌ Deployment failed: \${receipt.reason || 'unknown'}\`);
+    console.error('  Deployment failed: ' + (receipt.reason || 'unknown'));
     process.exit(1);
   }
 }
