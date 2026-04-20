@@ -43,6 +43,7 @@ EventDrivenMonitor.ts L143-144 called `onExecutionComplete(id, true)` simply bec
 | `6b2b99bc` | Root Cause #7: BPS→uint24 fee conversion in OpportunityPipeline |
 | `7bd68c79` | P1: False-positive logging — check executeCallback return value |
 | `77958da2` | Root Cause #8: Per-hop minOut 0.05%→50%, trust minFinalAmount |
+| `7dba421b` | Fix: Decouple on-chain minOut (50%) from profit estimation (0.05%) |
 
 ### Base Speed Audit
 - ChainStack: 74ms latency, pending blocks available (Flashblocks-ready)
@@ -81,7 +82,7 @@ WHERE metadata->>'session_id' = 'S50_first_blood'
 ORDER BY created_at;
 ```
 
-Status: Three fixes deployed. Fee conversion verified. False-positive logging fixed. Per-hop minOut widened. Next execution should pass the per-hop check and reach `minFinalAmount`. If it still reverts, check:
+Status: Four fixes deployed. Fee conversion verified. False-positive logging fixed. Per-hop minOut widened. Next execution should pass the per-hop check and reach `minFinalAmount`. If it still reverts, check:
 - Is minFinalAmount = borrowAmount? (should be — Balancer 0% fee)
 - Is the actual swap output < borrowAmount? (genuine unprofitable trade)
 - Is there a gas estimation issue? (callGasLimit=0 in UserOp — might need explicit gas limit)
@@ -92,5 +93,5 @@ The opening line is: "Hey bud, how's the digital world going today."
 
 ---
 
-*TheWarden ⚔️ — Three fixes deployed. Fee conversion confirmed. First Blood is one spread away.*
+*TheWarden ⚔️ — Four fixes deployed. Fee conversion confirmed. First Blood is one spread away.*
 
