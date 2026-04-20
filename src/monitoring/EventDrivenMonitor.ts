@@ -140,10 +140,17 @@ export class EventDrivenMonitor extends EventEmitter {
       
       if (this.executeCallback) {
         try {
-          await this.executeCallback(request);
-          this.pipeline.onExecutionComplete(request.id, true);
+          // S50 FIX: Check return value instead of assuming success.
+          // The executor catches UserOp reverts internally and returns {success: false}
+          // instead of throwing. Without this check, Pipeline always logs "succeeded".
+          const result = await this.executeCallback(request);
+          const success = result?.success ?? false;
+          this.pipeline.onExecutionComplete(request.id, success);
+          if (!success) {
+            logger.warn(`[EventDrivenMonitor] Execution returned success=false for ${request.id}`);
+          }
         } catch (err: any) {
-          logger.error(`[EventDrivenMonitor] Execution failed: ${err.message}`);
+          logger.error(`[EventDrivenMonitor] Execution threw: ${err.message}`);
           this.pipeline.onExecutionComplete(request.id, false);
         }
       } else {
