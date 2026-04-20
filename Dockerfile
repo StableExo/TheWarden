@@ -46,4 +46,5 @@ COPY --from=build /app /app
 EXPOSE 3000
 # S46: Direct start — no more deploy wrapper (S44 deployment complete)
 # npm run start already includes --max-old-space-size=256
-CMD [ "npm", "run", "start" ]
+# S52: Use deploy wrapper — compiles + deploys contract if DEPLOY_MULTI_ROUTER=true
+CMD [ "sh", "scripts/start-with-deploy.sh" ]
