@@ -440,10 +440,16 @@ export class FlashSwapV3Executor {
         ],
       });
 
+      // S52 FIX: Explicit gas limits — bundler can't simulate flash loan callbacks,
+      // returns callGasLimit=0 without overrides. 800k covers loan+swap+callback on Base.
+      const GAS_LIMIT_OVERRIDE = BigInt(process.env.USEROP_CALL_GAS_LIMIT || '800000');
       const userOpHash = await this.bundlerClient.sendUserOperation({
         calls: [{ to: this.config.contractAddress as Hex, data: calldata, value: 0n }],
+        callGasLimit: GAS_LIMIT_OVERRIDE,
+        verificationGasLimit: 500000n,
+        preVerificationGas: 100000n,
       });
-      logger.info(`[UserOp] Submitted: hash=${userOpHash}`);
+      logger.info(`[UserOp] Submitted: hash=${userOpHash}, callGasLimit=${GAS_LIMIT_OVERRIDE}`);
 
       const userOpReceipt = await this.bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
       if (!userOpReceipt.success) throw new Error(`UserOp failed: ${userOpReceipt.reason || 'unknown'}`);
@@ -576,6 +582,9 @@ export class FlashSwapV3Executor {
       });
       const hash = await this.bundlerClient.sendUserOperation({
         calls: [{ to: this.config.contractAddress as Hex, data: calldata, value: 0n }],
+        callGasLimit: 200000n,
+        verificationGasLimit: 500000n,
+        preVerificationGas: 100000n,
       });
       const receipt = await this.bundlerClient.waitForUserOperationReceipt({ hash });
       logger.info(`[UserOp] Emergency withdrawal: txHash=${receipt.receipt.transactionHash}`);
