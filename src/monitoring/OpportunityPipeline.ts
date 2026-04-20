@@ -425,7 +425,7 @@ export class OpportunityPipeline extends EventEmitter {
       // S48 DEBUG: Trace profit calculation
       logger.info(`[Pipeline-DEBUG] Pair: ${signal.pairKey}`);
       logger.info(`[Pipeline-DEBUG] borrowToken=${borrowToken} borrowAmount=${borrowAmount.toString()}`);
-      logger.info(`[Pipeline-DEBUG] Step1: sellPool.price=${sellPool.price} rawStep1=${rawStep1Output.toFixed(0)} afterSlip=${step1OutputWithSlippage.toFixed(0)} minOut=${step1MinOut.toString()}`);
+      logger.info(`[Pipeline-DEBUG] Step1: sellPool.price=${sellPool.price} rawStep1=${rawStep1Output.toFixed(0)} afterSlip=${estStep1Output.toFixed(0)} minOut=${step1MinOut.toString()}`);
       logger.info(`[Pipeline-DEBUG] Step2: buyPool.inversePrice=${buyPool.inversePrice} rawStep2=${rawStep2Output.toFixed(0)} afterSlip=${step2OutputWithSlippage.toFixed(0)} minOut=${step2MinOut.toString()}`);
       const roundTripRatio = (Number(step2MinOut) / Number(borrowAmount));
       logger.info(`[Pipeline-DEBUG] grossProfit=${grossProfit.toString()} netProfit=${estimatedNetProfit.toString()} minRequired=${this.config.minProfitAmount.toString()}`);
