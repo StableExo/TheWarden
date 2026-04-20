@@ -3,9 +3,7 @@ builder = "NIXPACKS"
 buildCommand = "npm install && npx hardhat compile --force"
 
 [deploy]
-# S53: Deploy Contract #14 first, then start the bot
-# When DEPLOY_MULTI_ROUTER=true: compile + deploy contract, then start engine
-# When DEPLOY_MULTI_ROUTER=false: just start the engine
+# S54: Removed healthcheckPath — deploy script runs before HTTP server starts
+# Health check was causing "service unavailable" during contract deployment phase
 startCommand = "sh scripts/start-with-deploy.sh"
-healthcheckPath = "/"
 restartPolicyType = "ON_FAILURE"
