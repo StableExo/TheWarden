@@ -358,13 +358,27 @@ export class OpportunityPipeline extends EventEmitter {
       const buyDexType = DEX_TYPE_MAP[buyPool.dex] ?? DexType.UNISWAP_V3;
       const sellDexType = DEX_TYPE_MAP[sellPool.dex] ?? DexType.UNISWAP_V3;
       
+      // S50 FIX (Root Cause #7): Convert pool.fee from BPS to V3 uint24 format.
+      // The data pipeline provides fees in BPS (e.g. 30 = 0.3%, 5 = 0.05%).
+      // V3 contracts expect uint24 (e.g. 3000 = 0.3%, 500 = 0.05%).
+      // Without this conversion: Factory.getPool(token0, token1, 30) → address(0) → revert.
+      const toV3Fee = (bpsFee: number): number => {
+        if (bpsFee >= 100) return bpsFee;  // Already in V3 uint24 format (100, 500, 3000, 10000)
+        if (bpsFee > 0) return bpsFee * 100; // BPS → uint24 (30 → 3000, 5 → 500)
+        return 3000; // Fallback for 0/missing — common V3 tier
+      };
+
+      const sellFee = toV3Fee(sellPool.fee);
+      const buyFee = toV3Fee(buyPool.fee);
+      logger.info(`[Pipeline-S50] Fee conversion: sellPool.fee=${sellPool.fee}→${sellFee}, buyPool.fee=${buyPool.fee}→${buyFee}`);
+
       const steps: SwapStep[] = [
         {
           // S48: Step 1 — Sell token0 at HIGH-price pool (get more token1)
           pool: sellPool.pool,
           tokenIn: sellPool.token0,
           tokenOut: sellPool.token1,
-          fee: sellPool.fee,
+          fee: sellFee,
           minOut: step1MinOut,
           dexType: sellDexType,
           router: '0x0000000000000000000000000000000000000000',
@@ -375,7 +389,7 @@ export class OpportunityPipeline extends EventEmitter {
           pool: buyPool.pool,
           tokenIn: buyPool.token1,
           tokenOut: buyPool.token0,
-          fee: buyPool.fee,
+          fee: buyFee,
           minOut: step2MinOut,
           dexType: buyDexType,
           router: '0x0000000000000000000000000000000000000000',
