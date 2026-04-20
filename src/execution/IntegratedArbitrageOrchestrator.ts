@@ -987,10 +987,18 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
       // S41 Fix: Query actual pool fee on-chain for V3-style pools.
       // The data pipeline may pass 0.003 (default) instead of actual fee.
       // The SwapRouter uses Factory.getPool(tokenIn, tokenOut, fee) — wrong fee = revert(0x).
+      // S49: Added in-memory cache. V3 pool fees are IMMUTABLE — safe to cache permanently.
       const queryPoolFee = async (poolAddress: string): Promise<number | null> => {
+        const cached = this.feeCache?.get(poolAddress.toLowerCase());
+        if (cached !== undefined) return cached;
         try {
           const result = await this.provider.call({ to: poolAddress, data: '0xddca3f43' }); // fee()
-          if (result && result !== '0x') return parseInt(result, 16);
+          if (result && result !== '0x') {
+            const fee = parseInt(result, 16);
+            if (!this.feeCache) this.feeCache = new Map();
+            this.feeCache.set(poolAddress.toLowerCase(), fee);
+            return fee;
+          }
         } catch { /* not a V3 pool */ }
         return null;
       };
