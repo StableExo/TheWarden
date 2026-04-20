@@ -426,7 +426,7 @@ export class OpportunityPipeline extends EventEmitter {
       logger.info(`[Pipeline-DEBUG] Pair: ${signal.pairKey}`);
       logger.info(`[Pipeline-DEBUG] borrowToken=${borrowToken} borrowAmount=${borrowAmount.toString()}`);
       logger.info(`[Pipeline-DEBUG] Step1: sellPool.price=${sellPool.price} rawStep1=${rawStep1Output.toFixed(0)} afterSlip=${estStep1Output.toFixed(0)} minOut=${step1MinOut.toString()}`);
-      logger.info(`[Pipeline-DEBUG] Step2: buyPool.inversePrice=${buyPool.inversePrice} rawStep2=${rawStep2Output.toFixed(0)} afterSlip=${step2OutputWithSlippage.toFixed(0)} minOut=${step2MinOut.toString()}`);
+      logger.info(`[Pipeline-DEBUG] Step2: buyPool.inversePrice=${buyPool.inversePrice} rawStep2=${estStep2Output.toFixed(0)} afterSlip=${step2OutputWithSlippage.toFixed(0)} minOut=${step2MinOut.toString()}`);
       const roundTripRatio = (Number(step2MinOut) / Number(borrowAmount));
       logger.info(`[Pipeline-DEBUG] grossProfit=${grossProfit.toString()} netProfit=${estimatedNetProfit.toString()} minRequired=${this.config.minProfitAmount.toString()}`);
       logger.info(`[Pipeline-DEBUG] roundTrip=${roundTripRatio.toFixed(6)} (needs >1.0) spread=${signal.spreadPercent.toFixed(4)}% slippage=${this.config.slippageTolerance}`);
