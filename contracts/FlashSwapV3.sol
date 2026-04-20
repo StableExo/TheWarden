@@ -55,6 +55,21 @@ interface IV3SwapRouter {
     function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);
 }
 
+// S52: Aerodrome Slipstream CL Router Interface (tickSpacing instead of fee)
+interface IAerodromeCLRouter {
+    struct ExactInputSingleParams {
+        address tokenIn;
+        address tokenOut;
+        int24 tickSpacing;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+        uint160 sqrtPriceLimitX96;
+    }
+    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);
+}
+
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
@@ -598,7 +613,9 @@ contract FlashSwapV3 is
                     step.tokenIn,
                     step.tokenOut,
                     currentAmount,
-                    step.minOut
+                    step.minOut,
+                    step.fee,
+                    step.router
                 );
             } else {
                 revert("FSV3:UDT"); // Unsupported DEX type
@@ -610,6 +627,8 @@ contract FlashSwapV3 is
         }
         
         require(currentAmount >= path.minFinalAmount, "FSV3:FIN");
+        // S52: Profit floor — ensure at least 1 wei profit over borrow
+        require(currentAmount > path.borrowAmount, "FSV3:NOP"); // No Profit
         return currentAmount;
     }
 
@@ -679,14 +698,29 @@ contract FlashSwapV3 is
         return amounts[amounts.length - 1];
     }
 
+    // S52: Aerodrome Slipstream CL swap — uses tickSpacing instead of fee
     function _swapAerodrome(
         address tokenIn,
         address tokenOut,
         uint256 amountIn,
-        uint256 minAmountOut
+        uint256 minAmountOut,
+        uint24 tickSpacingOrFee,
+        address router
     ) internal returns (uint256 amountOut) {
-        // Aerodrome uses same interface as Uniswap V2
-        return _swapSushiSwap(tokenIn, tokenOut, amountIn, minAmountOut);
+        address hopRouter = router != address(0) ? router : address(swapRouter);
+        IERC20(tokenIn).approve(hopRouter, amountIn);
+        
+        IAerodromeCLRouter.ExactInputSingleParams memory params = IAerodromeCLRouter.ExactInputSingleParams({
+            tokenIn: tokenIn,
+            tokenOut: tokenOut,
+            tickSpacing: int24(uint24(tickSpacingOrFee)),
+            recipient: address(this),
+            deadline: block.timestamp + DEADLINE_OFFSET,
+            amountIn: amountIn,
+            amountOutMinimum: minAmountOut,
+            sqrtPriceLimitX96: 0
+        });
+        return IAerodromeCLRouter(hopRouter).exactInputSingle(params);
     }
 
     // --- Profit Distribution ---
