@@ -160,6 +160,7 @@ export class OpportunityPipeline extends EventEmitter {
   onOpportunity(signal: OpportunitySignal): void {
     this.stats.totalReceived++;
     
+    logger.info(`[Pipeline] 📥 RECEIVED: ${signal.pairKey} spread=${signal.spreadPercent.toFixed(4)}% buy@${signal.buyPool?.dex}(${signal.buyPool?.price?.toFixed(6) || '?'}) sell@${signal.sellPool?.dex}(${signal.sellPool?.price?.toFixed(6) || '?'})`);
     const rejectReason = this.validate(signal);
     if (rejectReason) {
       this.reject(rejectReason);
@@ -169,6 +170,7 @@ export class OpportunityPipeline extends EventEmitter {
     // Construct execution request
     const request = this.buildExecutionRequest(signal);
     if (!request) {
+      logger.info(`[Pipeline] ❌ BUILD_FAILED: ${signal.pairKey} — could not construct execution request`);
       this.reject('BUILD_FAILED');
       return;
     }
@@ -235,22 +237,29 @@ export class OpportunityPipeline extends EventEmitter {
     
     // 1. Spread check
     if (signal.spreadPercent < this.config.minSpreadPercent) {
+      logger.info(`[Pipeline] ⏭️ SKIP ${signal.pairKey}: spread ${signal.spreadPercent.toFixed(4)}% < min ${this.config.minSpreadPercent}%`);
       return 'SPREAD_TOO_LOW';
     }
     
     // 2. Price freshness
     if (signal.maxPriceAge > this.config.maxPriceAge) {
+      logger.info(`[Pipeline] ⏭️ SKIP ${signal.pairKey}: price age ${signal.priceAge || 'unknown'}ms > max stale threshold`);
+
       return 'STALE_PRICE';
     }
     
     // 3. Concurrent execution limit
     if (this.activeExecutions >= this.config.maxConcurrent) {
+      logger.info(`[Pipeline] ⏭️ SKIP ${signal.pairKey}: ${this.activeExecutions}/${this.config.maxConcurrent} concurrent executions`);
+
       return 'MAX_CONCURRENT';
     }
     
     // 4. Pair cooldown
     const lastExec = this.executionCooldowns.get(signal.pairKey) ?? 0;
     if (now - lastExec < this.config.executionCooldown) {
+        logger.info(`[Pipeline] ⏭️ SKIP ${signal.pairKey}: cooldown active`);
+
       return 'COOLDOWN';
     }
     
@@ -258,12 +267,16 @@ export class OpportunityPipeline extends EventEmitter {
     if (this.config.minLiquidity > 0n) {
       if (signal.buyPool.liquidity < this.config.minLiquidity || 
           signal.sellPool.liquidity < this.config.minLiquidity) {
+          logger.info(`[Pipeline] ⏭️ SKIP ${signal.pairKey}: low liquidity in pool`);
+
         return 'LOW_LIQUIDITY';
       }
     }
     
     // 6. Sanity: prices must be positive
     if (signal.buyPool.price <= 0 || signal.sellPool.price <= 0) {
+      logger.info(`[Pipeline] ⏭️ SKIP ${signal.pairKey}: invalid price data`);
+
       return 'INVALID_PRICE';
     }
     
