@@ -1064,12 +1064,18 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
         const hop = hops[i];
         let fee = feeToUint24(hop.fee);
 
-        // If fee would be the common default (3000), verify against on-chain
-        if (fee === 3000) {
+        // S49: ALWAYS verify fee on-chain when it's 0, missing, or the common default (3000).
+        // ROOT CAUSE #6: If fee=0 (from missing data), contract calls Factory.getPool(t0,t1,0) → address(0) → revert(0x).
+        // If fee=3000 (default), it might not match the actual pool tier → same revert.
+        if (fee === 0 || fee === 3000 || !fee) {
           const onChainFee = await queryPoolFee(hop.poolAddress);
-          if (onChainFee !== null && onChainFee !== 3000) {
-            logger.info(`[V3Pipeline] Fee override: pool ${hop.poolAddress.substring(0, 14)}... pipeline=${fee} → on-chain=${onChainFee}`);
+          if (onChainFee !== null && onChainFee > 0) {
+            if (onChainFee !== fee) {
+              logger.info(`[V3Pipeline] Fee override: pool ${hop.poolAddress.substring(0, 14)}... pipeline=${fee} → on-chain=${onChainFee}`);
+            }
             fee = onChainFee;
+          } else {
+            logger.warn(`[V3Pipeline] ⚠️ Could not read fee for pool ${hop.poolAddress.substring(0, 14)}..., using ${fee}. May revert if wrong.`);
           }
         }
 
