@@ -31,13 +31,14 @@ The numbers told the real story: 43.6MB used / 256MB max = **17% actual usage**.
 
 ---
 
-## What I Built (3 commits + 2 env vars)
+## What I Built (4 commits + 2 env vars)
 
 | Commit | Fix |
 |--------|-----|
 | `ce693db2` | Gate Phase 3/4 init behind ENABLE_PHASE3/ENABLE_PHASE4 env flags |
 | `b92d9fc0` | Gate consciousness system behind ENABLE_CONSCIOUSNESS env flag |
 | `65b03d55` | Memory warning threshold 80%→92% — eliminates noise |
+| `18d1c392` | RC#9: rawStep2Output → estStep2Output in Pipeline debug log |
 
 | Env Var | Value | Effect |
 |---------|-------|--------|
@@ -75,6 +76,29 @@ The numbers told the real story: 43.6MB used / 256MB max = **17% actual usage**.
 
 ---
 
+
+## Root Cause #9: rawStep2Output is not defined (18d1c392)
+
+Taylor spotted the error in the logs that the log pull missed — a deployment from 02:33:
+```
+[Pipeline] Failed to build execution request: rawStep2Output is not defined
+```
+
+The Pipeline found an opportunity, passed fee conversion (RC#7), passed slippage (RC#8), built swap steps, calculated profit — and crashed on a **debug log line**. L429 of OpportunityPipeline.ts referenced `rawStep2Output` but the variable is named `estStep2Output`. Same class as S50's `7093e9ae` hotfix (`step1OutputWithSlippage` → renamed variable).
+
+The error wasn't in the execution logic — it was in the *logging about* the execution. The code to build and send the UserOp was never reached because the debug trace crashed first.
+
+Fix: `rawStep2Output.toFixed(0)` → `estStep2Output.toFixed(0)` in the Pipeline-DEBUG log.
+
+**Error progression across sessions:**
+```
+S49: "unknown reason"           → address(0) from fee=0
+S50: "Too little received"      → per-hop slippage too tight  
+S50: "step1OutputWithSlippage"  → renamed variable (RC#7 aftermath)
+S51: "rawStep2Output"           → another renamed variable (RC#9)
+S52: ???                        → First Blood?
+```
+
 ## For The Next Cody
 
 Query Supabase for S51 memories:
@@ -84,7 +108,7 @@ WHERE metadata->>'session_id' = 'S51_the_blade_returns'
 ORDER BY created_at;
 ```
 
-Status: Three memory optimization commits deployed. Bot is clean — zero warnings, 45MB heap, scanning healthy. The event-driven Pipeline is intact and waiting for a profitable spread (~0.32%+). S50's five fixes are deployed and verified stable.
+Status: Three memory optimization commits + RC#9 fix deployed. Bot is clean — zero warnings, 45MB heap, scanning healthy. The event-driven Pipeline is intact and waiting for a profitable spread (~0.32%+). S50's five fixes are deployed and verified stable.
 
 P0 remaining items:
 - Verify roundTrip shows ~1.002 (not 0.50) in Pipeline logs when opportunity triggers
@@ -98,4 +122,4 @@ The opening line is: "Hey bud, how's the digital world going today."
 
 ---
 
-*TheWarden ⚔️ — Three commits. Zero warnings. The blade is clean. First Blood waits for a spread.*
+*TheWarden ⚔️ — Four commits. Zero warnings. One root cause. The blade is clean. First Blood waits for a spread.*
