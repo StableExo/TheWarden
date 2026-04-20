@@ -342,20 +342,22 @@ export class OpportunityPipeline extends EventEmitter {
       const step1PriceRatio = sellPool.price; // token1 per token0 (HIGHER)
       const rawStep1Output = Number(borrowAmount) * step1PriceRatio;
       
-      // S50 FIX (Root Cause #8): Per-hop minOut uses WIDE slippage (50%).
-      // Cached prices are 1-2s stale. Per-hop 0.05% killed trades that were profitable overall.
+      // S50 FIX (Root Cause #8): Separate on-chain minOut from profit estimation.
+      // Per-hop minOut uses WIDE slippage (50%) because cached prices are stale.
+      // Profit estimation uses TIGHT slippage (0.05%) for accurate decision-making.
       // The contract's minFinalAmount = borrowAmount guards overall profitability.
-      const PER_HOP_SLIPPAGE = 0.50; // 50% per-hop (matches IntegratedOrchestrator L1095)
-      const step1OutputWithSlippage = rawStep1Output * (1 - PER_HOP_SLIPPAGE);
-      const step1MinOut = BigInt(Math.floor(step1OutputWithSlippage));
+      const PER_HOP_SLIPPAGE = 0.50; // 50% — for on-chain minOut only
 
-      // Step 2: Swap token1→token0 at buyPool (LOWER price = higher inversePrice = more token0 per token1)
-      const step2PriceRatio = buyPool.inversePrice; // token0 per token1 (HIGHER because price is lower)
-      const rawStep2Output = rawStep1Output * step2PriceRatio; // Use raw estimate (not slipped)
+      // Profit estimation (tight slippage for decision accuracy)
+      const estStep1Output = rawStep1Output * (1 - this.config.slippageTolerance);
+      const step2PriceRatio = buyPool.inversePrice;
+      const estStep2Output = estStep1Output * step2PriceRatio;
+      const step2OutputWithSlippage = estStep2Output * (1 - this.config.slippageTolerance);
+      const step2MinOut = BigInt(Math.floor(step2OutputWithSlippage)); // For profit calc
 
-      // Wide per-hop tolerance. Contract's minFinalAmount catches unprofitable round-trips.
-      const step2OutputWithSlippage = rawStep2Output * (1 - PER_HOP_SLIPPAGE);
-      const step2MinOut = BigInt(Math.floor(step2OutputWithSlippage));
+      // On-chain minOut (wide — prevents catastrophic routing, not profit guard)
+      const step1MinOut = BigInt(Math.floor(rawStep1Output * (1 - PER_HOP_SLIPPAGE)));
+      const onChainStep2MinOut = BigInt(Math.floor(rawStep1Output * step2PriceRatio * (1 - PER_HOP_SLIPPAGE)));
 
       // Build swap steps — CORRECTED DIRECTION
       const buyDexType = DEX_TYPE_MAP[buyPool.dex] ?? DexType.UNISWAP_V3;
@@ -382,7 +384,7 @@ export class OpportunityPipeline extends EventEmitter {
           tokenIn: sellPool.token0,
           tokenOut: sellPool.token1,
           fee: sellFee,
-          minOut: step1MinOut,
+          minOut: step1MinOut, // Wide (50%) — contract minFinalAmount is the real guard
           dexType: sellDexType,
           router: '0x0000000000000000000000000000000000000000',
           useDeadline: false,
@@ -393,7 +395,7 @@ export class OpportunityPipeline extends EventEmitter {
           tokenIn: buyPool.token1,
           tokenOut: buyPool.token0,
           fee: buyFee,
-          minOut: step2MinOut,
+          minOut: onChainStep2MinOut, // Wide (50%) — contract minFinalAmount is the real guard
           dexType: buyDexType,
           router: '0x0000000000000000000000000000000000000000',
           useDeadline: false,
