@@ -128,7 +128,7 @@ const DEFAULT_CONFIG: InternalConfig = {
   statsFilePath: undefined, // Will use PROJECT_ROOT/logs/warden-stats.json
   persistInterval: 60000, // 1 minute
   memoryCheckInterval: 60000, // 1 minute
-  memoryWarningThreshold: 80,
+  memoryWarningThreshold: 92, // S51: V8 naturally runs 80-90% of current allocation. 80% was noise.
   memoryCriticalThreshold: 95,
   memoryHistorySize: 60, // 1 hour of history at 1-minute intervals
   heartbeat: {
