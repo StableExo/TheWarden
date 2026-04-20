@@ -1,16 +1,22 @@
 #!/bin/sh
-# S44: One-time deploy wrapper — deploys multi-router FlashSwapV3 then starts main engine
-# This runs once, deploys if needed, then starts the normal arb engine
+# S52: One-time deploy wrapper — compiles + deploys FlashSwapV3 v14, then starts main engine
+# Triggered by DEPLOY_MULTI_ROUTER=true in Railway env vars
 
-# Check if we should deploy (env var flag)
 if [ "$DEPLOY_MULTI_ROUTER" = "true" ]; then
-  echo "=== S44: Running multi-router FlashSwapV3 deployment ==="
-  npx ts-node scripts/deploy-multi-router.ts
-  DEPLOY_EXIT=$?
-  if [ $DEPLOY_EXIT -eq 0 ]; then
-    echo "=== Deployment complete (or already deployed) ==="
+  echo "=== S52: Compiling FlashSwapV3 with Hardhat ==="
+  npx hardhat compile --force
+  COMPILE_EXIT=$?
+  if [ $COMPILE_EXIT -ne 0 ]; then
+    echo "=== COMPILE FAILED (exit $COMPILE_EXIT) — skipping deploy ==="
   else
-    echo "=== Deployment script exited with code $DEPLOY_EXIT ==="
+    echo "=== S52: Running Contract #14 deployment ==="
+    npx ts-node scripts/deploy-multi-router.ts
+    DEPLOY_EXIT=$?
+    if [ $DEPLOY_EXIT -eq 0 ]; then
+      echo "=== Contract #14 deployed (or already exists) ==="
+    else
+      echo "=== Deploy script exited with code $DEPLOY_EXIT ==="
+    fi
   fi
 fi
 
