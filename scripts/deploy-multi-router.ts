@@ -1,6 +1,6 @@
 /**
  * S53: Deploy FlashSwapV3 Contract #14 via CREATE2 + UserOp + CDP Paymaster
- * Fixed: ESM compatibility (__dirname -> path.resolve), DEPLOYER_PRIVATE_KEY env var
+ * Fixed: ESM compat, DEPLOYER_PRIVATE_KEY, bundler gas estimation (no hardcoded limits)
  */
 
 import { createPublicClient, http, type Hex, encodeAbiParameters, parseAbiParameters, concat } from 'viem';
@@ -39,11 +39,10 @@ async function main() {
     process.exit(1);
   }
 
-  // ESM-compatible path resolution (no __dirname in ESM)
+  // ESM-compatible path resolution
   const artifactPath = path.resolve('artifacts', 'contracts', 'FlashSwapV3.sol', 'FlashSwapV3.json');
   if (!fs.existsSync(artifactPath)) {
     console.error('ERROR: Artifact not found at ' + artifactPath);
-    console.error('Run npx hardhat compile first');
     process.exit(1);
   }
   const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf-8'));
@@ -92,7 +91,7 @@ async function main() {
   const existingCode = await publicClient.getCode({ address: expectedAddress });
   if (existingCode && existingCode !== '0x') {
     console.log('  Contract already deployed at ' + expectedAddress + ' (' + (existingCode.length / 2) + ' bytes)');
-    console.log('  Set FLASHSWAP_V3_ADDRESS=' + expectedAddress + ' in Railway');
+    console.log('  >>> FLASHSWAP_V3_ADDRESS=' + expectedAddress + ' <<<');
     return;
   }
 
@@ -103,24 +102,41 @@ async function main() {
     paymaster: true,
   });
 
-  console.log('  Deploying via UserOp + CDP Paymaster...');
-  const userOpHash = await bundlerClient.sendUserOperation({
-    calls: [{ to: CREATE2_FACTORY, data: deployData, value: 0n }],
-    callGasLimit: 3000000n,
-    verificationGasLimit: 500000n,
-    preVerificationGas: 200000n,
-  });
-  console.log('  UserOp hash: ' + userOpHash);
+  // S53 FIX: Let the bundler estimate gas for CREATE2 deployments
+  // Unlike flash loans, CREATE2 CAN be simulated by the bundler
+  // Do NOT hardcode gas limits — let eth_estimateUserOperationGas handle it
+  console.log('  Deploying via UserOp + CDP Paymaster (bundler gas estimation)...');
+  console.log('  Calldata size: ' + deployData.length + ' hex chars (' + (deployData.length / 2) + ' bytes)');
+  
+  try {
+    const userOpHash = await bundlerClient.sendUserOperation({
+      calls: [{ to: CREATE2_FACTORY, data: deployData, value: 0n }],
+      // No gas overrides — let bundler estimate for CREATE2 simulation
+    });
+    console.log('  UserOp hash: ' + userOpHash);
+    console.log('  Waiting for inclusion (may take 10-60s on Base)...');
 
-  const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
-  if (receipt.success) {
-    const code = await publicClient.getCode({ address: expectedAddress });
-    console.log('  Contract #14 deployed at ' + expectedAddress + ' (' + ((code?.length ?? 0) / 2) + ' bytes)');
-    console.log('  TX: ' + receipt.receipt.transactionHash);
-    console.log('  Gas: ' + receipt.receipt.gasUsed + ' (sponsored by Paymaster)');
-    console.log('  >>> Set FLASHSWAP_V3_ADDRESS=' + expectedAddress + ' in Railway <<<');
-  } else {
-    console.error('  Deployment failed: ' + (receipt.reason || 'unknown'));
+    const receipt = await bundlerClient.waitForUserOperationReceipt({ 
+      hash: userOpHash,
+      timeout: 120_000, // 2 minute timeout
+    });
+    
+    if (receipt.success) {
+      const code = await publicClient.getCode({ address: expectedAddress });
+      console.log('  Contract #14 deployed at ' + expectedAddress + ' (' + ((code?.length ?? 0) / 2) + ' bytes)');
+      console.log('  TX: ' + receipt.receipt.transactionHash);
+      console.log('  Gas used: ' + receipt.receipt.gasUsed);
+      console.log('  >>> FLASHSWAP_V3_ADDRESS=' + expectedAddress + ' <<<');
+    } else {
+      console.error('  UserOp executed but FAILED: ' + (receipt.reason || 'unknown'));
+      console.error('  TX: ' + receipt.receipt.transactionHash);
+      process.exit(1);
+    }
+  } catch (err: any) {
+    console.error('  UserOp submission/receipt error:');
+    console.error('  ' + (err.message || err));
+    if (err.details) console.error('  Details: ' + err.details);
+    if (err.shortMessage) console.error('  Short: ' + err.shortMessage);
     process.exit(1);
   }
 }
