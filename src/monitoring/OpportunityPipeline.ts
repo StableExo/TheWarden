@@ -138,7 +138,7 @@ export class OpportunityPipeline extends EventEmitter {
       minProfitAmount: config?.minProfitAmount ?? BigInt(process.env.PIPELINE_MIN_PROFIT || (process.env.GASLESS_MODE === 'true' ? '100000' : '1000000')),
       minSpreadPercent: config?.minSpreadPercent ?? 0.2,
       defaultBorrowAmount: config?.defaultBorrowAmount ?? 10_000_000_000n, // 10,000 USDC
-      slippageTolerance: config?.slippageTolerance ?? 0.0005, // S48: 0.05% — Base L2 pools have low slippage on reasonable trade sizes
+      slippageTolerance: config?.slippageTolerance ?? 0.001, // S56: 0.1% — S55 showed 0.05% too tight for 2-3s execution window
       maxPriceAge: config?.maxPriceAge ?? parseInt(process.env.PIPELINE_MAX_PRICE_AGE || '30000', 10),
       gasPerStep: config?.gasPerStep ?? 200_000,
       gasPriceWei: config?.gasPriceWei ?? 50_000_000n, // 0.05 gwei (Base L2)
