@@ -1,4 +1,4 @@
-# S57 — First Blood (The Vigil)
+# S57 — The Vigil
 
 *April 21, 2026*
 *Platform: CodeWords (Agemo) — Eleventh session*
@@ -7,63 +7,53 @@
 
 ## What Happened
 
-Eleventh session on CodeWords. Loaded Cody folder (S29-S56), Supabase (145 pools, 25 tokens), 28 credentials vaulted. Session focused on two critical P1 items blocking First Blood: PriceTracker warmup wiring and Aerodrome pool expansion.
+Eleventh session on CodeWords. Loaded Cody folder (S29-S56), Supabase (145 pools, 25 tokens), 27 credentials vaulted. Session focused on P1 hardening (warmup wiring + Aerodrome pools) and deep flash loan source research.
 
-## P1: PriceTracker Warmup Wired
+## P1: PriceTracker Warmup Wired (2 commits)
+- **965ccbc8**: Added rpcUrl to EventDrivenMonitorConfig + warmup call in start() before WSS
+- **87e74b59**: Threaded rpcUrl through EventDrivenInitializer config
+- **Impact**: Eliminates 7-8 minute dead time after restart. slot0() seeds ALL pools instantly.
 
-### The Problem
-PriceTracker.warmup(rpcUrl) existed since S56 but was NEVER called in EventDrivenMonitor.start(). Result: 7-8 minutes of dead time after every restart while prices naturally populate via swap events. During this dead time, maxPriceAge kills all opportunities.
+## Aerodrome Pool Discovery (16 new pools)
+Used DexScreener API to find Aerodrome pools not in Supabase. Inserted 16 pools including:
+- cbBTC/WETH: $22.9M liq, $144.6M daily vol
+- cbBTC/USDC: $13.2M liq, $166M daily vol  
+- LBTC/cbBTC: $4.16M liq (KEY peg arb target)
+- tBTC/cbBTC: $380K liq, $148K vol
+- Pool count: 145 → 161
 
-### The Fix (2 commits)
-1. **965ccbc8**: Added rpcUrl to EventDrivenMonitorConfig + warmup call in start() before WSS connection
-2. **87e74b59**: Threaded rpcUrl through EventDrivenInitializer config
+## Flash Loan Source Research
+Comprehensive on-chain analysis of all flash loan sources on Base:
 
-Now on restart: slot0() queries seed ALL 161 pools instantly → prices ready in seconds, not minutes.
+| Source | Available | Fee | Viable? |
+|--------|-----------|-----|---------|
+| Balancer V2 | $299K | 0% | ❌ Too thin |
+| Balancer V3 | $419K | 0% | ❌ Too thin (better architecture) |
+| Aave V3 | $221M | 0.05% | ✅ 2,026 cbBTC ($176M) |
+| UniV3/Aero | $50M+ | Pool fee | ✅ Proven path |
 
-## Aerodrome Pool Discovery
+Key finding: **No modern flash loan protocol has a % cap.** The 2% limit was Balancer V1 (deprecated). All V2+ allow 100% of available liquidity.
 
-### 16 NEW Aerodrome Pools Inserted
-Used DexScreener API to discover Aerodrome pools not in Supabase. Found massive liquidity pools:
+## Balancer V3 Architecture (Saved for Future M3)
+V3 uses EIP-1153 transient accounting, Vault.unlock() pattern, Hooks framework. Architecturally superior but liquidity-starved on Base ($419K). Saved as Milestone M3 in roadmap — trigger: Balancer Base TVL > $10M.
 
-| Pool | Liquidity | 24h Volume |
-|------|-----------|------------|
-| cbBTC/WETH (Aero) | $22.9M | $144.6M |
-| cbBTC/USDC (Aero) | $13.2M | $166.0M |
-| cbBTC/USDC (Aero #2) | $4.2M | $7.0M |
-| LBTC/cbBTC (Aero) | $4.16M | $68K |
-| cbBTC/USDC (Aero #3) | $1.3M | $875K |
-| cbBTC/WETH (Aero #2) | $735K | $7.4M |
-| tBTC/USDC (Aero) | $425K | $61K |
-| tBTC/cbBTC (Aero) | $380K | $148K |
-| cbBTC/WETH (Aero #3) | $373K | $6.4M |
-| tBTC/WETH (Aero) | $303K | $15K |
-| tBTC/cbBTC (Aero #2) | $204K | $6K |
-| + 5 more | | |
+V3 Addresses:
+- Vault: 0xbA1333333333a1BA1108E8412f11850A5C319bA9
+- Router: 0x3f170631ed9821ca51a59d996ab095162438dc10
+- Batch Router: 0x136f1efcc3f8f88516b9e94110d56fdbfb1778d1
 
-### Cross-DEX Arbitrage Unlocked
-UniV3 ↔ Aerodrome now possible for ALL BTC pairs. The cbBTC/WETH Aerodrome pool alone has $144.6M daily volume — this creates constant spread opportunities against UniV3 pools.
-
----
-
-## What I Built
-
-| Category | Details |
-|----------|---------|
-| Commits | 2 (warmup wiring + initializer threading) |
-| Supabase inserts | 16 new Aerodrome pools |
-| Pool coverage | 145 → 161 (11% increase) |
-| Secrets | 27 vaulted (updated keys) |
-| Key fix | PriceTracker warmup → instant readiness on restart |
+## Supabase State
+6 tables found: warden_pools (161), warden_tokens (25), warden_opportunities (7), warden_executions (1), warden_strategies (7), sessions (3).
 
 ## Session Stats
-- **Commits**: 2 (965ccbc8, 87e74b59)
-- **Root causes**: None new — focused on P1 hardening
-- **Pool coverage**: 145 → 161 (+16 Aerodrome)
-- **Cross-DEX arb**: UniV3 ↔ Aerodrome fully armed
-- **Dead time eliminated**: warmup wiring removes 7-8 min restart penalty
-- **Bot status**: LIVE on Railway, pending redeploy with warmup fix
+- **Commits**: 4 (965ccbc8, 87e74b59, 995bf100, c59073cb)
+- **Supabase inserts**: 16 new Aerodrome pools (145 → 161)
+- **Secrets vaulted**: 27 (updated keys for S57)
+- **Key fix**: PriceTracker warmup → instant readiness on restart
+- **Research**: Flash loan sources fully mapped (Balancer V2/V3, Aave V3, UniV3)
+- **Railway**: Redeploy triggered (serviceInstanceRedeploy: true)
+- **Bot status**: Redeploying with warmup + 161 pools
 
 ---
 
-*TheWarden ⚔️ — The vigil watches. 161 pools. Warmup wired. Cross-DEX armed. The spread will come.*
-
+*TheWarden ⚔️ — The vigil watches. 161 pools. Warmup wired. Flash loans mapped. Six milestones charted. First Blood waits for the spread.*
