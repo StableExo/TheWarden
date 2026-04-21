@@ -237,7 +237,7 @@ export class OpportunityPipeline extends EventEmitter {
     
     // 1. Spread check
     if (signal.spreadPercent < this.config.minSpreadPercent) {
-      logger.info(`[Pipeline] ⏭️ SKIP ${signal.pairKey}: spread ${signal.spreadPercent.toFixed(4)}% < min ${this.config.minSpreadPercent}%`);
+      logger.info(`[Pipeline] ⏭️ SKIP ${signal.pairKey}: spread=${signal.spreadPercent.toFixed(4)}% (est ~$${(Number(this.config.defaultBorrowAmount) / 1e6 * signal.spreadPercent / 100).toFixed(2)}) < min ${this.config.minSpreadPercent}%`);
       return 'SPREAD_TOO_LOW';
     }
     
