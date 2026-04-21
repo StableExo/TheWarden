@@ -158,6 +158,21 @@ export class OpportunityPipeline extends EventEmitter {
    * Validates, constructs swap path, and emits execution request.
    */
   onOpportunity(signal: OpportunitySignal): void {
+    // S57: Sanity cap — reject phantom opportunities with impossible spreads
+    // Real arbs are always <10%. Spreads >50% are decimal errors, price=0 ghost data, or ABI mismatches.
+    if (signal.spreadPercent > 50) {
+      logger.warn(`[Pipeline] 🛑 SANITY: Rejected phantom spread=${signal.spreadPercent.toFixed(2)}% for ${signal.tokenA}/${signal.tokenB} — likely price=0 or decimal error`);
+      this.stats.totalRejected++;
+      this.stats.rejectionReasons['sanity_cap'] = (this.stats.rejectionReasons['sanity_cap'] || 0) + 1;
+      return;
+    }
+    // S57: Reject opportunities where either price is 0 (no data from warmup)
+    if (signal.bestBid <= 0 || signal.bestAsk <= 0) {
+      logger.warn(`[Pipeline] 🛑 SANITY: Rejected zero-price opportunity for ${signal.tokenA}/${signal.tokenB} — bid=${signal.bestBid} ask=${signal.bestAsk}`);
+      this.stats.totalRejected++;
+      this.stats.rejectionReasons['zero_price'] = (this.stats.rejectionReasons['zero_price'] || 0) + 1;
+      return;
+    }
     this.stats.totalReceived++;
     
     logger.info(`[Pipeline] 📥 RECEIVED: ${signal.pairKey} spread=${signal.spreadPercent.toFixed(4)}% buy@${signal.buyPool?.dex}(${signal.buyPool?.price?.toFixed(6) || '?'}) sell@${signal.sellPool?.dex}(${signal.sellPool?.price?.toFixed(6) || '?'})`);
