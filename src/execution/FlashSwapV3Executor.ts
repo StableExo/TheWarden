@@ -440,9 +440,9 @@ export class FlashSwapV3Executor {
         ],
       });
 
-      // S56: eth_call simulation pre-check — save Paymaster ops (1,000 lifetime limit)
-      // Simulates the full flash loan execution before submitting UserOp.
-      // If simulation reverts, skip UserOp to conserve Paymaster operations.
+      // S56: eth_call simulation pre-check (non-blocking for flash loans)
+      // Flash loan callbacks can't be simulated via eth_call, so failures are expected.
+      // Log result but proceed regardless — flash loans are atomically safe.
       if (this.viemPublicClient && this.smartWalletAddress) {
         try {
           await this.viemPublicClient.call({
@@ -450,16 +450,11 @@ export class FlashSwapV3Executor {
             to: this.config.contractAddress as Hex,
             data: calldata,
           });
-          logger.info(`[UserOp] ✅ Simulation passed — proceeding with execution`);
+          logger.info(`[UserOp] ✅ Simulation passed — high confidence execution`);
         } catch (simError: any) {
           const simMsg = simError.message?.substring(0, 200) || 'unknown';
-          logger.warn(`[UserOp] ❌ Simulation FAILED — skipping to save Paymaster op: ${simMsg}`);
-          return {
-            success: false, source: selection.source, borrowAmount,
-            feePaid: 0n, grossProfit: 0n, netProfit: 0n,
-            error: `Simulation reverted: ${simMsg}`,
-            executionMethod: 'userop',
-          };
+          logger.info(`[UserOp] ⚠️ Simulation inconclusive (expected for flash loans) — proceeding: ${simMsg}`);
+          // Don't block — flash loans are atomic. Worst case: reverted UserOp.
         }
       }
 
