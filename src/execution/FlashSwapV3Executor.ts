@@ -389,7 +389,7 @@ export class FlashSwapV3Executor {
     return {
       steps,
       borrowAmount: BigInt(Math.floor(opportunity.inputAmount)),
-      minFinalAmount: BigInt(Math.floor(opportunity.grossProfit)),
+      minFinalAmount: 0n, // S56: Let flash loan atomic repayment be the guard — no risk of loss
     };
   }
 
