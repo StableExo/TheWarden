@@ -145,6 +145,8 @@ export interface EventDrivenInitConfig {
   defaultBorrowAmount?: bigint;
   /** Verbose logging. Default: false */
   verbose?: boolean;
+  /** RPC URL for PriceTracker warmup. If not provided, reads from env. */
+  rpcUrl?: string;
 }
 
 /**
@@ -175,6 +177,7 @@ export async function initializeEventDrivenMonitoring(
     executionEnabled: !(config.dryRun ?? true), // Default dry-run
     defaultBorrowAmount: config.defaultBorrowAmount ?? 10_000_000_000n,
     verbose: config.verbose ?? false,
+    rpcUrl: config.rpcUrl, // S57: Pass RPC URL for PriceTracker warmup
   });
 
   // Set pools
