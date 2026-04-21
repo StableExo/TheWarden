@@ -111,7 +111,7 @@ export class EventDrivenMonitor extends EventEmitter {
     // Initialize OpportunityPipeline
     this.pipeline = new OpportunityPipeline({
       minSpreadPercent: config.minExecuteSpread ?? 0.2,
-      maxPriceAge: config.maxExecutePriceAge ?? 5000,
+      maxPriceAge: config.maxExecutePriceAge ?? parseInt(process.env.PIPELINE_MAX_PRICE_AGE || '30000', 10), // S54: was 5000 hardcoded — killed all opportunities
       defaultBorrowAmount: config.defaultBorrowAmount ?? 10_000_000_000n,
       slippageTolerance: config.slippageTolerance ?? 0.0005, // S49: 0.05% — matches OpportunityPipeline default. Base L2 has low slippage.
       minProfitAmount: config.minProfitAmount ?? 1_000_000n,
