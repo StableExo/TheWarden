@@ -77,6 +77,8 @@ export interface SwapEventMonitorConfig {
   heartbeatInterval?: number;
   /** Max time without a message before reconnect (ms). Default: 60000 */
   heartbeatTimeout?: number;
+  /** S54: Enable Flashblocks 200ms pre-confirmation streaming via pendingLogs */
+  useFlashblocks?: boolean;
 }
 
 /** Monitor statistics */
@@ -260,12 +262,16 @@ export class SwapEventMonitor extends EventEmitter {
     const poolAddresses = this.config.pools.map(p => p.address.toLowerCase());
 
     // Subscribe to logs matching Swap events on our pools
+    // S54: Flashblocks mode uses 'pendingLogs' for 200ms pre-confirmed event streaming
+    const subscriptionType = this.config.useFlashblocks ? 'pendingLogs' : 'logs';
+    logger.info(`[SwapMonitor] Subscription type: ${subscriptionType}${this.config.useFlashblocks ? ' ⚡ Flashblocks 200ms mode' : ''}`);
+
     const subscribeMsg = {
       jsonrpc: '2.0',
       id: 1,
       method: 'eth_subscribe',
       params: [
-        'logs',
+        subscriptionType,
         {
           address: poolAddresses,
           topics: [SWAP_TOPIC_V3],
@@ -413,13 +419,18 @@ export function sqrtPriceX96ToPrice(sqrtPriceX96: bigint, token0Decimals: number
  * Helper: Create monitor config from environment + Supabase pools
  */
 export function createMonitorConfigFromEnv(pools: MonitoredPool[]): SwapEventMonitorConfig {
+  const useFlashblocks = process.env.ENABLE_FLASHBLOCKS === 'true';
   return {
-    wssUrl: process.env.BASE_WSS_URL || 'wss://base-mainnet.core.chainstack.com',
+    // S54: Use Flashblocks-tier WSS when enabled, fallback to standard
+    wssUrl: useFlashblocks
+      ? (process.env.FLASHBLOCKS_WSS_URL || process.env.BASE_WSS_URL || 'wss://mainnet-preconf.base.org')
+      : (process.env.BASE_WSS_URL || 'wss://base-mainnet.core.chainstack.com'),
     wssUrlBackup: process.env.BASE_WSS_URL_BACKUP || process.env.TENDERLY_WSS_URL,
     pools,
     maxReconnectAttempts: parseInt(process.env.WS_MAX_RECONNECT || '50'),
     reconnectBaseDelay: parseInt(process.env.WS_RECONNECT_BASE_DELAY || '1000'),
     heartbeatInterval: parseInt(process.env.WS_HEARTBEAT_INTERVAL || '30000'),
     heartbeatTimeout: parseInt(process.env.WS_HEARTBEAT_TIMEOUT || '60000'),
+    useFlashblocks,
   };
 }
