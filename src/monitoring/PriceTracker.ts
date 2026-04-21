@@ -195,6 +195,94 @@ export class PriceTracker extends EventEmitter {
   }
 
   // ============================================================
+  // S56: On-chain Warmup — Seed initial prices from slot0()
+  // ============================================================
+
+  /**
+   * Warm up price state by querying slot0() for all registered pools.
+   * Eliminates the 7-8 minute dead time after restart.
+   * Call after registerPools() and before starting swap event processing.
+   */
+  async warmup(rpcUrl: string): Promise<void> {
+    const pools = Array.from(this.poolMeta.entries());
+    if (pools.length === 0) {
+      logger.warn('[PriceTracker] No pools registered — skip warmup');
+      return;
+    }
+
+    logger.info(`[PriceTracker] ♨️ Warming up ${pools.length} pools from on-chain slot0()...`);
+    const startTime = Date.now();
+    let success = 0;
+    let failed = 0;
+
+    // slot0() selector: 0x3850c7bd
+    const SLOT0_SELECTOR = '0x3850c7bd';
+
+    for (const [addr, meta] of pools) {
+      try {
+        const response = await fetch(rpcUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0', id: 1, method: 'eth_call',
+            params: [{ to: addr, data: SLOT0_SELECTOR }, 'latest']
+          }),
+        });
+        const data = await response.json();
+
+        if (data.result && data.result.length >= 130) {
+          // slot0 returns: (uint160 sqrtPriceX96, int24 tick, ...)
+          const sqrtPriceX96Hex = data.result.slice(2, 66);
+          const sqrtPriceX96 = BigInt('0x' + sqrtPriceX96Hex);
+          const tickHex = data.result.slice(66, 130);
+          const tick = Number(BigInt('0x' + tickHex));
+
+          if (sqrtPriceX96 === 0n) {
+            failed++;
+            continue;
+          }
+
+          const token0Decimals = this.config.tokenDecimals.get(meta.token0.toLowerCase()) ?? 18;
+          const token1Decimals = this.config.tokenDecimals.get(meta.token1.toLowerCase()) ?? 18;
+          const price = sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals);
+          const inversePrice = price > 0 ? 1 / price : 0;
+
+          const state: PoolPriceState = {
+            pool: addr,
+            dex: meta.dex || 'Unknown',
+            token0: meta.token0,
+            token1: meta.token1,
+            token0Decimals,
+            token1Decimals,
+            fee: meta.fee ?? 0,
+            sqrtPriceX96,
+            tick,
+            liquidity: 0n, // Will be updated on first swap
+            price,
+            inversePrice,
+            lastBlock: 0, // Will be updated on first swap
+            lastUpdated: Date.now(),
+            maxPriceAge: this.config.maxPriceAge,
+          };
+
+          this.poolStates.set(addr, state);
+          success++;
+        } else {
+          failed++;
+        }
+      } catch (err: any) {
+        failed++;
+      }
+    }
+
+    const elapsed = Date.now() - startTime;
+    logger.info(
+      `[PriceTracker] ♨️ Warmup complete: ${success}/${pools.length} pools seeded in ${elapsed}ms ` +
+      `(${failed} failed). Ready for spread detection.`
+    );
+  }
+
+  // ============================================================
   // Swap Event Processing
   // ============================================================
 
