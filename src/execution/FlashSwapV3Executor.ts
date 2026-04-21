@@ -178,6 +178,8 @@ const FLASH_SWAP_V3_ABI_VIEM = [
           { name: 'minFinalAmount', type: 'uint256' as const },
         ],
       },
+      { name: 'sourceOverride', type: 'uint8' as const },
+      { name: 'flashPool', type: 'address' as const },
     ],
     outputs: [],
     stateMutability: 'nonpayable' as const,
@@ -188,7 +190,7 @@ const FLASH_SWAP_V3_ABI_VIEM = [
  * FlashSwapV3 contract ABI (ethers.js human-readable — for read calls)
  */
 const FLASH_SWAP_V3_ABI = [
-  'function executeArbitrage(address borrowToken, uint256 borrowAmount, tuple(tuple(address pool, address tokenIn, address tokenOut, uint24 fee, uint256 minOut, uint8 dexType, address router, bool useDeadline)[] steps, uint256 borrowAmount, uint256 minFinalAmount) path) external',
+  'function executeArbitrage(address borrowToken, uint256 borrowAmount, tuple(tuple(address pool, address tokenIn, address tokenOut, uint24 fee, uint256 minOut, uint8 dexType, address router, bool useDeadline)[] steps, uint256 borrowAmount, uint256 minFinalAmount) path, uint8 sourceOverride, address flashPool) external',
   'function selectOptimalSource(address token, uint256 amount) external view returns (uint8)',
   'function isBalancerSupported(address token, uint256 amount) external view returns (bool)',
   'function isDydxSupported(address token, uint256 amount) external view returns (bool)',
@@ -437,6 +439,8 @@ export class FlashSwapV3Executor {
             borrowAmount: path.borrowAmount,
             minFinalAmount: path.minFinalAmount,
           },
+          255, // S58: sourceOverride = auto-select
+          '0x0000000000000000000000000000000000000000' as Hex, // S58: flashPool (unused for auto)
         ],
       });
 
@@ -525,9 +529,9 @@ export class FlashSwapV3Executor {
       const selection = await this.selectOptimalSource(borrowToken, borrowAmount);
       logger.info(`[DirectTx] Executing: token=${borrowToken}, amount=${formatUnits(borrowAmount, 6)}, source=${FlashLoanSource[selection.source]}`);
 
-      const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path);
+      const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path, 255, '0x0000000000000000000000000000000000000000');
       const gasLimit = (estimatedGas * BigInt(Math.floor(this.config.gasBuffer * 100))) / 100n;
-      const tx = await this.contract.executeArbitrage(borrowToken, borrowAmount, path, { gasLimit });
+      const tx = await this.contract.executeArbitrage(borrowToken, borrowAmount, path, 255, '0x0000000000000000000000000000000000000000', { gasLimit });
       logger.info(`[DirectTx] Submitted: txHash=${tx.hash}`);
 
       const receipt = await tx.wait();
@@ -573,7 +577,7 @@ export class FlashSwapV3Executor {
     const selection = await this.selectOptimalSource(borrowToken, borrowAmount);
     const flashLoanFee = selection.estimatedCost;
     const path = await this.constructSwapPath(opportunity);
-    const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path).catch(() => 500000n);
+    const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path, 255, '0x0000000000000000000000000000000000000000').catch(() => 500000n);
 
     let estimatedGasCost: bigint;
     if (this.userOpEnabled) {
