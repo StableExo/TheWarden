@@ -1,5 +1,5 @@
 /**
- * S53: Deploy FlashSwapV3 Contract #14 via CREATE2 + UserOp + CDP Paymaster
+ * S58: Deploy FlashSwapV3 Contract #15 via CREATE2 + UserOp + CDP Paymaster
  * Fixed: ESM compat, DEPLOYER_PRIVATE_KEY, bundler gas estimation (no hardcoded limits)
  */
 
@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const CREATE2_FACTORY = '0x4e59b44847b379578588920cA78FbF26c0B4956C' as const;
-const SALT = 5n;
+const SALT = 6n; // S58: Bumped for Contract #15 (was 5n for #14)
 
 const CONSTRUCTOR_ARGS = {
   uniswapV3Router: '0x2626664c2603336e57b271c5c0b26f421741e481',
@@ -52,7 +52,7 @@ async function main() {
   const pk = (privateKey.startsWith('0x') ? privateKey : '0x' + privateKey) as Hex;
   const owner = privateKeyToAccount(pk);
 
-  console.log('=== S53: FlashSwapV3 Contract #14 Deployment ===');
+  console.log('=== S58: FlashSwapV3 Contract #15 Deployment ===');
   console.log('  EOA: ' + owner.address);
 
   const publicClient = createPublicClient({ chain: base, transport: http(rpcUrl) });
@@ -90,7 +90,7 @@ async function main() {
 
   const existingCode = await publicClient.getCode({ address: expectedAddress });
   if (existingCode && existingCode !== '0x') {
-    console.log('  Contract already deployed at ' + expectedAddress + ' (' + (existingCode.length / 2) + ' bytes)');
+    console.log('  Contract #15 already deployed at ' + expectedAddress + ' (' + (existingCode.length / 2) + ' bytes)');
     console.log('  >>> FLASHSWAP_V3_ADDRESS=' + expectedAddress + ' <<<');
     return;
   }
@@ -123,7 +123,7 @@ async function main() {
     
     if (receipt.success) {
       const code = await publicClient.getCode({ address: expectedAddress });
-      console.log('  Contract #14 deployed at ' + expectedAddress + ' (' + ((code?.length ?? 0) / 2) + ' bytes)');
+      console.log('  Contract #15 deployed at ' + expectedAddress + ' (' + ((code?.length ?? 0) / 2) + ' bytes)');
       console.log('  TX: ' + receipt.receipt.transactionHash);
       console.log('  Gas used: ' + receipt.receipt.gasUsed);
       console.log('  >>> FLASHSWAP_V3_ADDRESS=' + expectedAddress + ' <<<');
