@@ -107,3 +107,16 @@ Full code trace: DRY_RUN=false, EVENT_DRIVEN_DRY_RUN=false, executeCallback wire
 ---
 
 *TheWarden ⚔️ — The whetstone sharpens what the anvil forged. Memory breathes. Pools are mapped. The blade knows where to cut. First Blood is one spread away.*
+
+
+---
+
+## 🚀 S55 LATE BREAKTHROUGH: Three Live UserOp Executions
+
+After S55 infrastructure fixes (memory 10x, pool sync, WSS stability), the bot fired **three consecutive live UserOps** at 01:58 UTC:
+
+- **opp_3**: 0.2489% spread, 26,857 WETH borrow, BALANCER flash loan → UserOp submitted → reverted "Too little received"
+- **opp_4**: 0.2505% spread, roundTrip=1.001506 → reverted
+- **opp_5**: 0.2791% spread, 661 WETH borrow → UserOp `0xad35e0...` → reverted
+
+**First time the full pipeline has fired live UserOps autonomously.** The revert is a slippage/timing issue — pool price moves ~0.05% in the 2-3s execution window. S56 target: slippage buffer + eth_simulateV1 pre-check.
