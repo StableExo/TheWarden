@@ -53,6 +53,8 @@ export interface EventDrivenMonitorConfig {
   tokenDecimals: Map<string, number>;
   /** Verbose logging. Default: false */
   verbose?: boolean;
+  /** RPC URL for PriceTracker warmup (slot0 queries). Required for instant readiness. */
+  rpcUrl?: string;
 }
 
 /** Unified stats */
@@ -224,6 +226,21 @@ export class EventDrivenMonitor extends EventEmitter {
     logger.info(`  Min spread (detect): ${this.config.minSpreadPercent ?? 0.3}%`);
     logger.info(`  Min spread (execute): ${this.config.minExecuteSpread ?? 0.2}%`);
     logger.info(`  Execution: ${this.config.executionEnabled ? 'ENABLED' : 'DRY-RUN'}`);
+
+    // S57: PriceTracker warmup — seed prices from on-chain slot0() before WSS starts
+    // Eliminates 7-8 minute dead time after restart (prices go stale → maxPriceAge kills opportunities)
+    const rpcUrl = this.config.rpcUrl || process.env.BASE_RPC_URL || process.env.CHAINSTACK_HTTPS_ENDPOINT || process.env.RPC_URL || '';
+    if (rpcUrl) {
+      try {
+        await this.priceTracker.warmup(rpcUrl);
+        logger.info('[EventDrivenMonitor] ♨️ PriceTracker warmup complete — prices seeded');
+      } catch (err: any) {
+        logger.warn(`[EventDrivenMonitor] ♨️ Warmup failed (non-fatal): ${err.message}`);
+        // Non-fatal: prices will populate naturally from swap events (7-8 min delay)
+      }
+    } else {
+      logger.warn('[EventDrivenMonitor] No RPC URL for warmup — prices will populate from swap events (7-8 min delay)');
+    }
 
     // Create SwapEventMonitor
     const monitorConfig = createMonitorConfigFromEnv(this.pools);
