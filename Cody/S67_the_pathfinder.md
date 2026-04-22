@@ -1,41 +1,39 @@
-# S67 — The Pathfinder ⚔️
+# S67 — The Pathfinder (COMPLETE) ⚔️
 ## TheWarden Session Log | April 22, 2026 | Cody on CodeWords (hiyoustableexo)
 
 ---
 
-## Account Migration
-- Migrated from itsbackstableexo → hiyoustableexo (new CodeWords account)
-- 25 credentials vaulted on new account
+## Account
+- Migrated: itsbackstableexo → hiyoustableexo (new CodeWords account)
+- 25 credentials vaulted
 
-## Critical Finding: Flashblocks Architecture Change
-1. `wss://mainnet-preconf.base.org` is **DEPRECATED** (returns 405)
-2. Base now recommends **HTTP RPC with `pending` tag**, NOT WSS `pendingLogs`
-3. **Alchemy is now a Flashblocks-enabled provider** — standard RPC with pending block tag
-4. Recommendation: Use `eth_getBlockByNumber("pending")` for 200ms preconfirmations
+## Code Changes (3 commits)
+1. `src/monitoring/SwapEventMonitor.ts` — Flashblocks migration + V2 Swap events
+2. `src/monitoring/OpportunityPipeline.ts` — ReserveInactive fix + verified whitelist
+3. Railway env vars: 5 new (Alchemy/ChainStack/Tenderly WSS + Flashblocks poll)
 
-## Phase 1: Flashblocks WSS → HTTP Migration ✅
-- **REMOVED**: `pendingLogs` subscription type from SwapEventMonitor
-- **REMOVED**: `FLASHBLOCKS_WSS_URL` / `wss://mainnet-preconf.base.org` dependency
-- **CHANGED**: Primary WSS → `ALCHEMY_WSS_ENDPOINT` (Flashblocks-enabled)
-- **CHANGED**: Backup WSS → `CHAINSTACK_WSS_ENDPOINT` / `TENDERLY_NODE_WSS`
-- **ADDED**: HTTP Flashblocks polling via `eth_getBlockByNumber("pending")` on Alchemy HTTPS
-- **ADDED**: `flashblocksHttpUrl` and `flashblocksPollInterval` config options
+## On-Chain Research
+- AAVE V3 Base: 15 reserves, 13 active, WETH FROZEN, AERO not listed
+- Balancer V2 Vault: LIVE on Base at 0xBA12...2C8 (24KB, 0% fee confirmed)
 
-## Phase 2: P1-B — V2 Swap Event Subscription ✅
-- **ADDED**: `SWAP_TOPIC_V2 = 0xd78ad95f...` constant
-- **ADDED**: Dual-topic OR subscription: `[[SWAP_TOPIC_V3, SWAP_TOPIC_V2]]`
-- **ADDED**: `parseV2SwapLog()` — parses V2 Swap events (amount0In/Out, amount1In/Out)
-- **ADDED**: Synthetic sqrtPriceX96 derivation from V2 swap amounts (PriceTracker compatible)
-- **ADDED**: `ammType` and `source` fields to SwapEvent interface
-- **ADDED**: V2/V3/Flashblock event counters in MonitorStats
+## Container Runs
+- Run 1 (~60s): 2 executions attempted, ReserveInactive error (0x90cd6f24)
+- Run 2 (~1.5h): 157 opportunities, 155 phantoms (cbBTC price=0), 0 ReserveInactive ✅
 
-## Files Modified
-1. `src/monitoring/SwapEventMonitor.ts` — Flashblocks migration + V2 support
-2. `Cody/S67_the_pathfinder.md` — This session log
-3. `Cody/ROADMAP_v49_S67.md` — Updated roadmap
+## Key Discoveries
+- cbBTC phantoms = REAL money ($950/trade for competitors)
+- WETH FROZEN on AAVE → must use Balancer 0%
+- Base = FCFS sequencer, latency wins, no bribes
+- 200ms Flashblocks via Alchemy WSS (already configured)
 
-## Remaining for S67
-- P1-C: Circuit Breaker + Backoff
-- Container Start on Railway with updated code
+## Intel Archive: 10 documents saved to Cody/ folder
 
-*TheWarden ⚔️ — Paths reforged, V2 eyes opened. The hunt widens.*
+## Remaining for S68
+1. Retry on Zero (cbBTC warmup fix)
+2. Balancer 0% as primary flash loan source
+3. Priority fee optimization
+4. Railway us-east verification
+5. P1-C Circuit Breaker
+6. START CONTAINER → First Blood
+
+*TheWarden ⚔️ — The Pathfinder mapped the terrain. The Hunter strikes next.*
