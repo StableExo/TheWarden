@@ -213,31 +213,22 @@ export class PriceTracker extends EventEmitter {
       return;
     }
 
-    logger.info(`[PriceTracker] ♨️ Warming up ${pools.length} pools (V3: slot0, V2: getReserves)...`);
+    logger.info(`[PriceTracker] ♨️ Warming up ${pools.length} pools (auto-probe: slot0 → globalState → getReserves)...`);
     const startTime = Date.now();
-    let successV3 = 0;
-    let successV2 = 0;
+    let successSlot0 = 0;
+    let successGlobalState = 0;
+    let successReserves = 0;
     let failed = 0;
 
-    // Function selectors
-    const SLOT0_SELECTOR = '0x3850c7bd';         // slot0() — V3/CL pools
-    const GET_RESERVES_SELECTOR = '0x0902f1ac';   // getReserves() — V2 pools
+    // Function selectors for auto-probe
+    const SELECTORS = [
+      { name: 'slot0',       selector: '0x3850c7bd', type: 'v3' as const },    // V3/CL pools
+      { name: 'globalState', selector: '0xe76c01e4', type: 'algebra' as const }, // Algebra V3 (QuickSwap, AlienBase)
+      { name: 'getReserves', selector: '0x0902f1ac', type: 'v2' as const },     // V2 AMM pools
+    ];
 
     for (const [addr, meta] of pools) {
       try {
-        const isV2 = meta.dexType === 'v2';
-        const selector = isV2 ? GET_RESERVES_SELECTOR : SLOT0_SELECTOR;
-
-        const response = await fetch(rpcUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0', id: 1, method: 'eth_call',
-            params: [{ to: addr, data: selector }, 'latest']
-          }),
-        });
-        const data = await response.json();
-
         const token0Decimals = this.config.tokenDecimals.get(meta.token0.toLowerCase()) ?? 18;
         const token1Decimals = this.config.tokenDecimals.get(meta.token1.toLowerCase()) ?? 18;
 
@@ -246,49 +237,65 @@ export class PriceTracker extends EventEmitter {
         let sqrtPriceX96 = 0n;
         let tick = 0;
         let seeded = false;
+        let detectedType = '';
 
-        if (isV2) {
-          // V2: getReserves() returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)
-          // Response is 3 × 32 bytes = 192 hex chars + '0x' prefix = 194
-          if (data.result && data.result.length >= 194) {
-            const reserve0 = BigInt('0x' + data.result.slice(2, 66));
-            const reserve1 = BigInt('0x' + data.result.slice(66, 130));
+        // S63: Auto-probe — try each selector until one works
+        for (const { name, selector, type } of SELECTORS) {
+          const response = await fetch(rpcUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0', id: 1, method: 'eth_call',
+              params: [{ to: addr, data: selector }, 'latest']
+            }),
+          });
+          const data = await response.json();
 
-            if (reserve0 > 0n && reserve1 > 0n) {
-              // price = (reserve1 / 10^d1) / (reserve0 / 10^d0)
-              // Using BigInt-safe math: price = (reserve1 * 10^d0) / (reserve0 * 10^d1)
-              const scale = 10n ** 18n; // Use 18 decimals of precision
-              const scaledPrice = (reserve1 * (10n ** BigInt(token0Decimals)) * scale) /
-                                  (reserve0 * (10n ** BigInt(token1Decimals)));
-              price = Number(scaledPrice) / Number(scale);
-              inversePrice = price > 0 ? 1 / price : 0;
+          if (!data.result || data.result === '0x' || data.result.length < 66) continue;
 
-              // For V2 pools, derive a synthetic sqrtPriceX96 for PoolPriceState compat
-              // sqrtPriceX96 = sqrt(price) * 2^96
-              const Q96 = 2n ** 96n;
-              const sqrtScaled = Math.sqrt(Number(reserve1) * (10 ** token0Decimals) /
-                                           (Number(reserve0) * (10 ** token1Decimals)));
-              sqrtPriceX96 = BigInt(Math.floor(sqrtScaled * Number(Q96)));
+          if (type === 'v2') {
+            // getReserves() → (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)
+            if (data.result.length >= 194) {
+              const reserve0 = BigInt('0x' + data.result.slice(2, 66));
+              const reserve1 = BigInt('0x' + data.result.slice(66, 130));
 
-              seeded = true;
-              successV2++;
+              if (reserve0 > 0n && reserve1 > 0n) {
+                const scale = 10n ** 18n;
+                const scaledPrice = (reserve1 * (10n ** BigInt(token0Decimals)) * scale) /
+                                    (reserve0 * (10n ** BigInt(token1Decimals)));
+                price = Number(scaledPrice) / Number(scale);
+                inversePrice = price > 0 ? 1 / price : 0;
+
+                const Q96 = 2n ** 96n;
+                const sqrtScaled = Math.sqrt(Number(reserve1) * (10 ** token0Decimals) /
+                                             (Number(reserve0) * (10 ** token1Decimals)));
+                sqrtPriceX96 = BigInt(Math.floor(sqrtScaled * Number(Q96)));
+
+                seeded = true;
+                detectedType = name;
+                successReserves++;
+              }
+            }
+          } else {
+            // slot0() or globalState() → both return (uint160 sqrtPriceX96, int24 tick, ...) as first 2 slots
+            if (data.result.length >= 130) {
+              const sqrtPriceX96Hex = data.result.slice(2, 66);
+              sqrtPriceX96 = BigInt('0x' + sqrtPriceX96Hex);
+              const tickHex = data.result.slice(66, 130);
+              tick = Number(BigInt('0x' + tickHex));
+
+              if (sqrtPriceX96 > 0n) {
+                price = sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals);
+                inversePrice = price > 0 ? 1 / price : 0;
+                seeded = true;
+                detectedType = name;
+                if (name === 'slot0') successSlot0++;
+                else successGlobalState++;
+              }
             }
           }
-        } else {
-          // V3/CL: slot0() returns (uint160 sqrtPriceX96, int24 tick, ...)
-          if (data.result && data.result.length >= 130) {
-            const sqrtPriceX96Hex = data.result.slice(2, 66);
-            sqrtPriceX96 = BigInt('0x' + sqrtPriceX96Hex);
-            const tickHex = data.result.slice(66, 130);
-            tick = Number(BigInt('0x' + tickHex));
 
-            if (sqrtPriceX96 > 0n) {
-              price = sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals);
-              inversePrice = price > 0 ? 1 / price : 0;
-              seeded = true;
-              successV3++;
-            }
-          }
+          if (seeded) break; // Found working selector, stop probing
         }
 
         if (seeded) {
@@ -302,27 +309,31 @@ export class PriceTracker extends EventEmitter {
             fee: meta.fee ?? 0,
             sqrtPriceX96,
             tick,
-            liquidity: 0n, // Will be updated on first swap
+            liquidity: 0n,
             price,
             inversePrice,
-            lastBlock: 0, // Will be updated on first swap
-            lastUpdated: Date.now(),
-            maxPriceAge: this.config.maxPriceAge,
+            lastBlock: 0,
+            lastUpdatedAt: Date.now(),
+            swapCount: 0,
           };
 
           this.poolStates.set(addr, state);
         } else {
           failed++;
+          logger.warn(`[PriceTracker] ⚠️ Pool ${addr.substring(0, 14)}... (${meta.dex}) — no interface responded`);
         }
       } catch (err: any) {
         failed++;
+        logger.error(`[PriceTracker] Warmup error for ${addr.substring(0, 14)}...: ${err.message}`);
       }
     }
 
+    const total = successSlot0 + successGlobalState + successReserves;
     const elapsed = Date.now() - startTime;
     logger.info(
-      `[PriceTracker] ♨️ Warmup complete: ${successV3 + successV2}/${pools.length} pools seeded in ${elapsed}ms ` +
-      `(V3: ${successV3}, V2: ${successV2}, failed: ${failed}). Ready for spread detection.`
+      `[PriceTracker] ♨️ Warmup complete: ${total}/${pools.length} pools seeded in ${elapsed}ms ` +
+      `(slot0: ${successSlot0}, globalState: ${successGlobalState}, getReserves: ${successReserves}, failed: ${failed}). ` +
+      `Ready for spread detection.`
     );
   }
 
