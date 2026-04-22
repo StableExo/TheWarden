@@ -32,6 +32,11 @@ const DEX_ID_MAP: Record<number, string> = {
   12: 'rocketswap',    // S61: Added
 };
 
+// S62: V2 AMM DEXes — use getReserves() instead of slot0() for warmup
+const V2_DEXES = new Set([
+  'pancakeswap', 'hydrex', 'quickswap', 'alienbase', 'swapbased', 'rocketswap',
+]);
+
 // ============================================================
 // Supabase Types
 // ============================================================
@@ -124,6 +129,7 @@ export async function loadPoolsFromSupabase(
       token0: token0.address,
       token1: token1.address,
       fee: feeBps,
+      dexType: V2_DEXES.has(dexName) ? 'v2' : 'v3', // S62: Tag pool type for warmup
     });
 
     logger.info(
