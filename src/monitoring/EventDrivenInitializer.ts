@@ -19,11 +19,17 @@ import { EventDrivenMonitor, EventDrivenMonitorConfig } from './EventDrivenMonit
 
 const DEX_ID_MAP: Record<number, string> = {
   1: 'uniswap_v3',
-  2: 'sushiswap',
+  2: 'sushiswap_v3',
   3: 'aerodrome',
-  4: 'baseswap',
-  5: 'dodo',
-  6: 'curve',
+  4: 'pancakeswap_v3',
+  5: 'baseswap',
+  6: 'velodrome',
+  7: 'pancakeswap',    // S61: Added
+  8: 'hydrex',         // S61: Added
+  9: 'quickswap',      // S61: Added  
+  10: 'alienbase',     // S61: Added
+  11: 'swapbased',     // S61: Added
+  12: 'rocketswap',    // S61: Added
 };
 
 // ============================================================
