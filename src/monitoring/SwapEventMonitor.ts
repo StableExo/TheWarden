@@ -59,6 +59,7 @@ export interface MonitoredPool {
   token0: string;
   token1: string;
   fee: number;         // Fee tier in bps
+  dexType?: 'v2' | 'v3'; // S62: Pool AMM type for warmup branching
 }
 
 /** Monitor configuration */
