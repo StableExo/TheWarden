@@ -205,7 +205,7 @@ const shutdownComponents = async (_components: any): Promise<void> => {};
 import { AdvancedOrchestrator } from './arbitrage/AdvancedOrchestrator';
 // Stub: config/advanced-arbitrage.config
 const defaultAdvancedArbitrageConfig = {
-  pathfinding: { maxHops: 3, minProfitThreshold: BigInt(process.env.MIN_PROFIT_THRESHOLD || '0'), maxSlippage: 0.01, gasPrice: BigInt(process.env.GAS_PRICE || '5000000') },
+  pathfinding: { maxHops: 3, minProfitThreshold: BigInt(Math.floor(parseFloat(process.env.MIN_PROFIT_THRESHOLD || '0'))), maxSlippage: 0.01, gasPrice: BigInt(process.env.GAS_PRICE || '5000000') },
   execution: { maxRetries: 3, timeout: 30000, confirmations: 1 },
   monitoring: { enabled: true, interval: 1000 },
 } as any;
