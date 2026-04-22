@@ -34,15 +34,32 @@ import { DexType, SwapStep, UniversalSwapPath } from '../execution/FlashSwapV3Ex
 
 /** DEX name → DexType enum mapping */
 const DEX_TYPE_MAP: Record<string, DexType> = {
+  // === Standard V3 CL pools ===
   'uniswap_v3': DexType.UNISWAP_V3,
+  'uniswap_v4': DexType.UNISWAP_V4,
   'sushiswap': DexType.SUSHISWAP,
   'sushiswap_v3': DexType.SUSHISWAP,
-  'dodo': DexType.DODO,
+
+  // === V3 Forks (same swap interface as UniV3) ===
+  'pancakeswap': DexType.UNISWAP_V3,    // S65: PancakeSwap V3 (23 pools, factory 0x0BFbCF9f...)
+  'pancakeswap_v3': DexType.UNISWAP_V3,
+  'alien_base': DexType.UNISWAP_V3,     // S65: Alien Base V3 (3 pools, factory 0x0Fd83557...)
+  'alien_base_v3': DexType.UNISWAP_V3,
+  'baseswap': DexType.UNISWAP_V3,       // BaseSwap V2 (compatible via FlashSwapV3)
+
+  // === Algebra CL pools (dynamic fee, same swap interface) ===
+  'hydrex': DexType.UNISWAP_V3,         // S65: HydreX Algebra (6 pools, factory 0x36077D39...)
+  'quickswap': DexType.UNISWAP_V3,      // S65: QuickSwap V4 Algebra (8 pools, factory 0xC5396866...)
+  'quickswap_v4': DexType.UNISWAP_V3,
+
+  // === Solidly/ve(3,3) pools ===
   'aerodrome': DexType.AERODROME,
   'aerodrome_cl': DexType.AERODROME,
+
+  // === Other protocols ===
+  'dodo': DexType.DODO,
   'balancer': DexType.BALANCER,
   'curve': DexType.CURVE,
-  'uniswap_v4': DexType.UNISWAP_V4,
 };
 
 /** Execution request emitted to the orchestrator */
