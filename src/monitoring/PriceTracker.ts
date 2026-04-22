@@ -23,6 +23,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { PriceOracleValidator, PriceUpdate as OracleUpdate } from '../security/PriceOracleValidator';
 import { logger } from '../utils/logger';
 import { SwapEvent, MonitoredPool, sqrtPriceX96ToPrice } from './SwapEventMonitor';
 
@@ -143,6 +144,9 @@ export class PriceTracker extends EventEmitter {
   /** Cooldown tracker: pairKey → last emission timestamp */
   private cooldowns: Map<string, number> = new Map();
   
+  /** S68: Price oracle validator — circuit breaker + rate-of-change protection */
+  private oracleValidator: PriceOracleValidator;
+  
   /** Stats */
   private stats: PriceTrackerStats = {
     totalSwapsProcessed: 0,
@@ -164,6 +168,17 @@ export class PriceTracker extends EventEmitter {
       verboseLogging: config.verboseLogging ?? false,
       rpcUrl: config.rpcUrl ?? '',
     };
+    
+    // S68: Initialize price oracle validator with circuit breaker
+    this.oracleValidator = new PriceOracleValidator({
+      minPrice: 1n,                    // Allow very small prices (some tokens are cheap)
+      maxPrice: 10n ** 30n,            // Allow very large prices
+      maxRateChangeBps: 2000,          // 20% max change per update (arb-appropriate)
+      timelockDelay: 0,                // No timelock for real-time trading
+      circuitBreakerEnabled: true,
+      circuitBreakerThreshold: 50,     // 50% movement triggers circuit breaker
+      maxPriceAge: 120,                // 2 minutes staleness threshold
+    });
   }
 
   // ============================================================
@@ -494,6 +509,32 @@ export class PriceTracker extends EventEmitter {
     }
     const inversePrice = price > 0 ? 1 / price : 0;
     
+    // S68: Validate price through oracle circuit breaker
+    // Catches manipulation, extreme movements, and corrupted data
+    const priceBigint = BigInt(Math.floor(price * 1e18)); // Convert to bigint for validator
+    const oracleResult = this.oracleValidator.validatePriceUpdate({
+      symbol: poolAddr, // Track per-pool
+      price: priceBigint,
+      source: meta.dex,
+      timestamp: Date.now(),
+    });
+    
+    if (!oracleResult.valid) {
+      // Circuit breaker or rate-of-change violation
+      logger.warn(
+        `[PriceTracker] 🛑 Oracle REJECTED ${meta.dex} ${poolAddr.substring(0, 10)}... ` +
+        `price=${price.toFixed(8)}: ${oracleResult.errors.join(', ')}`
+      );
+      // Keep existing state — don't update with suspicious price
+      return;
+    }
+    
+    if (oracleResult.warnings.length > 0) {
+      logger.info(
+        `[PriceTracker] ⚠️ Oracle WARNING ${poolAddr.substring(0, 10)}...: ${oracleResult.warnings.join(', ')}`
+      );
+    }
+    
     // Update pool state
     const state: PoolPriceState = {
       pool: poolAddr,
@@ -686,6 +727,22 @@ export class PriceTracker extends EventEmitter {
   /** Get all tracked pair keys */
   getTrackedPairs(): TokenPairKey[] {
     return Array.from(this.pairPools.keys());
+  }
+
+  /** S68: Check if circuit breaker is active */
+  isCircuitBreakerActive(): boolean {
+    return this.oracleValidator.isCircuitBreakerActive();
+  }
+
+  /** S68: Reset circuit breaker (manual intervention required) */
+  resetCircuitBreaker(): void {
+    this.oracleValidator.resetCircuitBreaker();
+    logger.info('[PriceTracker] 🔄 Circuit breaker RESET — price updates resumed');
+  }
+
+  /** S68: Get oracle validator stats */
+  getOracleStats() {
+    return this.oracleValidator.getStats();
   }
 
   // ============================================================
