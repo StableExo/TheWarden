@@ -313,6 +313,23 @@ export class FlashSwapV3Executor {
 
   async selectOptimalSource(borrowToken: string, borrowAmount: bigint): Promise<SourceSelection> {
     try {
+      // S68: Force Balancer 0% as primary source
+      // WETH is FROZEN on AAVE V3 Base, AERO is NOT LISTED
+      // Balancer Vault confirmed live with $278K liquidity
+      // Only fall back to on-chain auto-select if Balancer check fails
+      const balancerSupported = await this.isBalancerSupported(borrowToken, borrowAmount).catch(() => false);
+      if (balancerSupported) {
+        logger.info(`[FlashSwapV3Executor] S68: Forcing Balancer 0% for ${borrowToken.substring(0, 10)}... (${borrowAmount})`);
+        return {
+          source: FlashLoanSource.BALANCER,
+          fee: 0,
+          reason: 'S68: Balancer V2 0% fee (forced primary)',
+          estimatedCost: 0n,
+        };
+      }
+      
+      // Balancer doesn't support this token — fall back to contract auto-select
+      logger.info(`[FlashSwapV3Executor] S68: Balancer unsupported for ${borrowToken.substring(0, 10)}... — falling back to auto-select`);
       const sourceId = await this.contract.selectOptimalSource(borrowToken, borrowAmount);
       const source = sourceId as FlashLoanSource;
       const fee = FLASH_LOAN_FEES[source];
@@ -439,7 +456,7 @@ export class FlashSwapV3Executor {
             borrowAmount: path.borrowAmount,
             minFinalAmount: path.minFinalAmount,
           },
-          255, // S58: sourceOverride = auto-select
+          0, // S68: sourceOverride = BALANCER (0% fee) — was 255 (auto-select)
           '0x0000000000000000000000000000000000000000' as Hex, // S58: flashPool (unused for auto)
         ],
       });
@@ -465,8 +482,11 @@ export class FlashSwapV3Executor {
       // S52 FIX: Explicit gas limits — bundler can't simulate flash loan callbacks,
       // returns callGasLimit=0 without overrides. 800k covers loan+swap+callback on Base.
       const GAS_LIMIT_OVERRIDE = BigInt(process.env.USEROP_CALL_GAS_LIMIT || '800000');
+      // S68: Set competitive priority fee for FCFS optimization (Base = first-come-first-served)
+      const maxPriorityFeePerGas = BigInt(process.env.MAX_PRIORITY_FEE_GWEI || '100000000'); // 0.1 gwei default
       const userOpHash = await this.bundlerClient.sendUserOperation({
         calls: [{ to: this.config.contractAddress as Hex, data: calldata, value: 0n }],
+        maxPriorityFeePerGas,
         callGasLimit: GAS_LIMIT_OVERRIDE,
         verificationGasLimit: 500000n,
         preVerificationGas: 100000n,
@@ -529,9 +549,9 @@ export class FlashSwapV3Executor {
       const selection = await this.selectOptimalSource(borrowToken, borrowAmount);
       logger.info(`[DirectTx] Executing: token=${borrowToken}, amount=${formatUnits(borrowAmount, 6)}, source=${FlashLoanSource[selection.source]}`);
 
-      const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path, 255, '0x0000000000000000000000000000000000000000');
+      const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path, 0, '0x0000000000000000000000000000000000000000'); // S68: BALANCER=0
       const gasLimit = (estimatedGas * BigInt(Math.floor(this.config.gasBuffer * 100))) / 100n;
-      const tx = await this.contract.executeArbitrage(borrowToken, borrowAmount, path, 255, '0x0000000000000000000000000000000000000000', { gasLimit });
+      const tx = await this.contract.executeArbitrage(borrowToken, borrowAmount, path, 0, '0x0000000000000000000000000000000000000000', { gasLimit }); // S68: BALANCER=0
       logger.info(`[DirectTx] Submitted: txHash=${tx.hash}`);
 
       const receipt = await tx.wait();
@@ -577,7 +597,7 @@ export class FlashSwapV3Executor {
     const selection = await this.selectOptimalSource(borrowToken, borrowAmount);
     const flashLoanFee = selection.estimatedCost;
     const path = await this.constructSwapPath(opportunity);
-    const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path, 255, '0x0000000000000000000000000000000000000000').catch(() => 500000n);
+    const estimatedGas = await this.contract.executeArbitrage.estimateGas(borrowToken, borrowAmount, path, 0, '0x0000000000000000000000000000000000000000').catch(() => 500000n); // S68: BALANCER=0
 
     let estimatedGasCost: bigint;
     if (this.userOpEnabled) {
