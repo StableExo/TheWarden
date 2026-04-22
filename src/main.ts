@@ -667,6 +667,7 @@ class TheWarden extends EventEmitter {
             dryRun: process.env.EVENT_DRIVEN_DRY_RUN !== 'false', // Default: dry-run (safe)
             minSpreadPercent: parseFloat(process.env.EVENT_DRIVEN_MIN_SPREAD || '0.3'),
             verbose: process.env.EVENT_DRIVEN_VERBOSE === 'true',
+            defaultBorrowAmount: BigInt(process.env.DEFAULT_BORROW_AMOUNT || '500000000'), // S61: Configurable borrow amount ($500 USDC default)
           });
 
           // Wire execution to V3 executor
