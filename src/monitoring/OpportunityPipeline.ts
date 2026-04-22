@@ -131,14 +131,20 @@ export interface PipelineStats {
 // Tokens with active reserves on AAVE V3 / Balancer on Base.
 // Used to select borrowToken — prevents ReserveInactive() errors.
 // ============================================================
+// S67: Verified on-chain April 22, 2026 via Tenderly RPC
+// NOTE: WETH is 🧊 FROZEN on AAVE V3 Base! But available via Balancer (0% fee).
+// This whitelist covers AAVE ACTIVE + Balancer Vault tokens.
+// For tokens not in this list (e.g., AERO), the contract falls back to UniV3 pool flash.
 const FLASH_LOAN_ELIGIBLE_TOKENS: Set<string> = new Set([
-  '0x4200000000000000000000000000000000000006', // WETH
-  '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC
-  '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca', // USDbC
-  '0x50c5725949a6f0c72e6c4a641f24049a917db0cb', // DAI
-  '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22', // cbETH
-  '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452', // wstETH
-  '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf', // cbBTC
+  '0x4200000000000000000000000000000000000006', // WETH — FROZEN on AAVE but available via Balancer 0%
+  '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC — AAVE active
+  '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca', // USDbC — AAVE active
+  '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22', // cbETH — AAVE active
+  '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452', // wstETH — AAVE active
+  '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf', // cbBTC — AAVE active
+  '0x04c0599ae5a44757c0af6f9ec3b93da8976c150a', // weETH — AAVE active
+  '0x60a3e35cc302bfa44cb288bc5a4f316fdb1adb42', // EURC — AAVE active
+  '0x236aa50979d5f3de3bd1eeb40e81137f22ab794b', // tBTC — AAVE active
 ]);
 
 /** S67: Check if a token has active flash loan reserves */
