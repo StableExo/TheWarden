@@ -255,20 +255,49 @@ export class PriceTracker extends EventEmitter {
 
           if (type === 'v2') {
             // getReserves() → (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)
+            // S63 (RC#28 fix): V2 reserves are ordered by ON-CHAIN token0/token1 (lower address first)
+            // which may differ from Supabase ordering. We need to fetch on-chain token0 to align.
             if (data.result.length >= 194) {
-              const reserve0 = BigInt('0x' + data.result.slice(2, 66));
-              const reserve1 = BigInt('0x' + data.result.slice(66, 130));
+              let rawR0 = BigInt('0x' + data.result.slice(2, 66));
+              let rawR1 = BigInt('0x' + data.result.slice(66, 130));
 
-              if (reserve0 > 0n && reserve1 > 0n) {
+              if (rawR0 > 0n && rawR1 > 0n) {
+                // Fetch on-chain token0 to determine correct reserve mapping
+                const t0Resp = await fetch(rpcUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    jsonrpc: '2.0', id: 1, method: 'eth_call',
+                    params: [{ to: addr, data: '0x0dfe1681' }, 'latest'] // token0()
+                  }),
+                });
+                const t0Data = await t0Resp.json();
+                const onChainToken0 = t0Data.result ? ('0x' + t0Data.result.slice(26)).toLowerCase() : '';
+
+                // If on-chain token0 doesn't match our meta.token0, swap reserves
+                let r0 = rawR0;
+                let r1 = rawR1;
+                let d0 = token0Decimals;
+                let d1 = token1Decimals;
+                if (onChainToken0 && onChainToken0 !== meta.token0.toLowerCase()) {
+                  // On-chain order is reversed from Supabase — swap reserves to match meta ordering
+                  r0 = rawR1;
+                  r1 = rawR0;
+                  d0 = token1Decimals;
+                  d1 = token0Decimals;
+                  logger.info(`[PriceTracker] V2 pool ${addr.substring(0, 14)}... token order swapped (on-chain t0=${onChainToken0.substring(0, 10)})`);
+                }
+
+                // price = (r1 / 10^d1) / (r0 / 10^d0) = (r1 * 10^d0) / (r0 * 10^d1)
                 const scale = 10n ** 18n;
-                const scaledPrice = (reserve1 * (10n ** BigInt(token0Decimals)) * scale) /
-                                    (reserve0 * (10n ** BigInt(token1Decimals)));
+                const scaledPrice = (r1 * (10n ** BigInt(d0)) * scale) /
+                                    (r0 * (10n ** BigInt(d1)));
                 price = Number(scaledPrice) / Number(scale);
                 inversePrice = price > 0 ? 1 / price : 0;
 
                 const Q96 = 2n ** 96n;
-                const sqrtScaled = Math.sqrt(Number(reserve1) * (10 ** token0Decimals) /
-                                             (Number(reserve0) * (10 ** token1Decimals)));
+                const sqrtScaled = Math.sqrt(Number(r1) * (10 ** d0) /
+                                             (Number(r0) * (10 ** d1)));
                 sqrtPriceX96 = BigInt(Math.floor(sqrtScaled * Number(Q96)));
 
                 seeded = true;
