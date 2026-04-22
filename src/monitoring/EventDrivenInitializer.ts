@@ -180,6 +180,7 @@ export async function initializeEventDrivenMonitoring(
   const monitor = new EventDrivenMonitor({
     tokenDecimals,
     minSpreadPercent: config.minSpreadPercent ?? 0.3,
+    minExecuteSpread: config.minSpreadPercent ?? 0.1, // S61: Execute threshold matches detect threshold
     executionEnabled: !(config.dryRun ?? true), // Default dry-run
     defaultBorrowAmount: config.defaultBorrowAmount ?? 10_000_000_000n,
     verbose: config.verbose ?? false,
