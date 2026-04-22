@@ -43,11 +43,11 @@ import { validateAndLogConfig } from './utils/configValidator';
 import { HealthCheckServer } from './monitoring/healthCheck';
 import { DEXRegistry } from './dex/core/DEXRegistry';
 import { DEXConfig } from './dex/types';
-// [DEAD] import { AdvancedOrchestrator } from './arbitrage/AdvancedOrchestrator';
+// [DEAD] // [S61-LEAN] import { AdvancedOrchestrator } from './arbitrage/AdvancedOrchestrator';
 // [DEAD] import { IntegratedArbitrageOrchestrator } from './execution/IntegratedArbitrageOrchestrator';
-// [DEAD] import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
+// [DEAD] // [S61-LEAN] import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
 // [DEAD] import { GasPriceOracle } from './gas/GasPriceOracle';
-// [DEAD] import { AdvancedGasEstimator } from './gas/AdvancedGasEstimator';
+// [DEAD] // [S61-LEAN] import { AdvancedGasEstimator } from './gas/AdvancedGasEstimator';
 import { SystemHealthMonitor } from './monitoring/SystemHealthMonitor';
 import { HealthStatus } from './types/ExecutionTypes';
 // [DEAD] import {
@@ -65,7 +65,7 @@ import { ArbitrageConfig } from './types/definitions';
 import { getScanTokens, getTokensByChainId, getNetworkName } from './utils/chainTokens';
 // formatTokenList reserved for token display features
 // [DEAD] import { formatTokenList as _formatTokenList } from './utils/chainTokens';
-// [DEAD] import { ArbitrageConsciousness } from './consciousness/ArbitrageConsciousness';
+// [DEAD] // [S61-LEAN] import { ArbitrageConsciousness } from './consciousness/ArbitrageConsciousness';
 // [DEAD] import {
 // [DEAD]   CognitiveCoordinator,
 // [DEAD]   OpportunityContext,
@@ -74,7 +74,7 @@ import { getScanTokens, getTokensByChainId, getNetworkName } from './utils/chain
 // [DEAD] import { EmergenceDetector, DecisionContext } from './consciousness/coordination/EmergenceDetector';
 import { ArbitragePath } from './arbitrage/types';
 import { PoolDataStore } from './arbitrage/PoolDataStore';
-// [DEAD] import { Metacognition } from '../consciousness/metacognition';
+// [DEAD] // [S61-LEAN] import { Metacognition } from '../consciousness/metacognition';
 
 // Type-safe event definitions for TheWarden
 interface TheWardenEvents {
@@ -159,16 +159,16 @@ const DashboardConfig = null as any; // not constructed, just config object
 const GasAnalytics = _createStubClass('GasAnalytics');
 // [S40] Restored real gas module imports
 import { GasPriceOracle } from './gas/GasPriceOracle';
-import { AdvancedGasEstimator } from './gas/AdvancedGasEstimator';
+// [S61-LEAN] import { AdvancedGasEstimator } from './gas/AdvancedGasEstimator';
 const CrossChainAnalytics = _createStubClass('CrossChainAnalytics');
 const SensoryMemory = _createStubClass('SensoryMemory');
 const TemporalAwarenessFramework = _createStubClass('TemporalAwarenessFramework');
 const PerceptionStream = _createStubClass('PerceptionStream');
 // [S40] Restored real consciousness module imports
-import { ArbitrageConsciousness } from './consciousness/ArbitrageConsciousness';
-import { CognitiveCoordinator } from './consciousness/coordination/CognitiveCoordinator';
-import { EmergenceDetector } from './consciousness/coordination/EmergenceDetector';
-import { Metacognition } from '../consciousness/metacognition';
+// [S61-LEAN] import { ArbitrageConsciousness } from './consciousness/ArbitrageConsciousness';
+// [S61-LEAN] import { CognitiveCoordinator } from './consciousness/coordination/CognitiveCoordinator';
+// [S61-LEAN] import { EmergenceDetector } from './consciousness/coordination/EmergenceDetector';
+// [S61-LEAN] import { Metacognition } from '../consciousness/metacognition';
 const extractOpportunityFeatures = (..._args: any[]) => ({});
 const _featuresToArray = (..._args: any[]) => [];
 const _formatTokenList = (..._args: any[]) => '';
@@ -186,7 +186,7 @@ const WardenBootstrap = _createStubClass('WardenBootstrap');
 // [S40] Restored real IntegratedArbitrageOrchestrator from Git history
 import { IntegratedArbitrageOrchestrator } from './execution/IntegratedArbitrageOrchestrator';
 // [S35] Restored real ArbitrageOrchestrator import
-import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
+// [S61-LEAN] import { ArbitrageOrchestrator } from './arbitrage/ArbitrageOrchestrator';
 import type { OpportunityContext, ModuleInsight } from './consciousness/coordination/CognitiveCoordinator';
 const getInfrastructureCosts = (..._args: any[]) => ({ cex: 0, bloxroute: 0, total: 0, monthly: 0, rpc: 0 });
 // === END S32 STUBS ===
@@ -197,7 +197,7 @@ const initializeComponents = async (_config: any): Promise<any> => ({});
 const shutdownComponents = async (_components: any): Promise<void> => {};
 // Stub: arbitrage/AdvancedOrchestrator
 // [S35] Restored real AdvancedOrchestrator import (446 lines)
-import { AdvancedOrchestrator } from './arbitrage/AdvancedOrchestrator';
+// [S61-LEAN] import { AdvancedOrchestrator } from './arbitrage/AdvancedOrchestrator';
 // Stub: config/advanced-arbitrage.config
 const defaultAdvancedArbitrageConfig = {
   pathfinding: { maxHops: 3, minProfitThreshold: BigInt(process.env.MIN_PROFIT_THRESHOLD || '0'), maxSlippage: 0.01, gasPrice: BigInt(process.env.GAS_PRICE || '5000000') },
