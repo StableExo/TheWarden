@@ -102,12 +102,16 @@ export class EventDrivenMonitor extends EventEmitter {
     this.config = config;
 
     // Initialize PriceTracker
+    // S68: Resolve rpcUrl early so PriceTracker can use forceRefreshPrice in onSwap
+    const resolvedRpcUrl = config.rpcUrl || process.env.BASE_RPC_URL || process.env.CHAINSTACK_HTTPS || process.env.RPC_URL || '';
+    
     this.priceTracker = new PriceTracker({
       minSpreadPercent: config.minSpreadPercent ?? 0.3,
       maxPriceAge: config.maxPriceAge ?? 30000,
       tokenDecimals: config.tokenDecimals,
       opportunityCooldown: config.opportunityCooldown ?? 2000,
       verboseLogging: config.verbose ?? false,
+      rpcUrl: resolvedRpcUrl, // S68: Enable "Retry on Zero" forceRefreshPrice in onSwap
     });
 
     // Initialize OpportunityPipeline
