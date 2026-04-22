@@ -102,6 +102,8 @@ export interface PriceTrackerConfig {
   opportunityCooldown?: number;
   /** Enable logging of every price update. Default: false */
   verboseLogging?: boolean;
+  /** RPC URL for direct on-chain queries (used by forceRefreshPrice). Required. */
+  rpcUrl?: string;
 }
 
 /** PriceTracker statistics */
@@ -160,6 +162,7 @@ export class PriceTracker extends EventEmitter {
       tokenDecimals: config.tokenDecimals,
       opportunityCooldown: config.opportunityCooldown ?? 2000,
       verboseLogging: config.verboseLogging ?? false,
+      rpcUrl: config.rpcUrl ?? '',
     };
   }
 
@@ -366,6 +369,78 @@ export class PriceTracker extends EventEmitter {
     );
   }
 
+
+  // ============================================================
+  // S68: Force Refresh Price — Direct on-chain query when price=0
+  // "Retry on Zero" pattern: slot0 → globalState → getReserves
+  // ============================================================
+
+  /**
+   * Force a direct on-chain price query for a pool.
+   * Used when a swap event or warmup returns price=0.
+   * Tries slot0() → globalState() → getReserves() in order.
+   * Returns the refreshed price, or 0 if all queries fail.
+   */
+  async forceRefreshPrice(poolAddr: string, meta: MonitoredPool, rpcUrl: string): Promise<number> {
+    const token0Decimals = this.config.tokenDecimals.get(meta.token0.toLowerCase()) ?? 18;
+    const token1Decimals = this.config.tokenDecimals.get(meta.token1.toLowerCase()) ?? 18;
+    
+    const SELECTORS = [
+      { name: 'slot0',       selector: '0x3850c7bd', type: 'v3' as const },
+      { name: 'globalState', selector: '0xe76c01e4', type: 'algebra' as const },
+      { name: 'getReserves', selector: '0x0902f1ac', type: 'v2' as const },
+    ];
+
+    for (const { name, selector, type } of SELECTORS) {
+      try {
+        const response = await fetch(rpcUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0', id: 1, method: 'eth_call',
+            params: [{ to: poolAddr, data: selector }, 'latest']
+          }),
+        });
+        const data = await response.json();
+
+        if (!data.result || data.result === '0x' || data.result.length < 66) continue;
+
+        if (type === 'v2') {
+          if (data.result.length >= 194) {
+            const rawR0 = BigInt('0x' + data.result.slice(2, 66));
+            const rawR1 = BigInt('0x' + data.result.slice(66, 130));
+            if (rawR0 > 0n && rawR1 > 0n) {
+              const scale = 10n ** 18n;
+              const scaledPrice = (rawR1 * (10n ** BigInt(token0Decimals)) * scale) /
+                                  (rawR0 * (10n ** BigInt(token1Decimals)));
+              const price = Number(scaledPrice) / Number(scale);
+              if (price > 0) {
+                logger.info(`[PriceTracker] 🔄 forceRefresh ${poolAddr.substring(0, 14)}... via ${name}: price=${price.toFixed(8)}`);
+                return price;
+              }
+            }
+          }
+        } else {
+          if (data.result.length >= 130) {
+            const sqrtPriceX96 = BigInt('0x' + data.result.slice(2, 66));
+            if (sqrtPriceX96 > 0n) {
+              const price = sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals);
+              if (price > 0) {
+                logger.info(`[PriceTracker] 🔄 forceRefresh ${poolAddr.substring(0, 14)}... via ${name}: price=${price.toFixed(8)}`);
+                return price;
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        logger.warn(`[PriceTracker] forceRefresh ${name} failed for ${poolAddr.substring(0, 14)}...: ${err.message}`);
+      }
+    }
+
+    logger.warn(`[PriceTracker] ⚠️ forceRefresh FAILED for ${poolAddr.substring(0, 14)}... — all probes returned 0`);
+    return 0;
+  }
+
   // ============================================================
   // Swap Event Processing
   // ============================================================
@@ -374,7 +449,7 @@ export class PriceTracker extends EventEmitter {
    * Process a swap event — update price state and check for opportunities.
    * Called by SwapEventMonitor's 'swap' event handler.
    */
-  onSwap(event: SwapEvent): void {
+  async onSwap(event: SwapEvent): Promise<void> {
     this.stats.totalSwapsProcessed++;
     
     const poolAddr = event.pool.toLowerCase();
@@ -386,7 +461,37 @@ export class PriceTracker extends EventEmitter {
     const token1Decimals = this.config.tokenDecimals.get(meta.token1.toLowerCase()) ?? 18;
     
     // Calculate human-readable price
-    const price = sqrtPriceX96ToPrice(event.sqrtPriceX96, token0Decimals, token1Decimals);
+    let price = sqrtPriceX96ToPrice(event.sqrtPriceX96, token0Decimals, token1Decimals);
+    let refreshedSqrtPriceX96 = event.sqrtPriceX96;
+    
+    // S68: "Retry on Zero" — if price=0, force direct on-chain query
+    // This catches the cbBTC phantom bug (155/157 opportunities were phantoms)
+    if (price === 0 || event.sqrtPriceX96 === 0n) {
+      if (this.config.rpcUrl) {
+        const refreshedPrice = await this.forceRefreshPrice(poolAddr, meta, this.config.rpcUrl);
+        if (refreshedPrice > 0) {
+          price = refreshedPrice;
+          logger.info(`[PriceTracker] 🔄 S68 Retry on Zero: ${meta.dex} ${poolAddr.substring(0, 10)}... refreshed to ${price.toFixed(8)}`);
+        } else {
+          // All probes failed — keep the LAST KNOWN GOOD price (don't overwrite with 0)
+          const existingState = this.poolStates.get(poolAddr);
+          if (existingState && existingState.price > 0) {
+            logger.info(`[PriceTracker] 🛡️ S68 Zero Guard: keeping last good price ${existingState.price.toFixed(8)} for ${poolAddr.substring(0, 10)}...`);
+            return; // Skip this update entirely
+          }
+          // No existing state either — skip this event
+          logger.warn(`[PriceTracker] ⚠️ S68: No valid price for ${poolAddr.substring(0, 10)}... — skipping`);
+          return;
+        }
+      } else {
+        // No RPC URL configured — defensive skip
+        const existingState = this.poolStates.get(poolAddr);
+        if (existingState && existingState.price > 0) {
+          return; // Keep last known good price
+        }
+        return; // Skip entirely
+      }
+    }
     const inversePrice = price > 0 ? 1 / price : 0;
     
     // Update pool state
@@ -450,6 +555,9 @@ export class PriceTracker extends EventEmitter {
         // Stale price, skip
         continue;
       }
+      
+      // S68: Skip pools with price=0 (phantom prevention)
+      if (state.price === 0) continue;
       
       freshStates.push(state);
     }
