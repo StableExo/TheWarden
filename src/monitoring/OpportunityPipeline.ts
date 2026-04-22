@@ -135,7 +135,7 @@ export class OpportunityPipeline extends EventEmitter {
     super();
     this.config = {
       // S46: Read from env var, lower default for gasless mode (0.10 USDC → 100_000)
-      minProfitAmount: config?.minProfitAmount ?? BigInt(process.env.PIPELINE_MIN_PROFIT || (process.env.GASLESS_MODE === 'true' ? '100000' : '1000000')),
+      minProfitAmount: config?.minProfitAmount ?? BigInt(Math.floor(parseFloat(process.env.PIPELINE_MIN_PROFIT || (process.env.GASLESS_MODE === 'true' ? '100000' : '1000000')))),
       minSpreadPercent: config?.minSpreadPercent ?? 0.2,
       defaultBorrowAmount: config?.defaultBorrowAmount ?? 10_000_000_000n, // 10,000 USDC
       slippageTolerance: config?.slippageTolerance ?? 0.001, // S56: 0.1% — S55 showed 0.05% too tight for 2-3s execution window
