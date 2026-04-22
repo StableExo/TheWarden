@@ -183,6 +183,14 @@ const loadBloXrouteConfig = (..._args: any[]) => ({});
 type DecisionContext = any;
 type GasEstimationResult = any;
 const WardenBootstrap = _createStubClass('WardenBootstrap');
+// S61-LEAN: Stubs for commented-out imports (saves module tree memory)
+const ArbitrageConsciousness = _createStubClass('ArbitrageConsciousness');
+const CognitiveCoordinator = _createStubClass('CognitiveCoordinator');
+const EmergenceDetector = _createStubClass('EmergenceDetector');
+const Metacognition = _createStubClass('Metacognition');
+const ArbitrageOrchestrator = _createStubClass('ArbitrageOrchestrator');
+const AdvancedOrchestrator = _createStubClass('AdvancedOrchestrator');
+const AdvancedGasEstimator = _createStubClass('AdvancedGasEstimator');
 // [S40] Restored real IntegratedArbitrageOrchestrator from Git history
 import { IntegratedArbitrageOrchestrator } from './execution/IntegratedArbitrageOrchestrator';
 // [S35] Restored real ArbitrageOrchestrator import
