@@ -125,6 +125,27 @@ export interface PipelineStats {
 // OpportunityPipeline
 // ============================================================
 
+
+// ============================================================
+// S67: Flash Loan Eligible Tokens (Base Mainnet)
+// Tokens with active reserves on AAVE V3 / Balancer on Base.
+// Used to select borrowToken — prevents ReserveInactive() errors.
+// ============================================================
+const FLASH_LOAN_ELIGIBLE_TOKENS: Set<string> = new Set([
+  '0x4200000000000000000000000000000000000006', // WETH
+  '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC
+  '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca', // USDbC
+  '0x50c5725949a6f0c72e6c4a641f24049a917db0cb', // DAI
+  '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22', // cbETH
+  '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452', // wstETH
+  '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf', // cbBTC
+]);
+
+/** S67: Check if a token has active flash loan reserves */
+function isFlashLoanEligible(token: string): boolean {
+  return FLASH_LOAN_ELIGIBLE_TOKENS.has(token.toLowerCase());
+}
+
 export class OpportunityPipeline extends EventEmitter {
   private config: Required<OpportunityPipelineConfig>;
   
@@ -336,7 +357,22 @@ export class OpportunityPipeline extends EventEmitter {
   private buildExecutionRequest(signal: OpportunitySignal): ExecutionRequest | null {
     try {
       const { buyPool, sellPool } = signal;
-      const borrowToken = buyPool.token0; // Borrow token0
+      // S67: Smart borrow token selection — prefer flash-loan-eligible tokens
+      // Prevents ReserveInactive() errors when borrowing tokens without AAVE reserves
+      let borrowToken: string;
+      let borrowFromToken0 = true;
+      
+      if (isFlashLoanEligible(buyPool.token0)) {
+        borrowToken = buyPool.token0; // token0 is eligible — borrow it (original flow)
+        borrowFromToken0 = true;
+      } else if (isFlashLoanEligible(buyPool.token1)) {
+        borrowToken = buyPool.token1; // token1 is eligible — borrow it (flipped flow)
+        borrowFromToken0 = false;
+        logger.info(`[Pipeline-S67] Flipped borrow: ${buyPool.token0.substring(0, 10)} not eligible, borrowing ${buyPool.token1.substring(0, 10)} instead`);
+      } else {
+        logger.warn(`[Pipeline-S67] ⏭️ SKIP: Neither token is flash-loan-eligible for ${signal.pairKey}`);
+        return null;
+      }
       
       // S48: Dynamic borrow amount based on token decimals + pool liquidity
       // The old flat 10B (10,000 USDC) was wrong for non-6-decimal tokens:
@@ -383,6 +419,9 @@ export class OpportunityPipeline extends EventEmitter {
       //           Buy token0 at LOW-price pool (buyPool) second → spend LESS token1
       // Previous code was INVERTED: swapped at low first, high second → guaranteed loss
       
+      // S67: Swap direction depends on which token we borrowed
+      // borrowFromToken0=true:  Borrow token0, sell→buy→repay (original)
+      // borrowFromToken0=false: Borrow token1, buy→sell→repay (flipped)
       // Step 1: Swap token0→token1 at sellPool (HIGHER price = more token1 per token0)
       const step1PriceRatio = sellPool.price; // token1 per token0 (HIGHER)
       const rawStep1Output = Number(borrowAmount) * step1PriceRatio;
