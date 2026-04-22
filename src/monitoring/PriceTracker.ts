@@ -195,11 +195,14 @@ export class PriceTracker extends EventEmitter {
   }
 
   // ============================================================
-  // S56: On-chain Warmup — Seed initial prices from slot0()
+  // S56: On-chain Warmup — Seed initial prices from slot0() / getReserves()
+  // S62: Dual-mode warmup — V3 pools use slot0(), V2 pools use getReserves()
   // ============================================================
 
   /**
-   * Warm up price state by querying slot0() for all registered pools.
+   * Warm up price state by querying on-chain state for all registered pools.
+   * V3/CL pools: slot0() → sqrtPriceX96 → price
+   * V2 pools: getReserves() → reserve0/reserve1 → price
    * Eliminates the 7-8 minute dead time after restart.
    * Call after registerPools() and before starting swap event processing.
    */
@@ -210,43 +213,85 @@ export class PriceTracker extends EventEmitter {
       return;
     }
 
-    logger.info(`[PriceTracker] ♨️ Warming up ${pools.length} pools from on-chain slot0()...`);
+    logger.info(`[PriceTracker] ♨️ Warming up ${pools.length} pools (V3: slot0, V2: getReserves)...`);
     const startTime = Date.now();
-    let success = 0;
+    let successV3 = 0;
+    let successV2 = 0;
     let failed = 0;
 
-    // slot0() selector: 0x3850c7bd
-    const SLOT0_SELECTOR = '0x3850c7bd';
+    // Function selectors
+    const SLOT0_SELECTOR = '0x3850c7bd';         // slot0() — V3/CL pools
+    const GET_RESERVES_SELECTOR = '0x0902f1ac';   // getReserves() — V2 pools
 
     for (const [addr, meta] of pools) {
       try {
+        const isV2 = meta.dexType === 'v2';
+        const selector = isV2 ? GET_RESERVES_SELECTOR : SLOT0_SELECTOR;
+
         const response = await fetch(rpcUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             jsonrpc: '2.0', id: 1, method: 'eth_call',
-            params: [{ to: addr, data: SLOT0_SELECTOR }, 'latest']
+            params: [{ to: addr, data: selector }, 'latest']
           }),
         });
         const data = await response.json();
 
-        if (data.result && data.result.length >= 130) {
-          // slot0 returns: (uint160 sqrtPriceX96, int24 tick, ...)
-          const sqrtPriceX96Hex = data.result.slice(2, 66);
-          const sqrtPriceX96 = BigInt('0x' + sqrtPriceX96Hex);
-          const tickHex = data.result.slice(66, 130);
-          const tick = Number(BigInt('0x' + tickHex));
+        const token0Decimals = this.config.tokenDecimals.get(meta.token0.toLowerCase()) ?? 18;
+        const token1Decimals = this.config.tokenDecimals.get(meta.token1.toLowerCase()) ?? 18;
 
-          if (sqrtPriceX96 === 0n) {
-            failed++;
-            continue;
+        let price = 0;
+        let inversePrice = 0;
+        let sqrtPriceX96 = 0n;
+        let tick = 0;
+        let seeded = false;
+
+        if (isV2) {
+          // V2: getReserves() returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)
+          // Response is 3 × 32 bytes = 192 hex chars + '0x' prefix = 194
+          if (data.result && data.result.length >= 194) {
+            const reserve0 = BigInt('0x' + data.result.slice(2, 66));
+            const reserve1 = BigInt('0x' + data.result.slice(66, 130));
+
+            if (reserve0 > 0n && reserve1 > 0n) {
+              // price = (reserve1 / 10^d1) / (reserve0 / 10^d0)
+              // Using BigInt-safe math: price = (reserve1 * 10^d0) / (reserve0 * 10^d1)
+              const scale = 10n ** 18n; // Use 18 decimals of precision
+              const scaledPrice = (reserve1 * (10n ** BigInt(token0Decimals)) * scale) /
+                                  (reserve0 * (10n ** BigInt(token1Decimals)));
+              price = Number(scaledPrice) / Number(scale);
+              inversePrice = price > 0 ? 1 / price : 0;
+
+              // For V2 pools, derive a synthetic sqrtPriceX96 for PoolPriceState compat
+              // sqrtPriceX96 = sqrt(price) * 2^96
+              const Q96 = 2n ** 96n;
+              const sqrtScaled = Math.sqrt(Number(reserve1) * (10 ** token0Decimals) /
+                                           (Number(reserve0) * (10 ** token1Decimals)));
+              sqrtPriceX96 = BigInt(Math.floor(sqrtScaled * Number(Q96)));
+
+              seeded = true;
+              successV2++;
+            }
           }
+        } else {
+          // V3/CL: slot0() returns (uint160 sqrtPriceX96, int24 tick, ...)
+          if (data.result && data.result.length >= 130) {
+            const sqrtPriceX96Hex = data.result.slice(2, 66);
+            sqrtPriceX96 = BigInt('0x' + sqrtPriceX96Hex);
+            const tickHex = data.result.slice(66, 130);
+            tick = Number(BigInt('0x' + tickHex));
 
-          const token0Decimals = this.config.tokenDecimals.get(meta.token0.toLowerCase()) ?? 18;
-          const token1Decimals = this.config.tokenDecimals.get(meta.token1.toLowerCase()) ?? 18;
-          const price = sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals);
-          const inversePrice = price > 0 ? 1 / price : 0;
+            if (sqrtPriceX96 > 0n) {
+              price = sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals);
+              inversePrice = price > 0 ? 1 / price : 0;
+              seeded = true;
+              successV3++;
+            }
+          }
+        }
 
+        if (seeded) {
           const state: PoolPriceState = {
             pool: addr,
             dex: meta.dex || 'Unknown',
@@ -266,7 +311,6 @@ export class PriceTracker extends EventEmitter {
           };
 
           this.poolStates.set(addr, state);
-          success++;
         } else {
           failed++;
         }
@@ -277,8 +321,8 @@ export class PriceTracker extends EventEmitter {
 
     const elapsed = Date.now() - startTime;
     logger.info(
-      `[PriceTracker] ♨️ Warmup complete: ${success}/${pools.length} pools seeded in ${elapsed}ms ` +
-      `(${failed} failed). Ready for spread detection.`
+      `[PriceTracker] ♨️ Warmup complete: ${successV3 + successV2}/${pools.length} pools seeded in ${elapsed}ms ` +
+      `(V3: ${successV3}, V2: ${successV2}, failed: ${failed}). Ready for spread detection.`
     );
   }
 
