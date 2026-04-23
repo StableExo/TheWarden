@@ -119,7 +119,7 @@ export class EventDrivenMonitor extends EventEmitter {
       minSpreadPercent: config.minExecuteSpread ?? 0.2,
       maxPriceAge: config.maxExecutePriceAge ?? parseInt(process.env.PIPELINE_MAX_PRICE_AGE || '30000', 10), // S54: was 5000 hardcoded — killed all opportunities
       defaultBorrowAmount: config.defaultBorrowAmount ?? 10_000_000_000n,
-      slippageTolerance: config.slippageTolerance ?? 0.001, // S56: 0.1% — S55 showed 0.05% too tight for 2-3s execution window
+      slippageTolerance: config.slippageTolerance ?? parseFloat(process.env.PIPELINE_SLIPPAGE_TOLERANCE || '0.0005'), // S71: Read from env var, default 0.05%. Was 0.001 (hardcoded override)
       minProfitAmount: config.minProfitAmount ?? 1_000_000n,
       executionCooldown: config.executionCooldown ?? 10_000,
       executionEnabled: config.executionEnabled ?? false, // Safe default
