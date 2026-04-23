@@ -8,9 +8,9 @@
  *   const results = await pool.fanOut(calls); // Parallel: distribute across all endpoints
  */
 
-import { createLogger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = createLogger('ProviderPool');
+// logger imported from ../utils/logger
 
 export interface PoolEndpoint {
   url: string;
