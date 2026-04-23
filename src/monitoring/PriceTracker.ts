@@ -231,7 +231,11 @@ export class PriceTracker extends EventEmitter {
       return;
     }
 
-    logger.info(`[PriceTracker] ♨️ Warming up ${pools.length} pools (auto-probe: slot0 → globalState → getReserves)...`);
+    // S72 P0-1: Rate limit protection — 75ms delay between each RPC call
+    // QuickNode free tier: 15 req/s. Without delay, 68 pools × 3 probes = 200+ RPCs in <2s → rate limited → "no interface responded"
+    const rpcDelay = () => new Promise<void>(r => setTimeout(r, 75));
+    
+    logger.info(`[PriceTracker] ♨️ Warming up ${pools.length} pools (auto-probe: slot0 → globalState → getReserves, 75ms RPC delay)...`);
     const startTime = Date.now();
     let successSlot0 = 0;
     let successGlobalState = 0;
@@ -259,6 +263,7 @@ export class PriceTracker extends EventEmitter {
 
         // S63: Auto-probe — try each selector until one works
         for (const { name, selector, type } of SELECTORS) {
+          await rpcDelay(); // S72: Rate limit protection
           const response = await fetch(rpcUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -281,6 +286,7 @@ export class PriceTracker extends EventEmitter {
 
               if (rawR0 > 0n && rawR1 > 0n) {
                 // Fetch on-chain token0 to determine correct reserve mapping
+                await rpcDelay(); // S72: Rate limit protection
                 const t0Resp = await fetch(rpcUrl, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -337,6 +343,7 @@ export class PriceTracker extends EventEmitter {
                 let d0 = token0Decimals;
                 let d1 = token1Decimals;
                 try {
+                  await rpcDelay(); // S72: Rate limit protection
                   const t0Resp = await fetch(rpcUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -708,6 +715,9 @@ export class PriceTracker extends EventEmitter {
     
     // Net spread = gross spread minus total fees
     const spreadPercent = grossSpreadPercent - totalFeePercent;
+    
+    // S72 P1-4: Reject phantom spreads > 50% (guaranteed decimal error / token0 inversion)
+    if (grossSpreadPercent > 50) return;
     
     // Check threshold (now fee-aware — only genuine opportunities pass)
     if (spreadPercent < this.config.minSpreadPercent) return;
