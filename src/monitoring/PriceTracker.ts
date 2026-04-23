@@ -690,14 +690,26 @@ export class PriceTracker extends EventEmitter {
     // Skip if same pool (shouldn't happen but defensive)
     if (minPriceState.pool === maxPriceState.pool) return;
     
-    // Calculate spread
+    // S72 RC#50: Calculate NET spread after pool swap fees
+    // Raw spread between pools does NOT account for fees charged by each pool.
+    // A 1.04% spread between a 1% fee pool and a 0.05% fee pool is actually
+    // UNPROFITABLE because total fees (1.05%) exceed the spread.
     const midPrice = (minPriceState.price + maxPriceState.price) / 2;
     if (midPrice === 0) return;
     
     const spreadAbsolute = maxPriceState.price - minPriceState.price;
-    const spreadPercent = (spreadAbsolute / midPrice) * 100;
+    const grossSpreadPercent = (spreadAbsolute / midPrice) * 100;
     
-    // Check threshold
+    // Deduct pool swap fees: buy pool fee + sell pool fee (both in bps)
+    // fee is stored as bps (e.g., 500 = 0.05%, 3000 = 0.3%, 10000 = 1%)
+    const buyFeePercent = (minPriceState.fee || 0) / 10000 * 100;
+    const sellFeePercent = (maxPriceState.fee || 0) / 10000 * 100;
+    const totalFeePercent = buyFeePercent + sellFeePercent;
+    
+    // Net spread = gross spread minus total fees
+    const spreadPercent = grossSpreadPercent - totalFeePercent;
+    
+    // Check threshold (now fee-aware — only genuine opportunities pass)
     if (spreadPercent < this.config.minSpreadPercent) return;
     
     // Check cooldown
@@ -736,7 +748,8 @@ export class PriceTracker extends EventEmitter {
     this.stats.lastOpportunityAt = now;
     
     logger.info(
-      `[PriceTracker] 🎯 OPPORTUNITY: ${pairKey} spread=${spreadPercent.toFixed(4)}% ` +
+      `[PriceTracker] 🎯 OPPORTUNITY: ${pairKey} netSpread=${spreadPercent.toFixed(4)}% ` +
+      `(gross=${grossSpreadPercent.toFixed(4)}% fees=${totalFeePercent.toFixed(4)}%) ` +
       `buy@${minPriceState.dex}(${minPriceState.price.toFixed(8)}) ` +
       `sell@${maxPriceState.dex}(${maxPriceState.price.toFixed(8)}) ` +
       `age=${maxPriceAge}ms block=${signal.blockNumber}`
@@ -784,7 +797,7 @@ export class PriceTracker extends EventEmitter {
     if (mid === 0) return null;
     
     return {
-      spreadPercent: ((max.price - min.price) / mid) * 100,
+      spreadPercent: ((max.price - min.price) / mid) * 100 - ((min.fee || 0) + (max.fee || 0)) / 10000 * 100,
       buyDex: min.dex,
       sellDex: max.dex,
     };
