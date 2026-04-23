@@ -525,7 +525,7 @@ class TheWarden extends EventEmitter {
         await this.checkTokenBalances();
 
         if (balance === 0n) {
-          logger.warn('WARNING: Wallet balance is 0 - bot will not be able to execute trades');
+          logger.warn('NOTE: Wallet balance is 0 — using Coinbase Paymaster for gasless execution');
         }
       }
 
