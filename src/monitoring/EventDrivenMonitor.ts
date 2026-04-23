@@ -16,6 +16,7 @@
  *   await monitor.start();
  */
 
+import { ProviderPool } from '../infrastructure/ProviderPool';
 import { EventEmitter } from 'events';
 import { logger } from '../utils/logger';
 import { SwapEventMonitor, MonitoredPool, createMonitorConfigFromEnv } from './SwapEventMonitor';
