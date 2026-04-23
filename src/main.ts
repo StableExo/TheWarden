@@ -1895,6 +1895,19 @@ class TheWarden extends EventEmitter {
     } else {
       logger.info('[S63] ⚡ Batch scanner DISABLED — event-driven pipeline (Phase4b) is active');
       logger.info('[S63] 📉 ~30% memory freed (no 160-pool batch scan loop)');
+
+      // S73: Heartbeat for event-driven mode (LongRunningManager expects periodic beats)
+      // Without this, heartbeat monitor falsely reports "process unresponsive" in event-driven mode
+      if (this.longRunningManager) {
+        setInterval(() => {
+          try {
+            (this.longRunningManager as any).heartbeat?.();
+            (this.longRunningManager as any).recordHeartbeat?.();
+            (this.longRunningManager as any).beat?.();
+          } catch {} // Silent — heartbeat is advisory
+        }, 15000); // Every 15 seconds
+        logger.info('[S73] Heartbeat wired to event-driven pipeline (15s interval)');
+      }
     }
 
     logger.info('TheWarden is now running and scanning for opportunities');
