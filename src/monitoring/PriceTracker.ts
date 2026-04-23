@@ -332,7 +332,30 @@ export class PriceTracker extends EventEmitter {
               tick = Number(BigInt('0x' + tickHex));
 
               if (sqrtPriceX96 > 0n) {
-                price = sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals);
+                // S71: Align on-chain token0 with Supabase for correct decimal adjustment
+                // Aerodrome CL cbBTC/WETH pools have inverted token order → 10^20 decimal error without this
+                let d0 = token0Decimals;
+                let d1 = token1Decimals;
+                try {
+                  const t0Resp = await fetch(rpcUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      jsonrpc: '2.0', id: 1, method: 'eth_call',
+                      params: [{ to: addr, data: '0x0dfe1681' }, 'latest']
+                    }),
+                  });
+                  const t0Data = await t0Resp.json();
+                  if (t0Data.result && t0Data.result.length >= 66) {
+                    const onChainT0 = '0x' + t0Data.result.slice(26).toLowerCase();
+                    if (onChainT0 !== meta.token0.toLowerCase()) {
+                      d0 = token1Decimals; d1 = token0Decimals;
+                      (meta as any)._invertedDecimals = true;
+                      logger.info(`[PriceTracker] 🔀 S71: V3 pool ${addr.substring(0, 14)}... token0 mismatch — corrected decimals for warmup+events`);
+                    }
+                  }
+                } catch {}
+                price = sqrtPriceX96ToPrice(sqrtPriceX96, d0, d1);
                 inversePrice = price > 0 ? 1 / price : 0;
                 seeded = true;
                 detectedType = name;
@@ -351,8 +374,8 @@ export class PriceTracker extends EventEmitter {
             dex: meta.dex || 'Unknown',
             token0: meta.token0,
             token1: meta.token1,
-            token0Decimals,
-            token1Decimals,
+            token0Decimals: (meta as any)._invertedDecimals ? token1Decimals : token0Decimals,
+            token1Decimals: (meta as any)._invertedDecimals ? token0Decimals : token1Decimals,
             fee: meta.fee ?? 0,
             sqrtPriceX96,
             tick,
@@ -521,7 +544,10 @@ export class PriceTracker extends EventEmitter {
     const token1Decimals = this.config.tokenDecimals.get(meta.token1.toLowerCase()) ?? 18;
     
     // Calculate human-readable price
-    let price = sqrtPriceX96ToPrice(event.sqrtPriceX96, token0Decimals, token1Decimals);
+    // S71: Use corrected decimals if warmup detected inverted on-chain token order
+    const correctedD0 = (meta as any)._invertedDecimals ? token1Decimals : token0Decimals;
+    const correctedD1 = (meta as any)._invertedDecimals ? token0Decimals : token1Decimals;
+    let price = sqrtPriceX96ToPrice(event.sqrtPriceX96, correctedD0, correctedD1);
     let refreshedSqrtPriceX96 = event.sqrtPriceX96;
     
     // S68: "Retry on Zero" — if price=0, force direct on-chain query
