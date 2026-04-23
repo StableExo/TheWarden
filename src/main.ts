@@ -233,6 +233,7 @@ const DEFAULT_GAS_PRICE_GWEI = 50;
 interface WardenConfig {
   // Network configuration
   rpcUrl: string;
+  rpcUrlFallback?: string;
   chainId: number;
   walletPrivateKey: string;
 
@@ -309,6 +310,14 @@ function loadConfig(): WardenConfig {
     );
   }
 
+  // S73: Load fallback RPC URL (ChainStack) for auto-failover
+  const rpcUrlFallback = process.env.BASE_RPC_URL_FALLBACK || process.env.RPC_URL_FALLBACK;
+  if (rpcUrlFallback) {
+    logger.info(`Fallback RPC configured: ${rpcUrlFallback.substring(0, 40)}...`);
+  } else {
+    logger.warn('No fallback RPC configured. Set BASE_RPC_URL_FALLBACK for resilience.');
+  }
+
   const walletPrivateKey = process.env.WALLET_PRIVATE_KEY || process.env.DEPLOYER_PRIVATE_KEY;
   if (!walletPrivateKey) {
     throw new Error('WALLET_PRIVATE_KEY is required');
@@ -317,6 +326,7 @@ function loadConfig(): WardenConfig {
   // Optional configuration with defaults
   const config: WardenConfig = {
     rpcUrl,
+    rpcUrlFallback,
     chainId,
     walletPrivateKey,
 
@@ -362,7 +372,10 @@ function loadConfig(): WardenConfig {
 
   logger.info('Configuration loaded successfully');
   logger.info(`- Chain ID: ${config.chainId}`);
-  logger.info(`- RPC URL: ${config.rpcUrl.substring(0, 30)}...`);
+  logger.info(`- RPC URL: ${config.rpcUrl.substring(0, 40)}... (primary)`);
+  if (config.rpcUrlFallback) {
+    logger.info(`- RPC Fallback: ${config.rpcUrlFallback.substring(0, 40)}... (ChainStack)`);
+  }
   logger.info(`- Scan Chains: ${config.scanChains?.join(', ') || config.chainId}`);
   logger.info(`- Scan Interval: ${config.scanInterval}ms`);
   logger.info(`- Min Profit: ${config.minProfitPercent}%`);
@@ -468,11 +481,16 @@ class TheWarden extends EventEmitter {
     super();
     this.config = config;
 
-    // Initialize provider
+    // Initialize provider (S73: QuickNode primary, ChainStack fallback)
     this.provider = new JsonRpcProvider(config.rpcUrl);
 
     // Initialize wallet
     this.wallet = new Wallet(config.walletPrivateKey, this.provider);
+
+    // S73: Store fallback for provider recovery
+    if (config.rpcUrlFallback) {
+      logger.info('[RPC] Fallback provider ready for auto-failover');
+    }
 
     // Initialize DEX registry
     this.dexRegistry = new DEXRegistry();
@@ -997,7 +1015,7 @@ class TheWarden extends EventEmitter {
       // Register components with health monitor
       logger.info('Registering components with health monitor...');
       this.healthMonitor.registerComponent({
-        name: 'provider',
+        name: 'provider (QuickNode → ChainStack fallback)',
         checkHealth: async () => {
           try {
             await this.provider.getBlockNumber();
