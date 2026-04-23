@@ -237,7 +237,10 @@ export class EventDrivenMonitor extends EventEmitter {
     const rpcUrl = this.config.rpcUrl || process.env.BASE_RPC_URL || process.env.CHAINSTACK_HTTPS_ENDPOINT || process.env.RPC_URL || '';
     if (rpcUrl) {
       try {
-        await this.priceTracker.warmup(rpcUrl);
+        // S73: ProviderPool for parallel warmup across multiple endpoints
+        const pool = new ProviderPool();
+        await this.priceTracker.warmup(rpcUrl, pool);
+        pool.logStats();
         logger.info('[EventDrivenMonitor] ♨️ PriceTracker warmup complete — prices seeded');
       } catch (err: any) {
         logger.warn(`[EventDrivenMonitor] ♨️ Warmup failed (non-fatal): ${err.message}`);
