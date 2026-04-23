@@ -224,18 +224,22 @@ export class PriceTracker extends EventEmitter {
    * Eliminates the 7-8 minute dead time after restart.
    * Call after registerPools() and before starting swap event processing.
    */
-  async warmup(rpcUrl: string): Promise<void> {
+  async warmup(rpcUrl: string, pool?: ProviderPool): Promise<void> {
     const pools = Array.from(this.poolMeta.entries());
     if (pools.length === 0) {
       logger.warn('[PriceTracker] No pools registered — skip warmup');
       return;
     }
 
-    // S72 P0-1: Rate limit protection — 75ms delay between each RPC call
-    // QuickNode free tier: 15 req/s. Without delay, 68 pools × 3 probes = 200+ RPCs in <2s → rate limited → "no interface responded"
-    const rpcDelay = () => new Promise<void>(r => setTimeout(r, 75));
+    // S73: ProviderPool parallel warmup — no delays needed when pool has multiple endpoints
+    // With N endpoints: each endpoint handles its own 15 req/s limit independently
+    // S72 fallback: 75ms delay only when using single endpoint (pool size = 1)
+    const useParallel = pool && pool.size > 1;
+    const rpcDelay = useParallel
+      ? () => Promise.resolve() // No delay needed — pool distributes across endpoints
+      : () => new Promise<void>(r => setTimeout(r, 75)); // S72: Single endpoint rate limit protection
     
-    logger.info(`[PriceTracker] ♨️ Warming up ${pools.length} pools (auto-probe: slot0 → globalState → getReserves, 75ms RPC delay)...`);
+    logger.info(`[PriceTracker] ♨️ Warming up ${pools.length} pools (${useParallel ? `PARALLEL via ${pool!.size} endpoints` : 'sequential, 75ms RPC delay'})...`);
     const startTime = Date.now();
     let successSlot0 = 0;
     let successGlobalState = 0;
@@ -264,7 +268,8 @@ export class PriceTracker extends EventEmitter {
         // S63: Auto-probe — try each selector until one works
         for (const { name, selector, type } of SELECTORS) {
           await rpcDelay(); // S72: Rate limit protection
-          const response = await fetch(rpcUrl, {
+          const callUrl = useParallel ? pool!.getNext() : rpcUrl;
+          const response = await fetch(callUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -287,7 +292,8 @@ export class PriceTracker extends EventEmitter {
               if (rawR0 > 0n && rawR1 > 0n) {
                 // Fetch on-chain token0 to determine correct reserve mapping
                 await rpcDelay(); // S72: Rate limit protection
-                const t0Resp = await fetch(rpcUrl, {
+                const t0CallUrl = useParallel ? pool!.getNext() : rpcUrl;
+                const t0Resp = await fetch(t0CallUrl, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -344,7 +350,8 @@ export class PriceTracker extends EventEmitter {
                 let d1 = token1Decimals;
                 try {
                   await rpcDelay(); // S72: Rate limit protection
-                  const t0Resp = await fetch(rpcUrl, {
+                  const t0CallUrl2 = useParallel ? pool!.getNext() : rpcUrl;
+                  const t0Resp = await fetch(t0CallUrl2, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
