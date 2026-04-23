@@ -466,9 +466,10 @@ export class FlashSwapV3Executor {
         ],
       });
 
-      // S56: eth_call simulation pre-check (non-blocking for flash loans)
-      // Flash loan callbacks can't be simulated via eth_call, so failures are expected.
-      // Log result but proceed regardless — flash loans are atomically safe.
+      // S71: eth_call simulation pre-check — block on known revert errors
+      // Flash loan callbacks can't be fully simulated, but known revert patterns
+      // (e.g., "Too little received") indicate the trade will definitely fail.
+      // Blocking on these saves gas and avoids wasted UserOp submissions.
       if (this.viemPublicClient && this.smartWalletAddress) {
         try {
           await this.viemPublicClient.call({
@@ -478,9 +479,33 @@ export class FlashSwapV3Executor {
           });
           logger.info(`[UserOp] ✅ Simulation passed — high confidence execution`);
         } catch (simError: any) {
-          const simMsg = simError.message?.substring(0, 200) || 'unknown';
-          logger.info(`[UserOp] ⚠️ Simulation inconclusive (expected for flash loans) — proceeding: ${simMsg}`);
-          // Don't block — flash loans are atomic. Worst case: reverted UserOp.
+          const simMsg = simError.message?.substring(0, 500) || 'unknown';
+          // S71: Check for known revert patterns that indicate certain failure
+          const KNOWN_REVERTS = ['Too little received', 'STF', 'insufficient', 'TRANSFER_FAILED'];
+          const isKnownRevert = KNOWN_REVERTS.some(pattern =>
+            simMsg.toLowerCase().includes(pattern.toLowerCase())
+          );
+          const blockOnSimFailure = process.env.BLOCK_ON_SIM_FAILURE === 'true';
+
+          if (isKnownRevert) {
+            logger.warn(`[UserOp] 🛑 S71: Simulation BLOCKED — known revert pattern: ${simMsg.substring(0, 200)}`);
+            return {
+              success: false, source: selection.source, borrowAmount, feePaid: 0n,
+              grossProfit: 0n, netProfit: 0n,
+              error: `Simulation blocked: ${simMsg.substring(0, 200)}`,
+              executionMethod: 'userop',
+            };
+          } else if (blockOnSimFailure) {
+            logger.warn(`[UserOp] 🛑 S71: Simulation BLOCKED (BLOCK_ON_SIM_FAILURE=true): ${simMsg.substring(0, 200)}`);
+            return {
+              success: false, source: selection.source, borrowAmount, feePaid: 0n,
+              grossProfit: 0n, netProfit: 0n,
+              error: `Simulation blocked (env): ${simMsg.substring(0, 200)}`,
+              executionMethod: 'userop',
+            };
+          } else {
+            logger.info(`[UserOp] ⚠️ Simulation inconclusive (expected for flash loans) — proceeding: ${simMsg.substring(0, 200)}`);
+          }
         }
       }
 
