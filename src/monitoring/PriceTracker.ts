@@ -460,7 +460,31 @@ export class PriceTracker extends EventEmitter {
           if (data.result.length >= 130) {
             const sqrtPriceX96 = BigInt('0x' + data.result.slice(2, 66));
             if (sqrtPriceX96 > 0n) {
-              const price = sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals);
+              // S71: Align on-chain token0 with Supabase token0 for correct decimal adjustment
+              // Same fix as V2 handler (S70) — Aerodrome CL cbBTC/WETH pools have inverted token order
+              // On-chain: token0=WETH(18), token1=cbBTC(8). Supabase: token0=cbBTC(8), token1=WETH(18)
+              // Without alignment: decimals are swapped → price computes to ~0 (10^20x error)
+              let d0 = token0Decimals;
+              let d1 = token1Decimals;
+              try {
+                const t0Resp = await fetch(rpcUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    jsonrpc: '2.0', id: 1, method: 'eth_call',
+                    params: [{ to: poolAddr, data: '0x0dfe1681' }, 'latest']
+                  }),
+                });
+                const t0Data = await t0Resp.json();
+                if (t0Data.result && t0Data.result.length >= 66) {
+                  const onChainT0 = '0x' + t0Data.result.slice(26).toLowerCase();
+                  if (onChainT0 !== meta.token0.toLowerCase()) {
+                    d0 = token1Decimals; d1 = token0Decimals;
+                    logger.info(`[PriceTracker] 🔀 S71: Token0 mismatch for ${poolAddr.substring(0, 14)}... — swapped decimals (on-chain=${onChainT0.substring(0, 10)})`);
+                  }
+                }
+              } catch {}
+              const price = sqrtPriceX96ToPrice(sqrtPriceX96, d0, d1);
               if (price > 0) {
                 logger.info(`[PriceTracker] 🔄 forceRefresh ${poolAddr.substring(0, 14)}... via ${name}: price=${price.toFixed(8)}`);
                 return price;
