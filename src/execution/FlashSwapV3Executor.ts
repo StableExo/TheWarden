@@ -22,6 +22,11 @@ import { base } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { toCoinbaseSmartAccount, createBundlerClient } from 'viem/account-abstraction';
 import { logger } from '../utils/logger';
+import { PriorityFeePredictorMLP } from '../ml/PriorityFeePredictorMLP';
+
+// S69: Module-level MLP singleton — persists across executions for online learning
+const priorityFeePredictor = new PriorityFeePredictorMLP();
+let mlpBlocksFed = 0;
 import { ArbitrageOpportunity } from '../arbitrage/models';
 
 /**
@@ -482,8 +487,20 @@ export class FlashSwapV3Executor {
       // S52 FIX: Explicit gas limits — bundler can't simulate flash loan callbacks,
       // returns callGasLimit=0 without overrides. 800k covers loan+swap+callback on Base.
       const GAS_LIMIT_OVERRIDE = BigInt(process.env.USEROP_CALL_GAS_LIMIT || '800000');
-      // S68: Set competitive priority fee for FCFS optimization (Base = first-come-first-served)
-      const maxPriorityFeePerGas = BigInt(process.env.MAX_PRIORITY_FEE_GWEI || '100000000'); // 0.1 gwei default
+      // S69: ML-predicted priority fee — replaces static 0.1 gwei with adaptive bidding
+      const staticFallback = BigInt(process.env.MAX_PRIORITY_FEE_GWEI || '100000000'); // 0.1 gwei fallback
+      const mlpBid = priorityFeePredictor.getOptimalBid(2n); // predicted fee + 2 wei buffer
+      const maxMlpBid = BigInt(1_000_000_000); // 1 gwei cap to prevent runaway bidding
+      const maxPriorityFeePerGas = mlpBid !== null && mlpBid > 0n && mlpBid <= maxMlpBid
+        ? mlpBid
+        : staticFallback;
+      const mlpStats = priorityFeePredictor.getStats();
+      logger.info(
+        `[S69-MLP] Priority fee: ${maxPriorityFeePerGas} wei ` +
+        `(source=${mlpBid !== null ? 'MLP' : 'static'}, ` +
+        `confidence=${mlpStats.canPredict ? (mlpStats.trainingExamples / 100 * 100).toFixed(0) + '%' : 'warming'}, ` +
+        `history=${mlpStats.historySize}, fallback=${staticFallback})`
+      );
       const userOpHash = await this.bundlerClient.sendUserOperation({
         calls: [{ to: this.config.contractAddress as Hex, data: calldata, value: 0n }],
         maxPriorityFeePerGas,
@@ -492,6 +509,22 @@ export class FlashSwapV3Executor {
         preVerificationGas: 100000n,
       });
       logger.info(`[UserOp] Submitted: hash=${userOpHash}, callGasLimit=${GAS_LIMIT_OVERRIDE}`);
+
+      // S69: Feed MLP with actual priority fee used (online learning from execution context)
+      try {
+        const latestBlock = await this.publicClient.getBlockNumber();
+        priorityFeePredictor.addObservation(
+          Number(latestBlock),
+          maxPriorityFeePerGas,
+          Date.now()
+        );
+        mlpBlocksFed++;
+        if (mlpBlocksFed % 10 === 0) {
+          logger.info(`[S69-MLP] Fed ${mlpBlocksFed} observations, canPredict=${priorityFeePredictor.getStats().canPredict}`);
+        }
+      } catch (mlpErr) {
+        // Non-critical — don't let MLP errors affect execution
+      }
 
       const userOpReceipt = await this.bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
       if (!userOpReceipt.success) throw new Error(`UserOp failed: ${userOpReceipt.reason || 'unknown'}`);
