@@ -401,14 +401,19 @@ export class LongRunningManager extends EventEmitter {
     const totalHeapUsed = this.memoryHistory.reduce((sum, s) => sum + s.heapUsed, 0);
     this.stats.avgMemoryUsage = totalHeapUsed / this.memoryHistory.length;
 
-    // Check thresholds
-    const heapPercentage = (memUsage.heapUsed / memUsage.heapTotal) * 100;
+    // Check thresholds — S69: Compare against max-old-space-size, not V8's
+    // current heapTotal (which is always close to heapUsed, causing false 95%+ alerts)
+    const maxHeapMB = parseInt(
+      process.env.NODE_OPTIONS?.match(/--max-old-space-size=(\d+)/)?.[1] || '512'
+    );
+    const maxHeapBytes = maxHeapMB * 1024 * 1024;
+    const heapPercentage = (memUsage.heapUsed / maxHeapBytes) * 100;
 
     if (heapPercentage >= this.config.memoryCriticalThreshold) {
       logger.error(
         `[LongRunningManager] CRITICAL: Memory usage at ${heapPercentage.toFixed(
           1
-        )}% (${heapUsedMB.toFixed(1)}MB / ${heapTotalMB.toFixed(1)}MB)`
+        )}% (${heapUsedMB.toFixed(1)}MB / ${maxHeapMB}MB max-old-space)`
       );
       this.emit('memory-critical', {
         heapUsed: memUsage.heapUsed,
@@ -419,7 +424,7 @@ export class LongRunningManager extends EventEmitter {
       logger.warn(
         `[LongRunningManager] WARNING: Memory usage at ${heapPercentage.toFixed(
           1
-        )}% (${heapUsedMB.toFixed(1)}MB / ${heapTotalMB.toFixed(1)}MB)`
+        )}% (${heapUsedMB.toFixed(1)}MB / ${maxHeapMB}MB max-old-space)`
       );
       this.emit('memory-warning', {
         heapUsed: memUsage.heapUsed,
