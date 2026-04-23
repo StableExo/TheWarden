@@ -422,12 +422,33 @@ export class PriceTracker extends EventEmitter {
 
         if (type === 'v2') {
           if (data.result.length >= 194) {
-            const rawR0 = BigInt('0x' + data.result.slice(2, 66));
-            const rawR1 = BigInt('0x' + data.result.slice(66, 130));
+            let rawR0 = BigInt('0x' + data.result.slice(2, 66));
+            let rawR1 = BigInt('0x' + data.result.slice(66, 130));
             if (rawR0 > 0n && rawR1 > 0n) {
+              // S69: Align on-chain token0 with Supabase (fixes cbBTC 10,000x phantom)
+              let d0 = token0Decimals;
+              let d1 = token1Decimals;
+              try {
+                const t0Resp = await fetch(rpcUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    jsonrpc: '2.0', id: 1, method: 'eth_call',
+                    params: [{ to: poolAddr, data: '0x0dfe1681' }, 'latest']
+                  }),
+                });
+                const t0Data = await t0Resp.json();
+                if (t0Data.result && t0Data.result.length >= 66) {
+                  const onChainT0 = '0x' + t0Data.result.slice(26).toLowerCase();
+                  if (onChainT0 !== meta.token0.toLowerCase()) {
+                    const tmpR = rawR0; rawR0 = rawR1; rawR1 = tmpR;
+                    d0 = token1Decimals; d1 = token0Decimals;
+                  }
+                }
+              } catch {}
               const scale = 10n ** 18n;
-              const scaledPrice = (rawR1 * (10n ** BigInt(token0Decimals)) * scale) /
-                                  (rawR0 * (10n ** BigInt(token1Decimals)));
+              const scaledPrice = (rawR1 * (10n ** BigInt(d0)) * scale) /
+                                  (rawR0 * (10n ** BigInt(d1)));
               const price = Number(scaledPrice) / Number(scale);
               if (price > 0) {
                 logger.info(`[PriceTracker] 🔄 forceRefresh ${poolAddr.substring(0, 14)}... via ${name}: price=${price.toFixed(8)}`);
