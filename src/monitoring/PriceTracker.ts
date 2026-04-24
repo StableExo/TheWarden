@@ -231,13 +231,12 @@ export class PriceTracker extends EventEmitter {
       return;
     }
 
-    // S73: ProviderPool parallel warmup — no delays needed when pool has multiple endpoints
-    // With N endpoints: each endpoint handles its own 15 req/s limit independently
-    // S72 fallback: 75ms delay only when using single endpoint (pool size = 1)
-    const useParallel = pool && pool.size > 1;
-    const rpcDelay = useParallel
-      ? () => Promise.resolve() // No delay needed — pool distributes across endpoints
-      : () => new Promise<void>(r => setTimeout(r, 75)); // S72: Single endpoint rate limit protection
+    // S73: ProviderPool parallel warmup — no delays needed when pool has DIFFERENT providers
+    // CW-S2 FIX: Both endpoints are QuickNode = shared 15 req/s rate limit
+    // Parallel mode only safe when endpoints are on DIFFERENT providers (e.g., QuickNode + ChainStack)
+    // Force sequential + 75ms delay to stay under rate limit and seed all pools
+    const useParallel = false; // CW-S2: Disabled — both endpoints share QuickNode rate limit
+    const rpcDelay = () => new Promise<void>(r => setTimeout(r, 75)); // S72: Rate limit protection
     
     logger.info(`[PriceTracker] ♨️ Warming up ${pools.length} pools (${useParallel ? `PARALLEL via ${pool!.size} endpoints` : 'sequential, 75ms RPC delay'})...`);
     const startTime = Date.now();
