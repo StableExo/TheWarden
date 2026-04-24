@@ -344,31 +344,36 @@ export class PriceTracker extends EventEmitter {
               tick = Number(BigInt('0x' + tickHex));
 
               if (sqrtPriceX96 > 0n) {
-                // CW-S2 RC#52: Verify this is a real V3/CL pool by checking liquidity()
-                // Aerodrome vAMM pools may respond to slot0() selector collision with garbage data
-                // Real V3/CL pools always have a working liquidity() function
-                let isRealV3 = true;
-                try {
-                  await rpcDelay();
-                  const liqCallUrl = useParallel ? pool!.getNext() : rpcUrl;
-                  const liqResp = await fetch(liqCallUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      jsonrpc: '2.0', id: 1, method: 'eth_call',
-                      params: [{ to: addr, data: '0x1a686502' }, 'latest'] // liquidity()
-                    }),
-                  });
-                  const liqData = await liqResp.json();
-                  if (!liqData.result || liqData.result === '0x' || liqData.result.length < 66) {
+                // CW-S2 RC#52v2: Verify V3 pool ONLY for DEXes with known V2/CL overlap
+                // Aerodrome, AlienBase, QuickSwap have both V2 and CL pools — slot0() selector can collide
+                // UniV3, SushiV3, BaseSwap, PancakeSwap are always V3 — skip verification to save RPC calls
+                const dexLower = (meta.dex || '').toLowerCase();
+                const needsV3Verification = dexLower.includes('aerodrome') || dexLower.includes('alien') || 
+                  dexLower.includes('quickswap') || dexLower.includes('dex_16') || dexLower.includes('dex_17') || dexLower.includes('dex_20');
+                
+                if (needsV3Verification) {
+                  let isRealV3 = true;
+                  try {
+                    await rpcDelay();
+                    const liqCallUrl = useParallel ? pool!.getNext() : rpcUrl;
+                    const liqResp = await fetch(liqCallUrl, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        jsonrpc: '2.0', id: 1, method: 'eth_call',
+                        params: [{ to: addr, data: '0x1a686502' }, 'latest'] // liquidity()
+                      }),
+                    });
+                    const liqData = await liqResp.json();
+                    if (!liqData.result || liqData.result === '0x' || liqData.result.length < 66) {
+                      isRealV3 = false;
+                      logger.warn(`[PriceTracker] ⚠️ CW-S2: Pool ${addr.substring(0, 14)}... (${meta.dex}) slot0() responded but liquidity() failed — NOT V3, trying getReserves`);
+                    }
+                  } catch {
                     isRealV3 = false;
-                    logger.warn(`[PriceTracker] ⚠️ CW-S2: Pool ${addr.substring(0, 14)}... slot0() responded but liquidity() failed — NOT a V3 pool, trying getReserves`);
                   }
-                } catch {
-                  isRealV3 = false;
-                  logger.warn(`[PriceTracker] ⚠️ CW-S2: liquidity() check failed for ${addr.substring(0, 14)}... — skipping V3 interpretation`);
+                  if (!isRealV3) continue; // Fall through to next probe (getReserves)
                 }
-                if (!isRealV3) continue; // Fall through to next probe (getReserves)
 
                 // S71: Align on-chain token0 with Supabase for correct decimal adjustment
                 // Aerodrome CL cbBTC/WETH pools have inverted token order → 10^20 decimal error without this
