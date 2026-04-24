@@ -512,6 +512,8 @@ class TheWarden extends EventEmitter {
    */
   async initialize(): Promise<void> {
     logger.info('Initializing arbitrage bot components...');
+    const _tick = (m: string) => console.error(`[INIT] ${(Date.now() / 1000).toFixed(1)}s: ${m}`);
+    _tick('START');
 
     // Check if running in offline cache only mode
     const offlineCacheOnly = process.env.OFFLINE_CACHE_ONLY === 'true';
@@ -526,7 +528,9 @@ class TheWarden extends EventEmitter {
         logger.info('Network connection and balance checks skipped in offline mode');
       } else {
         // Verify network connection
-        const network = await this.provider.getNetwork();
+              _tick('getNetwork...');
+      const network = await this.provider.getNetwork();
+      _tick('getNetwork DONE');
         logger.info(`Connected to network: ${network.name} (chainId: ${network.chainId})`);
 
         // Validate that the connected network matches the configured chain ID
@@ -537,12 +541,16 @@ class TheWarden extends EventEmitter {
         }
 
         // Verify wallet
-        const balance = await this.provider.getBalance(this.wallet.address);
+              _tick('getBalance...');
+      const balance = await this.provider.getBalance(this.wallet.address);
+      _tick('getBalance DONE');
         logger.info(`Wallet address: ${this.wallet.address}`);
         logger.info(`Wallet balance: ${formatEther(balance)} ETH`);
 
         // Check token balances for common tokens based on chain
-        await this.checkTokenBalances();
+              _tick('checkTokenBalances...');
+      await this.checkTokenBalances();
+      _tick('checkTokenBalances DONE');
 
         if (balance === 0n) {
           logger.warn('NOTE: Wallet balance is 0 — using Coinbase Paymaster for gasless execution');
@@ -550,6 +558,7 @@ class TheWarden extends EventEmitter {
       }
 
       // Initialize gas components
+            _tick('gas oracle init');
       logger.info('Initializing gas oracle and estimator...');
       const gasOracle = new GasPriceOracle(
         this.config.rpcUrl,
@@ -597,8 +606,10 @@ class TheWarden extends EventEmitter {
       );
 
       // Load preloaded pool data if available
+            _tick('loadPreloadedData...');
       logger.info('Loading preloaded pool data...');
       const preloadSuccess = await this.advancedOrchestrator.loadPreloadedData(this.config.chainId);
+      _tick(`preload: ${preloadSuccess}`);
       if (preloadSuccess) {
         logger.info('✓ Preloaded pool data loaded successfully - fast startup enabled');
       } else {
@@ -678,14 +689,17 @@ class TheWarden extends EventEmitter {
         }
 
         // Start the integrated orchestrator
-        await this.integratedOrchestrator.start(this.wallet);
+              _tick('orchestrator.start...');
+      await this.integratedOrchestrator.start(this.wallet);
+      _tick('orchestrator.start DONE');
       }
 
       // Phase 4b: Initialize event-driven WebSocket monitoring
       if (process.env.ENABLE_EVENT_DRIVEN === 'true') {
         try {
           logger.info('[Phase4b] Initializing event-driven WebSocket monitoring...');
-          this.eventDrivenMonitor = await initializeEventDrivenMonitoring({
+                _tick('eventDrivenMonitoring init...');
+      this.eventDrivenMonitor = await initializeEventDrivenMonitoring({
             supabaseUrl: process.env.SUPABASE_URL!,
             supabaseKey: process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY!,
             chainId: this.config.chainId,
@@ -713,7 +727,9 @@ class TheWarden extends EventEmitter {
             logger.warn('[Phase4b] No orchestrator available — running in monitor-only mode');
           }
 
-          await this.eventDrivenMonitor.start();
+                _tick('eventDrivenMonitor.start...');
+      await this.eventDrivenMonitor.start();
+      _tick('eventDrivenMonitor STARTED');
           logger.info('[Phase4b] ✅ Event-driven monitoring active');
         } catch (error) {
           logger.error(`[Phase4b] Failed to initialize event-driven monitoring: ${error}`);
@@ -975,6 +991,7 @@ class TheWarden extends EventEmitter {
       // Start health monitoring
       await this.healthMonitor.start();
 
+            _tick('ALL INIT COMPLETE');
       logger.info('All components initialized successfully');
     } catch (error) {
       logger.error(`Failed to initialize components: ${error}`);
