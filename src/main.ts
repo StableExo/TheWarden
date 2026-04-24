@@ -445,7 +445,7 @@ class TheWarden extends EventEmitter {
   private consciousness?: ArbitrageConsciousness;
   private cognitiveCoordinator?: CognitiveCoordinator;
   private emergenceDetector?: EmergenceDetector;
-  private metacognition: Metacognition;
+  private metacognition: any; // Metacognition stub
 
   // Phase 3 components
   private phase3Components?: Phase3Components;
@@ -627,8 +627,8 @@ class TheWarden extends EventEmitter {
 
         // S44 fix: When V3 is enabled, use V3 contract address for gas estimation
         // Without this, gas estimator falls back to wallet.address (EOA) when FLASHSWAP_V2_ADDRESS is unset
-        const executorAddress = (this.config.enableV3 && this.config.flashSwapV3Address)
-          ? this.config.flashSwapV3Address
+        const executorAddress = (this.config.enableV3 && (this.config as any).flashSwapV3Address)
+          ? (this.config as any).flashSwapV3Address
           : (this.config.executorAddress || this.wallet.address);
         const titheRecipient = this.config.titheRecipient || this.wallet.address;
 
@@ -653,14 +653,14 @@ class TheWarden extends EventEmitter {
         );
 
         // Phase 3: Initialize V3 executor with UserOp support if configured
-        if (this.config.enableV3 && this.config.flashSwapV3Address) {
+        if (this.config.enableV3 && (this.config as any).flashSwapV3Address) {
           const privateKey = process.env.DEPLOYER_PRIVATE_KEY || process.env.WALLET_PRIVATE_KEY;
           const cdpPaymasterUrl = process.env.CDP_PAYMASTER_URL;
           const rpcUrl = process.env.BASE_RPC_URL;
 
           if (privateKey && cdpPaymasterUrl && rpcUrl) {
             this.integratedOrchestrator.initV3Executor({
-              contractAddress: this.config.flashSwapV3Address,
+              contractAddress: (this.config as any).flashSwapV3Address,
               privateKey,
               cdpPaymasterUrl,
               rpcUrl,
@@ -888,7 +888,7 @@ class TheWarden extends EventEmitter {
 
           // Create CEX monitor
           this.cexMonitor = new CEXLiquidityMonitor({
-            exchanges: profitableInfraConfig.cex.exchanges,
+            exchanges: (profitableInfraConfig.cex as any).exchanges,
             updateInterval: profitableInfraConfig.cex.updateInterval,
             minSpreadBps: profitableInfraConfig.cex.minSpreadBps,
           });
@@ -896,9 +896,9 @@ class TheWarden extends EventEmitter {
           // Create CEX-DEX detector
           this.cexDexDetector = new CEXDEXArbitrageDetector(
             {
-              minPriceDiffPercent: profitableInfraConfig.cex.minPriceDiffPercent,
-              maxTradeSizeUsd: profitableInfraConfig.cex.maxTradeSizeUsd,
-              minNetProfitUsd: profitableInfraConfig.cex.minNetProfitUsd,
+              minPriceDiffPercent: (profitableInfraConfig.cex as any).minPriceDiffPercent,
+              maxTradeSizeUsd: (profitableInfraConfig.cex as any).maxTradeSizeUsd,
+              minNetProfitUsd: (profitableInfraConfig.cex as any).minNetProfitUsd,
             },
             {
               onOpportunityFound: (opportunity: any) => {
@@ -927,8 +927,8 @@ class TheWarden extends EventEmitter {
           // Start CEX monitoring
           await this.cexMonitor.start();
 
-          logger.info(`  ✓ CEX Monitoring active: ${profitableInfraConfig.cex.exchanges.length} exchanges`);
-          profitableInfraConfig.cex.exchanges.forEach((ex) => {
+          logger.info(`  ✓ CEX Monitoring active: ${(profitableInfraConfig.cex as any).exchanges.length} exchanges`);
+          (profitableInfraConfig.cex as any).exchanges.forEach((ex) => {
             logger.info(`    - ${ex.exchange.toUpperCase()}: ${ex.symbols.join(', ')}`);
           });
         } catch (error) {
@@ -2079,7 +2079,7 @@ class EnhancedTheWarden extends EventEmitter {
   private scanInterval?: NodeJS.Timeout;
   private isRunning: boolean = false;
   private shuttingDown: boolean = false;
-  private metacognition: Metacognition;
+  private metacognition: any; // Metacognition stub
 
   // Statistics
   private stats = {
