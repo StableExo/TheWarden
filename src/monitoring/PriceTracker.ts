@@ -27,6 +27,13 @@ import { PriceOracleValidator, PriceUpdate as OracleUpdate } from '../security/P
 import { logger } from '../utils/logger';
 import { SwapEvent, MonitoredPool, sqrtPriceX96ToPrice } from './SwapEventMonitor';
 
+// CW-S5: ProviderPool type for multi-endpoint warmup
+interface ProviderPool {
+  size: number;
+  getNext(): string;
+}
+
+
 // ============================================================
 // Types
 // ============================================================
@@ -276,7 +283,7 @@ export class PriceTracker extends EventEmitter {
               params: [{ to: addr, data: selector }, 'latest']
             }),
           });
-          const data = await response.json();
+          const data: any = await response.json();
 
           if (!data.result || data.result === '0x' || data.result.length < 66) continue;
 
@@ -300,7 +307,7 @@ export class PriceTracker extends EventEmitter {
                     params: [{ to: addr, data: '0x0dfe1681' }, 'latest'] // token0()
                   }),
                 });
-                const t0Data = await t0Resp.json();
+                const t0Data: any = await t0Resp.json();
                 const onChainToken0 = t0Data.result ? ('0x' + t0Data.result.slice(26)).toLowerCase() : '';
 
                 // If on-chain token0 doesn't match our meta.token0, swap reserves
@@ -363,7 +370,7 @@ export class PriceTracker extends EventEmitter {
                         params: [{ to: addr, data: '0x1a686502' }, 'latest'] // liquidity()
                       }),
                     });
-                    const liqData = await liqResp.json();
+                    const liqData: any = await liqResp.json();
                     if (!liqData.result || liqData.result === '0x' || liqData.result.length < 66) {
                       isRealV3 = false;
                       logger.warn(`[PriceTracker] ⚠️ CW-S2: Pool ${addr.substring(0, 14)}... (${meta.dex}) slot0() responded but liquidity() failed — NOT V3, trying getReserves`);
@@ -389,7 +396,7 @@ export class PriceTracker extends EventEmitter {
                       params: [{ to: addr, data: '0x0dfe1681' }, 'latest']
                     }),
                   });
-                  const t0Data = await t0Resp.json();
+                  const t0Data: any = await t0Resp.json();
                   if (t0Data.result && t0Data.result.length >= 66) {
                     const onChainT0 = '0x' + t0Data.result.slice(26).toLowerCase();
                     if (onChainT0 !== meta.token0.toLowerCase()) {
@@ -412,7 +419,7 @@ export class PriceTracker extends EventEmitter {
                         params: [{ to: addr, data: '0x0dfe1681' }, 'latest']
                       }),
                     });
-                    const retryData = await retryResp.json();
+                    const retryData: any = await retryResp.json();
                     if (retryData.result && retryData.result.length >= 66) {
                       const onChainT0 = '0x' + retryData.result.slice(26).toLowerCase();
                       if (onChainT0 !== meta.token0.toLowerCase()) {
@@ -507,7 +514,7 @@ export class PriceTracker extends EventEmitter {
             params: [{ to: poolAddr, data: selector }, 'latest']
           }),
         });
-        const data = await response.json();
+        const data: any = await response.json();
 
         if (!data.result || data.result === '0x' || data.result.length < 66) continue;
 
@@ -528,7 +535,7 @@ export class PriceTracker extends EventEmitter {
                     params: [{ to: poolAddr, data: '0x0dfe1681' }, 'latest']
                   }),
                 });
-                const t0Data = await t0Resp.json();
+                const t0Data: any = await t0Resp.json();
                 if (t0Data.result && t0Data.result.length >= 66) {
                   const onChainT0 = '0x' + t0Data.result.slice(26).toLowerCase();
                   if (onChainT0 !== meta.token0.toLowerCase()) {
@@ -566,7 +573,7 @@ export class PriceTracker extends EventEmitter {
                     params: [{ to: poolAddr, data: '0x0dfe1681' }, 'latest']
                   }),
                 });
-                const t0Data = await t0Resp.json();
+                const t0Data: any = await t0Resp.json();
                 if (t0Data.result && t0Data.result.length >= 66) {
                   const onChainT0 = '0x' + t0Data.result.slice(26).toLowerCase();
                   if (onChainT0 !== meta.token0.toLowerCase()) {
