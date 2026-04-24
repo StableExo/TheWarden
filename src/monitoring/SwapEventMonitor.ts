@@ -412,15 +412,15 @@ export function sqrtPriceX96ToPrice(sqrtPriceX96: bigint, token0Decimals: number
 export function createMonitorConfigFromEnv(pools: MonitoredPool[]): SwapEventMonitorConfig {
   const useFlashblocks = process.env.ENABLE_FLASHBLOCKS === 'true';
   return {
-    wssUrl: process.env.ALCHEMY_WSS_ENDPOINT || process.env.BASE_WSS_URL || 'wss://base-mainnet.g.alchemy.com/v2/demo',
-    wssUrlBackup: process.env.CHAINSTACK_WSS_ENDPOINT || process.env.TENDERLY_NODE_WSS || process.env.BASE_WSS_URL_BACKUP,
+    wssUrl: process.env.BASE_WSS_URL || process.env.ALCHEMY_WSS_ENDPOINT || 'wss://base-mainnet.g.alchemy.com/v2/demo', // CW-S2: BASE_WSS_URL first (Alchemy deleted S73)
+    wssUrlBackup: process.env.BASE_WSS_URL_FALLBACK || process.env.CHAINSTACK_WSS_ENDPOINT || process.env.TENDERLY_NODE_WSS || process.env.BASE_WSS_URL_BACKUP, // CW-S2: Added FALLBACK variant
     pools,
     maxReconnectAttempts: parseInt(process.env.WS_MAX_RECONNECT || '50'),
     reconnectBaseDelay: parseInt(process.env.WS_RECONNECT_BASE_DELAY || '1000'),
     heartbeatInterval: parseInt(process.env.WS_HEARTBEAT_INTERVAL || '30000'),
     heartbeatTimeout: parseInt(process.env.WS_HEARTBEAT_TIMEOUT || '60000'),
     useFlashblocks,
-    flashblocksHttpUrl: useFlashblocks ? (process.env.ALCHEMY_HTTPS_ENDPOINT || '') : '',
+    flashblocksHttpUrl: useFlashblocks ? (process.env.BASE_RPC_URL || process.env.ALCHEMY_HTTPS_ENDPOINT || '') : '', // CW-S2: Use BASE_RPC_URL (Alchemy deleted S73)
     flashblocksPollInterval: parseInt(process.env.FLASHBLOCKS_POLL_INTERVAL || '200'),
   };
 }
