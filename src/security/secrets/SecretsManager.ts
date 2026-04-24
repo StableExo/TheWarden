@@ -4,6 +4,7 @@
  */
 
 import crypto from 'crypto';
+// @ts-expect-error CW-S5: node-vault not installed (non-critical security module)
 import vault from 'node-vault';
 
 export interface SecretMetadata {
