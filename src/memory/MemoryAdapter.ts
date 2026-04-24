@@ -223,7 +223,7 @@ export class MemoryAdapter {
     articles: number;
   }> {
     let source: 'supabase' | 'local' | 'hybrid' = 'local';
-    let supabaseStats = null;
+    let supabaseStats: any = null;
 
     if (this.config.useSupabase) {
       try {
