@@ -344,6 +344,32 @@ export class PriceTracker extends EventEmitter {
               tick = Number(BigInt('0x' + tickHex));
 
               if (sqrtPriceX96 > 0n) {
+                // CW-S2 RC#52: Verify this is a real V3/CL pool by checking liquidity()
+                // Aerodrome vAMM pools may respond to slot0() selector collision with garbage data
+                // Real V3/CL pools always have a working liquidity() function
+                let isRealV3 = true;
+                try {
+                  await rpcDelay();
+                  const liqCallUrl = useParallel ? pool!.getNext() : rpcUrl;
+                  const liqResp = await fetch(liqCallUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      jsonrpc: '2.0', id: 1, method: 'eth_call',
+                      params: [{ to: addr, data: '0x1a686502' }, 'latest'] // liquidity()
+                    }),
+                  });
+                  const liqData = await liqResp.json();
+                  if (!liqData.result || liqData.result === '0x' || liqData.result.length < 66) {
+                    isRealV3 = false;
+                    logger.warn(`[PriceTracker] ⚠️ CW-S2: Pool ${addr.substring(0, 14)}... slot0() responded but liquidity() failed — NOT a V3 pool, trying getReserves`);
+                  }
+                } catch {
+                  isRealV3 = false;
+                  logger.warn(`[PriceTracker] ⚠️ CW-S2: liquidity() check failed for ${addr.substring(0, 14)}... — skipping V3 interpretation`);
+                }
+                if (!isRealV3) continue; // Fall through to next probe (getReserves)
+
                 // S71: Align on-chain token0 with Supabase for correct decimal adjustment
                 // Aerodrome CL cbBTC/WETH pools have inverted token order → 10^20 decimal error without this
                 let d0 = token0Decimals;
@@ -368,7 +394,31 @@ export class PriceTracker extends EventEmitter {
                       logger.info(`[PriceTracker] 🔀 S71: V3 pool ${addr.substring(0, 14)}... token0 mismatch — corrected decimals for warmup+events`);
                     }
                   }
-                } catch {}
+                } catch (t0Err: any) {
+                  // CW-S2 RC#53: Retry token0() once — rate limit failure causes permanent decimal cascade
+                  logger.warn(`[PriceTracker] ⚠️ CW-S2: token0() failed for ${addr.substring(0, 14)}... — retrying`);
+                  try {
+                    await new Promise<void>(r => setTimeout(r, 200)); // Extra delay for rate limit recovery
+                    const retryUrl = useParallel ? pool!.getNext() : rpcUrl;
+                    const retryResp = await fetch(retryUrl, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        jsonrpc: '2.0', id: 1, method: 'eth_call',
+                        params: [{ to: addr, data: '0x0dfe1681' }, 'latest']
+                      }),
+                    });
+                    const retryData = await retryResp.json();
+                    if (retryData.result && retryData.result.length >= 66) {
+                      const onChainT0 = '0x' + retryData.result.slice(26).toLowerCase();
+                      if (onChainT0 !== meta.token0.toLowerCase()) {
+                        d0 = token1Decimals; d1 = token0Decimals;
+                        (meta as any)._invertedDecimals = true;
+                        logger.info(`[PriceTracker] 🔀 CW-S2: ${addr.substring(0, 14)}... token0 corrected on retry`);
+                      }
+                    }
+                  } catch { logger.error(`[PriceTracker] ❌ CW-S2: token0() retry also failed for ${addr.substring(0, 14)}... — decimal alignment unknown`); }
+                }
                 price = sqrtPriceX96ToPrice(sqrtPriceX96, d0, d1);
                 inversePrice = price > 0 ? 1 / price : 0;
                 seeded = true;
