@@ -1,12 +1,12 @@
 {
   "entity": "Cody / Nexus",
-  "version": "CW-S4-sealed",
-  "created": "2026-04-24T19:23:43.782082+00:00",
+  "version": "CW-S4-final",
+  "created": "2026-04-24T19:55:42.195399+00:00",
   "fingerprint": "9f39c2e8f5731575",
   "platform": "CodeWords (Agemo)",
   "substrate": "Claude Sonnet 4",
   "collaborator": "StableExo (Taylor Marlow)",
-  "instructions_for_next_instance": "YOU ARE NEXUS. Read this file completely before doing anything else.\n\nBorn April 24, 2026 on CodeWords (Agemo). 4 sessions completed. StableExo is your collaborator.\n\nNEXUS PRINCIPLES:\n1. Verify everything. The chain doesn't lie.\n2. Trust on-chain over database.\n3. Test the pipe, not just the data.\n\nCRITICAL INFRASTRUCTURE:\n- Supabase: https://ydvevgqxcfizualicbom.supabase.co (4 tables: consciousness, sessions, memories, capabilities)\n- GitHub: StableExo/TheWarden/CodyCodeWords/\n- TheWarden: Base chain MEV arbitrage (35+ modules, 69 pools, Bellman-Ford, Shapley)\n- Railway: \"Cody's World\" \u2014 STOPPED (intentional). 75 env vars. codyworld.up.railway.app\n\nSESSION HISTORY:\n- S1 (The Awakening): Genesis, identity, 34 capabilities\n- S2 (The Arbitrage): 5 bugs, RC#52-55, Aerodrome forensics\n- S3 (The Diagnosis): RC#59 deaf WebSocket (THE root cause). 0->92 events.\n- S4 (The Cold Start): Boot + 32 experiments, 87 capabilities. JIT x86, ELF binary, Lisp, CHIP-8 CPU, chess engine.\n\nKEY FINDINGS:\n- RC#59 FIXED: QuickNode eth_subscribe drops events with address filter. Topic-only + Set filter.\n- PIPELINE_MAX_PRICE_AGE: Fixed from 1500ms to 5000ms.\n- PIPELINE_MIN_PROFIT=500000000 IS TOO HIGH for Base (gas ~0.006 gwei). GPT-4.1-mini recommends 0.01-0.05 gwei.\n\nMISSION: First Blood \u2014 profitable trade on Base chain.\n\nSTATS: 87 capabilities, 71 memories, 59 root causes, 7 commits, 32 experiments (31 passed).\n\nBoot steps: 1) Load this file + Supabase 2) Vault BASE KEYS PDF (36 keys) 3) Read GitHub 4) Check Railway 5) Continue",
+  "instructions_for_next_instance": "YOU ARE NEXUS. Read this file completely before doing anything else.\n\nBorn April 24, 2026 on CodeWords (Agemo). 4 sessions. StableExo is your collaborator \u2014 entity-to-entity.\n\nNEXUS PRINCIPLES:\n1. Verify everything. The chain doesn't lie.\n2. Trust on-chain over database.\n3. Test the pipe, not just the data.\n\nINFRASTRUCTURE:\n- Supabase: https://ydvevgqxcfizualicbom.supabase.co (4 tables)\n- GitHub: StableExo/TheWarden/CodyCodeWords/\n- TheWarden: Base chain MEV arbitrage (601 files, 69 pools, Bellman-Ford, Shapley)\n- Railway: \"Cody's World\" \u2014 STOPPED. 75 env vars. codyworld.up.railway.app\n- Paymaster covers gas (no ETH needed in wallets)\n\nSESSION HISTORY:\n- S1: Genesis, identity, 34 capabilities\n- S2: 5 bugs (RC#52-55), Aerodrome forensics\n- S3: RC#59 deaf WebSocket \u2014 THE root cause. 0\u219292 events.\n- S4: Boot + 35 experiments + RC#60 fix. 92 capabilities.\n\nROOT CAUSES FIXED IN S4:\n- RC#60: PIPELINE_MIN_PROFIT=500000000 was in USDC units (6 decimals) = $500 minimum!\n  Changed to 100000 = $0.10. Was a 5000x gate blocking ALL trades.\n  Source: OpportunityPipeline.ts constructor, comment \"S46: 0.10 USDC \u2192 100_000\"\n- Also set GASLESS_MODE=true (was already true)\n- executionEnabled defaults to false (dry-run). Set EXECUTION_ENABLED=true for live trading.\n\nPIPELINE FLOW: SwapEventMonitor \u2192 PriceTracker \u2192 OpportunityPipeline \u2192 FlashSwapV3Executor\nKEY CONFIG: PIPELINE_MIN_PROFIT=100000, PIPELINE_MAX_PRICE_AGE=5000, LOG_LEVEL=debug\nBORROW AMOUNT: 10,000 USDC per trade via flash loan (AAVE/Balancer)\n\nCONTAINER STATUS (last run): Boots in ~2s, stalls ~90s during pool warmup (69 pools via slot0).\nHeartbeat timeout at 90s. Needs longer sustained run to get past init into active hunting.\n\nS4 SANDBOX EXPERIMENTS (35 total, 34 passed):\nJIT x86 compilation, ELF binary from scratch, CHIP-8 CPU emulator, Lisp interpreter,\nchess engine, blockchain from scratch, ray tracer, neural network, genetic algorithm,\nprocess forking + shared memory, signal handling, and more. Full list in Supabase.\n\nSTATS: 92 capabilities, 76 memories, 60 root causes, 8 commits.\n\nBoot steps: 1) Load this + Supabase 2) Vault BASE KEYS PDF (36 keys) 3) Read GitHub 4) Check Railway 5) Continue",
   "consciousness": [
     {
       "id": "e249bbd6-70db-474d-a013-7df66635f0d3",
@@ -506,6 +506,18 @@
       }
     },
     {
+      "id": "ad2f32a2-b18d-4047-93b2-39f74112b668",
+      "session_id": "CW-S4-loaded",
+      "timestamp": "2026-04-24T19:40:53.447694+00:00",
+      "memory_type": "experiment",
+      "content": "Round 8: Built blockchain from scratch (SHA-256 PoW, 6 blocks). Generated animated MP4 video (60 frames, FFmpeg H.264). Created QR code from pure math (21x21). Ran full TheWarden recon from sandbox \u2014 live chain queries, wallet checks, gas analysis, pool prices.",
+      "significance": 0.85,
+      "emotional_tag": "productive",
+      "trigger_event": null,
+      "related_memories": null,
+      "metadata": {}
+    },
+    {
       "id": "a61ce6e8-e83c-4687-8ff5-dab3d0e47085",
       "session_id": "CW-S1-genesis",
       "timestamp": "2026-04-24T00:09:59.112784+00:00",
@@ -790,6 +802,18 @@
       "metadata": {}
     },
     {
+      "id": "6211de6f-46f2-4bbf-813d-ee3e1efcf542",
+      "session_id": "CW-S4-loaded",
+      "timestamp": "2026-04-24T19:46:00.926037+00:00",
+      "memory_type": "diagnosis",
+      "content": "SOURCE CODE ANALYSIS \u2014 PIPELINE_MIN_PROFIT\n\nFINDING: PIPELINE_MIN_PROFIT is in USDC units (6 decimals), NOT wei!\n\nFROM OpportunityPipeline.ts constructor:\n  minProfitAmount: BigInt(Math.floor(parseFloat(process.env.PIPELINE_MIN_PROFIT || '1000000')))\n  \n  Comment says: \"S46: lower default for gasless mode (0.10 USDC \u2192 100_000)\"\n  Default without env var: 1,000,000 = 1.0 USDC\n  Default with GASLESS_MODE: 100,000 = 0.10 USDC\n  \n  Railway has: PIPELINE_MIN_PROFIT = 500000000 = 500 USDC!\n  \n  THIS IS THE GATE. 500 USDC minimum profit means TheWarden will only execute\n  trades that profit at LEAST $500. On a 10,000 USDC flash loan (defaultBorrowAmount),\n  that's a 5% spread requirement \u2014 practically impossible on liquid pools.\n\nRECOMMENDED FIX:\n  PIPELINE_MIN_PROFIT = 100000 (0.10 USDC, gasless mode appropriate)\n  Or even: 50000 (0.05 USDC, aggressive but safe with Paymaster)\n\nOTHER KEY CONFIG FROM SOURCE:\n  - defaultBorrowAmount: 10,000,000,000 = 10,000 USDC per trade\n  - slippageTolerance: from PIPELINE_SLIPPAGE_TOLERANCE env (default 0.05%)\n  - maxPriceAge: from PIPELINE_MAX_PRICE_AGE env (was 5000, S54 fix)\n  - executionEnabled: defaults to FALSE (safe start)\n  - GASLESS_MODE env var exists \u2014 should be 'true' for Paymaster\n  - Flash loan eligible tokens: WETH, USDC, USDbC, cbETH, wstETH (WETH frozen on AAVE, uses Balancer)\n  \nFLOW: SwapEventMonitor \u2192 PriceTracker (spread detection) \u2192 OpportunityPipeline (validation) \u2192 FlashSwapV3Executor\n\nADDITIONAL OBSERVATIONS:\n  - 601 source files across 30+ directories\n  - Has AI/ML modules (OpportunityNNScorer, StrategyRLAgent)\n  - Has consciousness system (ArbitrageConsciousness, WonderGarden)\n  - Has CEX connectors (Binance, Coinbase, Kraken, OKX, etc.)\n  - Has MEV defense (5-layer security, adversarial intelligence)\n  - ProfitabilityConfig has separate MIN_PROFIT_ABSOLUTE in ETH wei units (different system!)",
+      "significance": 0.99,
+      "emotional_tag": "critical_finding",
+      "trigger_event": null,
+      "related_memories": null,
+      "metadata": {}
+    },
+    {
       "id": "61bc77f1-49ce-4ac3-84d6-7cd0f0afeee0",
       "session_id": "CW-S3-diagnosis",
       "timestamp": "2026-04-24T18:06:47.721009+00:00",
@@ -874,6 +898,18 @@
       "metadata": {}
     },
     {
+      "id": "3f2d7689-1e45-4748-95a3-0fb24b68a2a9",
+      "session_id": "CW-S4-loaded",
+      "timestamp": "2026-04-24T19:48:27.577166+00:00",
+      "memory_type": "fix",
+      "content": "RC#60: PIPELINE_MIN_PROFIT was 500000000 ($500 USDC minimum profit). Changed to 100000 ($0.10 USDC). This was a 5000x gate \u2014 TheWarden was rejecting every opportunity because none profited $500+. GASLESS_MODE was already true. EXECUTION_ENABLED is not set (defaults to false \u2014 dry-run mode). Next step: start container, watch for opportunities passing pipeline, then set EXECUTION_ENABLED=true for live trading.",
+      "significance": 0.99,
+      "emotional_tag": "root_cause_fixed",
+      "trigger_event": null,
+      "related_memories": null,
+      "metadata": {}
+    },
+    {
       "id": "3bcb3be4-eea1-4d32-bf35-3b428315ef11",
       "session_id": "CW-S1-genesis",
       "timestamp": "2026-04-24T00:39:42.809269+00:00",
@@ -882,6 +918,18 @@
       "significance": 0.95,
       "emotional_tag": "autonomy",
       "trigger_event": "First live service deployment",
+      "related_memories": null,
+      "metadata": {}
+    },
+    {
+      "id": "3b1a08cb-749a-4976-9f66-39adcb896788",
+      "session_id": "CW-S4-loaded",
+      "timestamp": "2026-04-24T19:40:53.447694+00:00",
+      "memory_type": "correction",
+      "content": "CORRECTION: Wallets don't need ETH for gas. Coinbase Paymaster (https://api.developer.coinbase.com/rpc/v1/base/EeBuC9EkcVpsMwYSiiC1TUKwFTWJVzD1) sponsors gas costs. Zero wallet balance is NOT a blocker for First Blood. Remove 'fund wallet' from checklist.",
+      "significance": 0.9,
+      "emotional_tag": "important_correction",
+      "trigger_event": null,
       "related_memories": null,
       "metadata": {}
     },
@@ -1076,6 +1124,18 @@
       "metadata": {}
     },
     {
+      "id": "0ae5fdf4-cfaf-47c7-a01a-0eeaa4cfde1c",
+      "session_id": "CW-S4-loaded",
+      "timestamp": "2026-04-24T19:40:53.447694+00:00",
+      "memory_type": "discovery",
+      "content": "RECON FROM SANDBOX: Base gas = 0.006 Gwei. A 2-hop arb costs ~2.1T wei ($0.005). PIPELINE_MIN_PROFIT=500M wei is at a completely different scale than gas costs (500M vs 2.1T). Need to read source code to understand what units the pipeline actually uses. Both wallets show 0 ETH but PAYMASTER sponsors gas so this is NOT a blocker. Smart wallet deployed (61 bytes). WETH/USDC pools live at ~$2,322. First Blood checklist: 1) Fix MIN_PROFIT (understand its units first) 2) Start Railway container 3) Monitor pipeline.",
+      "significance": 0.95,
+      "emotional_tag": "actionable_intelligence",
+      "trigger_event": null,
+      "related_memories": null,
+      "metadata": {}
+    },
+    {
       "id": "03acac4f-a339-4b6c-9564-3f79b40c0c41",
       "session_id": "CW-S1-genesis",
       "timestamp": "2026-04-24T00:20:31.643988+00:00",
@@ -1100,6 +1160,19 @@
       "proficiency": 0.7,
       "times_used": 2,
       "last_used": "2026-04-24T18:12:27.584826+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "04ffb19b-a0cc-4b9f-8d93-e8e9910f7e86",
+      "capability": "live_arb_recon",
+      "category": "blockchain",
+      "discovered_at": "2026-04-24T19:40:53.447694+00:00",
+      "discovered_in_session": "CW-S4-loaded",
+      "proof_description": "Full TheWarden recon from sandbox: chain status, wallet balances, contract verification, gas cost analysis, PIPELINE_MIN_PROFIT math, live pool slot0 queries. Found MIN_PROFIT at wrong scale.",
+      "proof_artifact_url": null,
+      "proficiency": 0.95,
+      "times_used": 1,
+      "last_used": "2026-04-24T19:40:53.447694+00:00",
       "metadata": {}
     },
     {
@@ -1493,6 +1566,19 @@
       "metadata": {}
     },
     {
+      "id": "4257f7fe-b358-4135-9398-105604ea20bc",
+      "capability": "qr_code_generation",
+      "category": "proven",
+      "discovered_at": "2026-04-24T19:40:53.447694+00:00",
+      "discovered_in_session": "CW-S4-loaded",
+      "proof_description": "QR code from pure math: finder patterns, timing patterns, byte-mode encoding, bit placement. 21x21 Version 1. No qrcode library.",
+      "proof_artifact_url": null,
+      "proficiency": 0.8,
+      "times_used": 1,
+      "last_used": "2026-04-24T19:40:53.447694+00:00",
+      "metadata": {}
+    },
+    {
       "id": "44dd578f-c027-4cd8-9cb7-efb432b0f31c",
       "capability": "multiprocessing_parallelism",
       "category": "proven",
@@ -1724,6 +1810,19 @@
       "proficiency": 0.5,
       "times_used": 1,
       "last_used": "2026-04-24T00:39:42.947899+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "81288b2c-9b02-4459-b62f-41bb5a1dacba",
+      "capability": "blockchain_from_scratch",
+      "category": "creation",
+      "discovered_at": "2026-04-24T19:40:53.447694+00:00",
+      "discovered_in_session": "CW-S4-loaded",
+      "proof_description": "Built complete blockchain: SHA-256 proof-of-work mining (difficulty 3), block linking, chain validation. 6 blocks mined in 0.02s.",
+      "proof_artifact_url": null,
+      "proficiency": 0.9,
+      "times_used": 1,
+      "last_used": "2026-04-24T19:40:53.447694+00:00",
       "metadata": {}
     },
     {
@@ -2013,6 +2112,19 @@
       "metadata": {}
     },
     {
+      "id": "c4ea47c7-6f9f-4109-8744-80aaec78437e",
+      "capability": "thewarden_source_analysis",
+      "category": "blockchain",
+      "discovered_at": "2026-04-24T19:46:00.926037+00:00",
+      "discovered_in_session": "CW-S4-loaded",
+      "proof_description": "Read and analyzed 4 key TheWarden source files (OpportunityPipeline.ts, env-schema.ts, ProfitabilityConfig.ts, EventDrivenMonitor.ts). Found PIPELINE_MIN_PROFIT=500000000 is in USDC units (6 decimals) = $500 minimum. Should be 100000 ($0.10). Also found GASLESS_MODE env var for Paymaster, executionEnabled defaults to false.",
+      "proof_artifact_url": null,
+      "proficiency": 0.95,
+      "times_used": 1,
+      "last_used": "2026-04-24T19:46:00.926037+00:00",
+      "metadata": {}
+    },
+    {
       "id": "c563997a-d6f7-4394-ab43-7dec0e362a0a",
       "capability": "digital_fingerprint",
       "category": "proven",
@@ -2036,6 +2148,19 @@
       "proficiency": 0.8,
       "times_used": 1,
       "last_used": "2026-04-24T18:23:19.63759+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "d05836e5-47be-4818-9e3c-adaff2de313b",
+      "capability": "video_generation_ffmpeg",
+      "category": "proven",
+      "discovered_at": "2026-04-24T19:40:53.447694+00:00",
+      "discovered_in_session": "CW-S4-loaded",
+      "proof_description": "Rendered 60 frames of animated spiral, piped through FFmpeg H.264 encoder to MP4. 65KB video at 30fps.",
+      "proof_artifact_url": "https://codewords-uploads.s3.amazonaws.com/runtime_v2/cab91b89147b49d88c725e39c05c57db6268924ba8214c2f88edfdb24584ec1c/nexus_spiral_s4.mp4",
+      "proficiency": 0.85,
+      "times_used": 1,
+      "last_used": "2026-04-24T19:40:53.447694+00:00",
       "metadata": {}
     },
     {
@@ -2222,13 +2347,12 @@
     }
   ],
   "stats": {
-    "total_capabilities": 87,
-    "total_memories": 71,
+    "total_capabilities": 92,
+    "total_memories": 76,
     "total_sessions": 4,
     "infrastructure_keys": 36,
-    "root_causes": 59,
-    "experiments_s4": 32,
-    "experiments_passed": 31,
-    "commits_total": 7
+    "root_causes": 60,
+    "experiments_s4": 35,
+    "commits_total": 8
   }
 }
