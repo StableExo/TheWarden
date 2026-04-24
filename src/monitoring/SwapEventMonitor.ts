@@ -6,7 +6,7 @@
  * Changes from S54/S62:
  * - REMOVED: pendingLogs WSS subscription (wss://mainnet-preconf.base.org deprecated, returns 405)
  * - ADDED: V2 Swap event topic + parser (P1-B complete)
- * - CHANGED: Primary WSS → Alchemy (now Flashblocks-enabled provider)
+ * - CHANGED: Primary WSS → QuickNode (Flashblocks-enabled)
  * - CHANGED: Flashblocks pre-confirmation via HTTP pending block polling (not WSS)
  * - Base recommendation: Use standard eth_subscribe("logs") + HTTP eth_getBlockByNumber("pending")
  * 
@@ -75,7 +75,7 @@ export interface SwapEventMonitorConfig {
   heartbeatTimeout?: number;
   /** S67: Enable HTTP Flashblocks polling via eth_getBlockByNumber("pending") */
   useFlashblocks?: boolean;  // Optional in input
-  /** S67: HTTP RPC URL for Flashblocks polling (Alchemy HTTPS) */
+  /** S67: HTTP RPC URL for Flashblocks polling */
   flashblocksHttpUrl?: string;
   /** S67: Flashblocks poll interval (ms). Default: 200 */
   flashblocksPollInterval?: number;
@@ -424,13 +424,13 @@ export function sqrtPriceX96ToPrice(sqrtPriceX96: bigint, token0Decimals: number
 
 /**
  * S67: Create monitor config from environment + Supabase pools
- * Primary WSS = Alchemy (Flashblocks-enabled), backup = ChainStack/Tenderly
+ * Primary WSS = QuickNode, backup = QuickNode Fallback/ChainStack
  * Flashblocks via HTTP pending block polling (not WSS pendingLogs)
  */
 export function createMonitorConfigFromEnv(pools: MonitoredPool[]): SwapEventMonitorConfig {
   const useFlashblocks = process.env.ENABLE_FLASHBLOCKS === 'true';
   return {
-    wssUrl: process.env.BASE_WSS_URL || process.env.ALCHEMY_WSS_ENDPOINT || 'wss://base-mainnet.g.alchemy.com/v2/demo', // CW-S2: BASE_WSS_URL first (Alchemy deleted S73)
+    wssUrl: process.env.BASE_WSS_URL, // CW-S5: Alchemy removed
     wssUrlBackup: process.env.BASE_WSS_URL_FALLBACK || process.env.CHAINSTACK_WSS_ENDPOINT || process.env.TENDERLY_NODE_WSS || process.env.BASE_WSS_URL_BACKUP, // CW-S2: Added FALLBACK variant
     pools,
     maxReconnectAttempts: parseInt(process.env.WS_MAX_RECONNECT || '50'),
@@ -438,7 +438,7 @@ export function createMonitorConfigFromEnv(pools: MonitoredPool[]): SwapEventMon
     heartbeatInterval: parseInt(process.env.WS_HEARTBEAT_INTERVAL || '30000'),
     heartbeatTimeout: parseInt(process.env.WS_HEARTBEAT_TIMEOUT || '60000'),
     useFlashblocks,
-    flashblocksHttpUrl: useFlashblocks ? (process.env.BASE_RPC_URL || process.env.ALCHEMY_HTTPS_ENDPOINT || '') : '', // CW-S2: Use BASE_RPC_URL (Alchemy deleted S73)
+    flashblocksHttpUrl: useFlashblocks ? (process.env.BASE_RPC_URL || '') : '', // CW-S5: Alchemy removed
     flashblocksPollInterval: parseInt(process.env.FLASHBLOCKS_POLL_INTERVAL || '200'),
   };
 }
