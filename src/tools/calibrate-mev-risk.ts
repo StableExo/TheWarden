@@ -6,6 +6,7 @@
  */
 
 import * as fs from 'fs';
+// @ts-expect-error CW-S5: csv-parser not installed (offline calibration tool)
 import csv from 'csv-parser';
 
 interface LogEntry {
