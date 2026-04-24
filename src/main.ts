@@ -141,6 +141,12 @@ import { LongRunningManager } from './monitoring/LongRunningManager';
 // Uses Proxy to handle any method call gracefully (returns no-op async functions).
 function _createStubClass(name: string) {
   return class {
+    // CW-S5: Explicit method stubs for TS type checker (Proxy handles all calls at runtime)
+    async initialize(..._args: any[]): Promise<any> { return this; }
+    async start(..._args: any[]): Promise<any> { return this; }
+    async shutdown(): Promise<void> {}
+    async stop(): Promise<void> {}
+    getModules(): any[] { return []; }
     constructor(..._args: any[]) {
       return new Proxy(this, {
         get: (_target: any, prop: string | symbol) => {
@@ -2542,7 +2548,7 @@ async function main() {
     });
 
     // Start Dashboard Server if not disabled
-    let dashboardServer: DashboardServer | undefined;
+    let dashboardServer: any; // DashboardServer stub
     
     if (process.env.DISABLE_DASHBOARD !== 'true') {
       try {
@@ -2553,7 +2559,7 @@ async function main() {
         const crossChainAnalytics = new CrossChainAnalytics();
 
         // Configure dashboard
-        const dashboardConfig: Partial<DashboardConfig> = {
+        const dashboardConfig: any /* Partial<DashboardConfig> */ = {
           port: parseInt(process.env.DASHBOARD_PORT || '3000'),
           enableCors: true,
           updateInterval: parseInt(process.env.UPDATE_INTERVAL || '1000'),
