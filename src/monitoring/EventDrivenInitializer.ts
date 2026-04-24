@@ -84,7 +84,7 @@ export async function loadPoolsFromSupabase(
     { headers }
   );
   if (!tokensResp.ok) throw new Error(`Failed to load tokens: ${tokensResp.status}`);
-  const tokens: SupabaseToken[] = await tokensResp.json();
+  const tokens: SupabaseToken[] = await tokensResp.json() as any;
 
   // Build token lookup maps
   const tokenById = new Map<number, SupabaseToken>();
@@ -102,7 +102,7 @@ export async function loadPoolsFromSupabase(
     { headers }
   );
   if (!poolsResp.ok) throw new Error(`Failed to load pools: ${poolsResp.status}`);
-  const rawPools: SupabasePool[] = await poolsResp.json();
+  const rawPools: SupabasePool[] = await poolsResp.json() as any;
 
   logger.info(`[EventDrivenInit] Loaded ${rawPools.length} pools from Supabase`);
 
