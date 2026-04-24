@@ -10,6 +10,7 @@ import express, { Request, Response } from 'express';
 import { Server } from 'http';
 import * as os from 'os';
 import { logger } from '../utils/logger';
+// @ts-expect-error CW-S5: Module deleted, type used as fallback
 import { InitializedComponents } from '../core/initializer';
 
 export interface HealthCheckConfig {
