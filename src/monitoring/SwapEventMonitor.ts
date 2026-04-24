@@ -136,16 +136,18 @@ export class SwapEventMonitor extends EventEmitter {
   constructor(config: SwapEventMonitorConfig) {
     super();
     this.config = {
+      ...config,
+      // CW-S5: Spread config first, then apply defaults to ensure Required<> is satisfied
       wssUrlBackup: config.wssUrlBackup || config.wssUrl,
       maxReconnectAttempts: config.maxReconnectAttempts ?? 50,
       reconnectBaseDelay: config.reconnectBaseDelay ?? 1000,
       reconnectMaxDelay: config.reconnectMaxDelay ?? 30000,
       heartbeatInterval: config.heartbeatInterval ?? 30000,
       heartbeatTimeout: config.heartbeatTimeout ?? 60000,
+      useFlashblocks: config.useFlashblocks ?? false,
       flashblocksHttpUrl: config.flashblocksHttpUrl ?? '',
       flashblocksPollInterval: config.flashblocksPollInterval ?? 200,
-      ...config,
-    };
+    } as Required<SwapEventMonitorConfig>;
   }
 
   async start(): Promise<void> {
