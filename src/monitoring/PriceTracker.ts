@@ -727,30 +727,47 @@ export class PriceTracker extends EventEmitter {
    */
   private checkSpread(pairKey: TokenPairKey): void {
     const poolAddrs = this.pairPools.get(pairKey);
-    if (!poolAddrs || poolAddrs.size < 2) return; // Need at least 2 pools
+    if (!poolAddrs || poolAddrs.size < 2) {
+      // CW-S6: Diagnostic — pair has < 2 registered pools
+      if (this.config.verboseLogging) {
+        logger.debug(`[PriceTracker] checkSpread(${pairKey}): only ${poolAddrs?.size ?? 0} pool(s) registered — need ≥2`);
+      }
+      return;
+    }
     
     const now = Date.now();
     
     // Collect fresh pool states
+    // CW-S6: Added diagnostic counters for all rejection paths
     const freshStates: PoolPriceState[] = [];
+    let staleCount = 0;
+    let zeroCount = 0;
+    let missingCount = 0;
     for (const addr of poolAddrs) {
       const state = this.poolStates.get(addr);
-      if (!state) continue;
+      if (!state) { missingCount++; continue; }
       
       const age = now - state.lastUpdatedAt;
       if (age > this.config.maxPriceAge) {
-        // Stale price, skip
+        staleCount++;
         continue;
       }
       
       // S68: Skip pools with price=0 (phantom prevention)
-      if (state.price === 0) continue;
+      if (state.price === 0) { zeroCount++; continue; }
       
       freshStates.push(state);
     }
     
     if (freshStates.length < 2) {
-      return; // Not enough fresh prices
+      // CW-S6: Diagnostic — why not enough fresh prices
+      if (this.config.verboseLogging) {
+        logger.debug(
+          `[PriceTracker] checkSpread(${pairKey}): ${freshStates.length} fresh / ${poolAddrs.size} total ` +
+          `(stale=${staleCount} zero=${zeroCount} missing=${missingCount}) — need ≥2 fresh`
+        );
+      }
+      return;
     }
     
     // Find min and max price pools
@@ -785,10 +802,23 @@ export class PriceTracker extends EventEmitter {
     const spreadPercent = grossSpreadPercent - totalFeePercent;
     
     // S72 P1-4: Reject phantom spreads > 50% (guaranteed decimal error / token0 inversion)
-    if (grossSpreadPercent > 50) return;
+    if (grossSpreadPercent > 50) {
+      logger.debug(`[PriceTracker] checkSpread(${pairKey}): PHANTOM gross=${grossSpreadPercent.toFixed(2)}% > 50% — skipped`);
+      return;
+    }
     
     // Check threshold (now fee-aware — only genuine opportunities pass)
-    if (spreadPercent < this.config.minSpreadPercent) return;
+    if (spreadPercent < this.config.minSpreadPercent) {
+      // CW-S6: Log near-misses (within 2x of threshold) for tuning visibility
+      if (this.config.verboseLogging && spreadPercent > this.config.minSpreadPercent * -2) {
+        logger.debug(
+          `[PriceTracker] checkSpread(${pairKey}): netSpread=${spreadPercent.toFixed(4)}% < min=${this.config.minSpreadPercent}% ` +
+          `(gross=${grossSpreadPercent.toFixed(4)}% fees=${totalFeePercent.toFixed(4)}%) ` +
+          `${minPriceState.dex}=${minPriceState.price.toFixed(8)} vs ${maxPriceState.dex}=${maxPriceState.price.toFixed(8)}`
+        );
+      }
+      return;
+    }
     
     // Check cooldown
     const lastEmit = this.cooldowns.get(pairKey) ?? 0;
