@@ -74,7 +74,7 @@ export interface SwapEventMonitorConfig {
   heartbeatInterval?: number;
   heartbeatTimeout?: number;
   /** S67: Enable HTTP Flashblocks polling via eth_getBlockByNumber("pending") */
-  useFlashblocks?: boolean;
+  useFlashblocks?: boolean;  // Optional in input
   /** S67: HTTP RPC URL for Flashblocks polling (Alchemy HTTPS) */
   flashblocksHttpUrl?: string;
   /** S67: Flashblocks poll interval (ms). Default: 200 */
@@ -383,7 +383,7 @@ export class SwapEventMonitor extends EventEmitter {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getBlockByNumber', params: ['pending', true] }),
     });
-    const data = await response.json();
+    const data: any = await response.json();
     if (!data.result) return;
     const blockHash = data.result.hash || data.result.parentHash;
     if (blockHash === this.lastFlashblockHash) return;
