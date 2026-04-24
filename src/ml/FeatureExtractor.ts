@@ -272,7 +272,7 @@ export class FeatureExtractor {
   private calculateVolatility(prices: number[]): number {
     if (prices.length < 2) return 0;
 
-    const returns = [];
+    const returns: number[] = [];
     for (let i = 1; i < prices.length; i++) {
       const ret = Math.log(prices[i] / prices[i - 1]);
       returns.push(ret);
