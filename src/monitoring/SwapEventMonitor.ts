@@ -235,9 +235,12 @@ export class SwapEventMonitor extends EventEmitter {
 
     // S67: Always use standard 'logs' (pendingLogs deprecated on Base)
     logger.info(`[SwapMonitor] S67: Standard 'logs' subscription with dual V2+V3 topics`);
+    // RC#59: Subscribe topic-only — QuickNode's eth_subscribe silently drops ALL events
+    // when the 'address' filter is present (tested: 0 events with address vs 92/16s without).
+    // Client-side filtering in parseV3SwapLog/parseV2SwapLog already discards non-monitored pools.
     const subscribeMsg = {
       jsonrpc: '2.0', id: 1, method: 'eth_subscribe',
-      params: ['logs', { address: poolAddresses, topics: [[SWAP_TOPIC_V3, SWAP_TOPIC_V2]] }],
+      params: ['logs', { topics: [[SWAP_TOPIC_V3, SWAP_TOPIC_V2]] }],
     };
 
     return new Promise((resolve, reject) => {
@@ -265,11 +268,26 @@ export class SwapEventMonitor extends EventEmitter {
   // Message Handling — S67: Route V2 vs V3 by topic
   // ============================================================
 
+  // RC#59: Fast-path address set for O(1) client-side filtering (since we now receive all swap events)
+  private poolAddressSet: Set<string> | null = null;
+  
+  private getPoolAddressSet(): Set<string> {
+    if (!this.poolAddressSet) {
+      this.poolAddressSet = new Set(this.config.pools.map(p => p.address.toLowerCase()));
+    }
+    return this.poolAddressSet;
+  }
+
   private handleMessage(data: WebSocket.Data): void {
     try {
       const msg = JSON.parse(data.toString());
       if (msg.method === 'eth_subscription' && msg.params?.subscription === this.subscriptionId) {
         const log = msg.params.result;
+        
+        // RC#59: Fast-path — skip events from pools we don't monitor
+        const logAddress = log.address?.toLowerCase();
+        if (!logAddress || !this.getPoolAddressSet().has(logAddress)) return;
+        
         const topic0 = log.topics?.[0];
         let swapEvent: SwapEvent | null = null;
         if (topic0 === SWAP_TOPIC_V3) { swapEvent = this.parseV3SwapLog(log); if (swapEvent) this.stats.v3EventsReceived++; }
