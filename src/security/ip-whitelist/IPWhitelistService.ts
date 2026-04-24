@@ -6,6 +6,7 @@
  * To enable geolocation, set enableGeolocation=true in the constructor.
  */
 
+// @ts-expect-error CW-S5: ip-address not installed (non-critical security module)
 import { Address4, Address6 } from 'ip-address';
 
 export interface IPWhitelistEntry {
