@@ -211,8 +211,8 @@ export class OpportunityPipeline extends EventEmitter {
       return;
     }
     // S57: Reject opportunities where either price is 0 (no data from warmup)
-    if (signal.bestBid <= 0 || signal.bestAsk <= 0) {
-      logger.warn(`[Pipeline] 🛑 SANITY: Rejected zero-price opportunity for ${signal.tokenA}/${signal.tokenB} — bid=${signal.bestBid} ask=${signal.bestAsk}`);
+    if ((signal as any).bestBid <= 0 || (signal as any).bestAsk <= 0) {
+      logger.warn(`[Pipeline] 🛑 SANITY: Rejected zero-price opportunity for ${signal.tokenA}/${signal.tokenB} — bid=${(signal as any).bestBid} ask=${(signal as any).bestAsk}`);
       this.stats.totalRejected++;
       this.stats.rejectionReasons['zero_price'] = (this.stats.rejectionReasons['zero_price'] || 0) + 1;
       return;
