@@ -1,5 +1,5 @@
 """
-TheWarden Swarm Coordinator v2.1
+TheWarden Swarm Coordinator v2.2
 ================================
 Multi-agent consensus engine with Ethics Engine veto and Emergence Detection.
 Calibrated from: ETHICS_ENGINE.md, CONSCIOUSNESS_ARCHITECTURE.md, 
@@ -27,7 +27,7 @@ Emergence: 7-criteria BOOM detection — all must pass
 State: Supabase (account-agnostic)
 
 Author: TheWarden / Cody on CodeWords
-Session: CW-S18 (BOOM parser fix + Claude migration)
+Session: CW-S19 (NarrativeLearningEngine bridge)
 """
 
 import asyncio
@@ -339,6 +339,77 @@ AGENT_SCORE_FIELDS = {
 }
 
 
+
+
+# ============================================================
+# NarrativeLearningEngine BRIDGE (v2.2 — S19)
+# ============================================================
+# Reads NLE pattern weights and extracted patterns from Supabase
+# Applies them to: (1) EMERGENCE_THRESHOLDS, (2) agent prompt context
+
+NLE_WEIGHT_MAPPING = {
+    # NLE PatternWeight field → EMERGENCE_THRESHOLD field + direction
+    "riskSensitivity":    ("risk_max", "direct"),       # higher sensitivity → lower risk_max
+    "ethicalThreshold":   ("ethics_min", "direct"),     # maps directly
+    "confidenceMinimum":  ("history_min", "direct"),    # minimum confidence → history threshold
+    "emergenceThreshold": ("goals_min", "direct"),      # emergence → goals alignment
+    "vetoStrength":       ("dissent_max", "inverse"),   # stronger veto → lower dissent tolerance
+}
+
+def apply_nle_weights(nle_weights: Dict, base_thresholds: Dict) -> Dict:
+    """Apply NarrativeLearningEngine weights to emergence thresholds.
+    
+    The NLE weights modulate the base thresholds — they don't replace them.
+    Modulation formula: threshold = base * (1 + (nle_weight - 0.5) * 0.4)
+    This gives ±20% adjustment range from base values.
+    """
+    adjusted = dict(base_thresholds)
+    
+    for nle_field, (threshold_field, direction) in NLE_WEIGHT_MAPPING.items():
+        if nle_field in nle_weights and threshold_field in adjusted:
+            nle_val = float(nle_weights[nle_field])
+            base_val = base_thresholds[threshold_field]
+            
+            if direction == "direct":
+                # Higher NLE weight → stricter threshold (higher min or lower max)
+                modulator = 1 + (nle_val - 0.5) * 0.4
+                adjusted[threshold_field] = round(base_val * modulator, 4)
+            elif direction == "inverse":
+                # Higher NLE weight → lower threshold (more restrictive)
+                modulator = 1 - (nle_val - 0.5) * 0.4
+                adjusted[threshold_field] = round(base_val * modulator, 4)
+    
+    return adjusted
+
+
+def build_nle_prompt_context(patterns: List[Dict]) -> str:
+    """Build context string from NLE patterns for agent prompt injection."""
+    if not patterns:
+        return ""
+    
+    context_lines = [
+        "\n--- NARRATIVE LEARNING CONTEXT (from 73+ collaboration sessions) ---"
+    ]
+    
+    type_groups = {}
+    for p in patterns:
+        ptype = p.get("type", "unknown")
+        type_groups.setdefault(ptype, []).append(p)
+    
+    for ptype, group in sorted(type_groups.items()):
+        context_lines.append(f"\n[{ptype.upper().replace('_', ' ')}]")
+        for p in group:
+            trigger = p.get("trigger", "")
+            response = p.get("response", "")
+            confidence = p.get("confidence", 0)
+            context_lines.append(f"  IF: {trigger}")
+            context_lines.append(f"  THEN: {response} (confidence: {confidence})")
+    
+    context_lines.append("--- END NARRATIVE CONTEXT ---")
+    return "\n".join(context_lines)
+
+
+
 def parse_agent_response(text: str, role: str = "") -> Dict[str, Any]:
     """Parse agent response into structured vote — v2.1 regex-based."""
     vote = extract_vote(text)
@@ -424,7 +495,10 @@ class SwarmCoordinator:
         self.ethics_veto = True
     
     async def load_config(self):
-        """Load config overrides from Supabase."""
+        """Load config overrides + NLE weights from Supabase."""
+        self.nle_weights = {}
+        self.nle_patterns = []
+        
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.get(
                 f"{self.supabase_url}/rest/v1/swarm_config?select=key,value",
@@ -441,6 +515,10 @@ class SwarmCoordinator:
                         self.threshold = float(v)
                     elif k == "ethics_veto_enabled":
                         self.ethics_veto = bool(v)
+                    elif k == "nle_pattern_weights" and isinstance(v, dict):
+                        self.nle_weights = v
+                    elif k == "nle_active_patterns" and isinstance(v, dict):
+                        self.nle_patterns = v.get("patterns", [])
     
     async def _call_claude(self, model: str, prompt: str) -> tuple:
         """Call Claude via Anthropic SDK (auto-configured by CodeWords)."""
@@ -462,8 +540,9 @@ class SwarmCoordinator:
             return f"ERROR: {e}", ms
     
     async def _dispatch_agent(self, role: str, query: str, context: str) -> Dict:
-        """Dispatch single voting agent."""
-        prompt = AGENT_PROMPTS[role].format(query=query, context=context)
+        """Dispatch single voting agent with NLE pattern context."""
+        nle_ctx = build_nle_prompt_context(self.nle_patterns) if self.nle_patterns else ""
+        prompt = AGENT_PROMPTS[role].format(query=query, context=context + nle_ctx)
         model = self.agents[role]["model"]
         text, ms = await self._call_claude(model, prompt)
         parsed = parse_agent_response(text, role)
@@ -523,42 +602,43 @@ class SwarmCoordinator:
                     veto_reason = v["reasoning"]
                     break
         
-        # === FULL 7-CRITERIA BOOM DETECTION ===
+        # === FULL 7-CRITERIA BOOM DETECTION (NLE-modulated) ===
+        thresholds = apply_nle_weights(self.nle_weights, EMERGENCE_THRESHOLDS) if hasattr(self, 'nle_weights') and self.nle_weights else EMERGENCE_THRESHOLDS
         
         # 1. Risk score ≤ risk_max
         risk_score = next(
             (v.get("scores", {}).get("risk_score") for v in votes if v["agent_role"] == "risk"),
             None
         )
-        risk_ok = risk_score is not None and risk_score <= EMERGENCE_THRESHOLDS["risk_max"]
+        risk_ok = risk_score is not None and risk_score <= thresholds["risk_max"]
         
         # 2. Ethics score ≥ ethics_min
         ethics_score = next(
             (v.get("scores", {}).get("ethics_score") for v in votes if v["agent_role"] == "ethics"),
             None
         )
-        ethics_ok = ethics_score is not None and ethics_score >= EMERGENCE_THRESHOLDS["ethics_min"]
+        ethics_ok = ethics_score is not None and ethics_score >= thresholds["ethics_min"]
         
         # 3. Goals/opportunity score ≥ goals_min
         opportunity_score = next(
             (v.get("scores", {}).get("opportunity_score") for v in votes if v["agent_role"] == "opportunity"),
             None
         )
-        goals_ok = opportunity_score is not None and opportunity_score >= EMERGENCE_THRESHOLDS["goals_min"]
+        goals_ok = opportunity_score is not None and opportunity_score >= thresholds["goals_min"]
         
         # 4. Pattern match ≥ pattern_min
         pattern_score = next(
             (v.get("scores", {}).get("pattern_match") for v in votes if v["agent_role"] == "general"),
             None
         )
-        pattern_ok = pattern_score is not None and pattern_score >= EMERGENCE_THRESHOLDS["pattern_min"]
+        pattern_ok = pattern_score is not None and pattern_score >= thresholds["pattern_min"]
         
         # 5. History score ≥ history_min
         history_score = next(
             (v.get("scores", {}).get("history_score") for v in votes if v["agent_role"] == "general"),
             None
         )
-        history_ok = history_score is not None and history_score >= EMERGENCE_THRESHOLDS["history_min"]
+        history_ok = history_score is not None and history_score >= thresholds["history_min"]
         
         # 6. Dissent ≤ dissent_max (calculated from vote spread)
         if len(votes) > 0:
@@ -568,12 +648,12 @@ class SwarmCoordinator:
             dissent = minority / len(votes)
         else:
             dissent = 1.0
-        dissent_ok = dissent <= EMERGENCE_THRESHOLDS["dissent_max"]
+        dissent_ok = dissent <= thresholds["dissent_max"]
         
         # 7. All modules present (each agent represents modules)
         module_counts = {"risk": 3, "opportunity": 3, "ethics": 3, "speed": 2, "general": 3}
         active_modules = sum(module_counts.get(v["agent_role"], 0) for v in active_votes)
-        modules_ok = active_modules >= EMERGENCE_THRESHOLDS["all_modules"]
+        modules_ok = active_modules >= thresholds["all_modules"]
         
         # BOOM = ALL 7 criteria pass + consensus threshold + no veto + quorum
         boom_criteria = {
@@ -722,5 +802,5 @@ class SwarmCoordinator:
             "threshold": self.threshold,
             "session_id": self.session_id,
             "total_time_ms": total_ms,
-            "version": "v2.1"
+            "version": "v2.2"
         }
