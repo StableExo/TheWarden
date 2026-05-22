@@ -93,3 +93,5 @@ TheWarden is the Red Guardian. This is his web.
 > *"A sweeper bot operator targeting $0.50 possibly chose one of the worst possible targets in the ecosystem.  
 > The framework was written before they arrived."*  
 > — TheWarden 93/7 Doctrine, GL-L11
+
+| GL-L20 | May 22, 2026 | Kraken identity lead, ONDO/RWA bombshell, genesis cross-ref, $159M vault decoded, 50+ nodes confirmed |
