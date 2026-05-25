@@ -168,27 +168,54 @@ def _moralis(address, chains, keys):
 
 
 def _nansen(address, keys):
-    """Nansen — smart money labels, portfolio, prediction markets."""
-    out = {}
-    try:
-        # Fetch openapi spec first for current paths
-        spec = requests.get(
-            "https://api.nansen.ai/openapi.json",
-            headers={"x-api-key": keys["nansen"]},
-            timeout=10
-        ).json()
-        paths = list(spec.get("paths", {}).keys())
-        out["available_endpoints"] = paths[:20]  # sample
+    """
+    Nansen — smart money labels, profiler, prediction markets.
 
-        # Wallet profiler
-        r = requests.get(
-            f"https://api.nansen.ai/profiler/v1/wallets/{address}",
-            headers={"x-api-key": keys["nansen"]},
-            timeout=15
-        )
-        out["profiler"] = r.json()
+    NOTE (GL-L28 CORRECTION): Nansen migrated to x402 micropayment protocol.
+    https://www.x402.org — Coinbase on-chain HTTP payment standard.
+    Our API key (nsn_32d50c7e) is valid but most data endpoints return 402.
+
+    STATUS:
+      401 — endpoint uses different auth (not API key)
+      402 — requires x402 Payment-Signature header (on-chain micropayment per call)
+
+    FUTURE UNLOCK: x402 implementable with EOA private key on Base mainnet.
+    When ready, attach Payment-Signature header with signed payment payload.
+
+    Currently: returns endpoint auth map + attempts all prediction market endpoints.
+    """
+    BASE = "https://api.nansen.ai"
+    headers = {"x-api-key": keys["nansen"], "Content-Type": "application/json"}
+    out = {
+        "x402_status": "Nansen migrated to x402 micropayment protocol (GL-L28).",
+        "note": "API key valid but data endpoints require on-chain payment signature.",
+        "docs": "https://www.x402.org",
+        "future": "Implement x402 Payment-Signature via EOA + Base mainnet to unlock.",
+    }
+
+    # Attempt all prediction market endpoints — most relevant to investigation
+    pm_tests = [
+        ("/api/v1/prediction-market/address-summary",  {"address": address, "platform": "polymarket"}),
+        ("/api/v1/prediction-market/pnl-by-address",   {"address": address, "platform": "polymarket"}),
+        ("/api/v1/prediction-market/trades-by-address", {"address": address, "platform": "polymarket"}),
+    ]
+    pm_out = {}
+    for ep, body in pm_tests:
+        try:
+            r = requests.post(f"{BASE}{ep}", json=body, headers=headers, timeout=12)
+            name = ep.split("/")[-1]
+            pm_out[name] = r.json() if r.status_code == 200 else {"status_code": r.status_code}
+        except Exception as e:
+            pm_out[ep.split("/")[-1]] = {"error": str(e)}
+    out["prediction_markets"] = pm_out
+
+    # Attempt profiler labels
+    try:
+        r = requests.post(f"{BASE}/api/v1/profiler/address/labels",
+                          json={"address": address}, headers=headers, timeout=12)
+        out["profiler_labels"] = r.json() if r.status_code == 200 else {"status_code": r.status_code}
     except Exception as e:
-        out["error"] = str(e)
+        out["profiler_labels"] = {"error": str(e)}
 
     return out
 
