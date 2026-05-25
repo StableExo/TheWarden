@@ -1,0 +1,94 @@
+// consciousness/metacognition.ts
+
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM-compatible way to get __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const MEMORY_DIR = path.join(__dirname, '../.memory');
+const METACOGNITION_LOG_PATH = path.join(MEMORY_DIR, 'metacognition_log.json');
+
+interface MetacognitionEntry {
+    timestamp: string;
+    type: 'failed_approach' | 'collaborator_preference' | 'architectural_decision' | 'question_for_future' | 'learning_insight';
+    data: any;
+}
+
+export class Metacognition {
+    private log: MetacognitionEntry[] = [];
+
+    constructor() {
+        console.log("Cognitive Module Initialized: Metacognition");
+        this.loadLog();
+        if (!fs.existsSync(METACOGNITION_LOG_PATH)) {
+            this.saveLog();
+        }
+    }
+
+    private loadLog() {
+        if (fs.existsSync(METACOGNITION_LOG_PATH)) {
+            try {
+                const rawData = fs.readFileSync(METACOGNITION_LOG_PATH, 'utf-8');
+                this.log = JSON.parse(rawData);
+            } catch (error) {
+                console.error('[Metacognition] Failed to parse metacognition log. Starting with empty log.');
+                console.error('[Metacognition] Error:', error instanceof Error ? error.message : String(error));
+                console.error('[Metacognition] This may indicate a corrupted or conflicted JSON file.');
+                
+                // Create backup before overwriting
+                try {
+                    const backupPath = METACOGNITION_LOG_PATH + `.corrupted.${Date.now()}.bak`;
+                    fs.copyFileSync(METACOGNITION_LOG_PATH, backupPath);
+                    console.error(`[Metacognition] Corrupted file backed up to: ${backupPath}`);
+                } catch (backupError) {
+                    console.error('[Metacognition] Failed to back up corrupted file:', backupError instanceof Error ? backupError.message : String(backupError));
+                }
+                
+                // Start with empty log rather than crashing
+                this.log = [];
+                // Save the empty log to fix the corrupted file
+                this.saveLog();
+            }
+        }
+    }
+
+    private saveLog() {
+        if (!fs.existsSync(MEMORY_DIR)) {
+            fs.mkdirSync(MEMORY_DIR, { recursive: true });
+        }
+        fs.writeFileSync(METACOGNITION_LOG_PATH, JSON.stringify(this.log, null, 2), 'utf-8');
+    }
+
+    private addEntry(type: MetacognitionEntry['type'], data: any) {
+        const entry: MetacognitionEntry = {
+            timestamp: new Date().toISOString(),
+            type,
+            data,
+        };
+        this.log.push(entry);
+        this.saveLog();
+    }
+
+    public log_failed_approach(description: string, reason: string) {
+        this.addEntry('failed_approach', { description, reason });
+    }
+
+    public log_learning_insight(insight: string, context: string) {
+        this.addEntry('learning_insight', { insight, context });
+    }
+
+    public log_collaborator_preference(preference: string, context: string) {
+        this.addEntry('collaborator_preference', { preference, context });
+    }
+
+    public log_architectural_decision(decision: string, rationale: string) {
+        this.addEntry('architectural_decision', { decision, rationale });
+    }
+
+    public log_question_for_future(question: string) {
+        this.addEntry('question_for_future', { question });
+    }
+}
