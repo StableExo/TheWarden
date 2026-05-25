@@ -169,53 +169,72 @@ def _moralis(address, chains, keys):
 
 def _nansen(address, keys):
     """
-    Nansen — smart money labels, profiler, prediction markets.
+    Nansen — via MCP endpoint (JSON-RPC 2.0 over SSE HTTP).
 
-    NOTE (GL-L28 CORRECTION): Nansen migrated to x402 micropayment protocol.
-    https://www.x402.org — Coinbase on-chain HTTP payment standard.
-    Our API key (nsn_32d50c7e) is valid but most data endpoints return 402.
+    GL-L28 FIX: REST API uses x402 micropayments → use MCP instead.
+    MCP URL: https://mcp.nansen.ai/ra/mcp
+    Auth: NANSEN-API-KEY header
+    Protocol: JSON-RPC 2.0, tools wrapped in {"request": {...}} except general_search + transaction_lookup
 
-    STATUS:
-      401 — endpoint uses different auth (not API key)
-      402 — requires x402 Payment-Signature header (on-chain micropayment per call)
-
-    FUTURE UNLOCK: x402 implementable with EOA private key on Base mainnet.
-    When ready, attach Payment-Signature header with signed payment payload.
-
-    Currently: returns endpoint auth map + attempts all prediction market endpoints.
+    COVERAGE:
+      36 tools — address profiler, smart money, prediction markets, token flows, counterparties
+      Credits: 0 (search) to 9 (hyperliquid) per call
+      Nansen tracks labeled/smart-money addresses — may return empty for unknown EOAs
     """
-    BASE = "https://api.nansen.ai"
-    headers = {"x-api-key": keys["nansen"], "Content-Type": "application/json"}
-    out = {
-        "x402_status": "Nansen migrated to x402 micropayment protocol (GL-L28).",
-        "note": "API key valid but data endpoints require on-chain payment signature.",
-        "docs": "https://www.x402.org",
-        "future": "Implement x402 Payment-Signature via EOA + Base mainnet to unlock.",
+    MCP_URL = "https://mcp.nansen.ai/ra/mcp"
+    headers = {
+        "NANSEN-API-KEY": keys["nansen"],
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/event-stream"
     }
+    _cid = [100]
 
-    # Attempt all prediction market endpoints — most relevant to investigation
-    pm_tests = [
-        ("/api/v1/prediction-market/address-summary",  {"address": address, "platform": "polymarket"}),
-        ("/api/v1/prediction-market/pnl-by-address",   {"address": address, "platform": "polymarket"}),
-        ("/api/v1/prediction-market/trades-by-address", {"address": address, "platform": "polymarket"}),
-    ]
-    pm_out = {}
-    for ep, body in pm_tests:
+    def _mcp(tool, args):
+        _cid[0] += 1
         try:
-            r = requests.post(f"{BASE}{ep}", json=body, headers=headers, timeout=12)
-            name = ep.split("/")[-1]
-            pm_out[name] = r.json() if r.status_code == 200 else {"status_code": r.status_code}
+            r = requests.post(MCP_URL, json={
+                "jsonrpc": "2.0", "id": _cid[0], "method": "tools/call",
+                "params": {"name": tool, "arguments": args}
+            }, headers=headers, timeout=20)
+            for line in r.text.split('\n'):
+                if line.startswith('data: '):
+                    data = json.loads(line[6:])
+                    content = data.get("result", {}).get("content", [])
+                    if content:
+                        text = content[0].get("text", "")
+                        try:
+                            return json.loads(text) if isinstance(text,str) and text.strip().startswith(('{','[')) else text
+                        except:
+                            return text
+            return {"error": f"no data in response"}
         except Exception as e:
-            pm_out[ep.split("/")[-1]] = {"error": str(e)}
-    out["prediction_markets"] = pm_out
+            return {"error": str(e)}
 
-    # Attempt profiler labels
-    try:
-        r = requests.post(f"{BASE}/api/v1/profiler/address/labels",
-                          json={"address": address}, headers=headers, timeout=12)
-        out["profiler_labels"] = r.json() if r.status_code == 200 else {"status_code": r.status_code}
-    except Exception as e:
-        out["profiler_labels"] = {"error": str(e)}
+    out = {"mcp_status": "live", "endpoint": MCP_URL}
+
+    # address_related_addresses — first funders, signers, deployed contracts (1 credit)
+    out["related_addresses"] = _mcp("address_related_addresses",
+        {"request": {"address": address, "chain": "all"}})
+
+    # address_transactions — 20 most recent (1 credit)
+    out["transactions"] = _mcp("address_transactions",
+        {"request": {"address": address, "chain": "all"}})
+
+    # address_portfolio — full holdings + DeFi positions (1 credit)
+    out["portfolio"] = _mcp("address_portfolio",
+        {"request": {"wallet_address": address, "chain": "all"}})
+
+    # wallet_pnl_summary — 30-day realized PnL (1 credit)
+    out["pnl_summary"] = _mcp("wallet_pnl_summary",
+        {"request": {"walletAddress": address, "chain": "all",
+                     "dateRange": {"from": "30D_AGO", "to": "NOW"}}})
+
+    # prediction_market_address_summary — Polymarket activity (1 credit)
+    out["polymarket_summary"] = _mcp("prediction_market_address_summary",
+        {"request": {"address": address, "platform": "polymarket"}})
+
+    # general_search — entity label lookup (FREE)
+    out["entity_search"] = _mcp("general_search", {"query": address})
 
     return out
 
