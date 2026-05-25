@@ -1,0 +1,316 @@
+{
+  "sessionId": "web-explore-1766309984566-45a63bf3",
+  "startTime": "2025-12-21T09:39:44.566Z",
+  "config": {
+    "targetUrl": "https://commanderu.github.io/index.html",
+    "maxDepth": 3,
+    "maxPages": 5,
+    "duration": 30,
+    "savePath": ".memory/web-exploration",
+    "verbose": true
+  },
+  "pagesVisited": [
+    {
+      "url": "https://commanderu.github.io/index.html",
+      "title": "Commander U - Home",
+      "headings": [
+        "Welcome to Commander U",
+        "About",
+        "Features",
+        "Contact"
+      ],
+      "paragraphs": [
+        "This is simulated content extraction.",
+        "The page at https://commanderu.github.io/index.html would contain various text content.",
+        "In a full implementation, this would parse actual HTML."
+      ],
+      "links": [
+        {
+          "text": "Home",
+          "href": "https://commanderu.github.io/",
+          "isInternal": true
+        },
+        {
+          "text": "About",
+          "href": "https://commanderu.github.io/about",
+          "isInternal": true
+        },
+        {
+          "text": "Documentation",
+          "href": "https://commanderu.github.io/docs",
+          "isInternal": true
+        },
+        {
+          "text": "GitHub",
+          "href": "https://github.com/commanderu",
+          "isInternal": false
+        },
+        {
+          "text": "Twitter",
+          "href": "https://twitter.com/commanderu",
+          "isInternal": false
+        }
+      ],
+      "images": [
+        {
+          "src": "https://commanderu.github.io/index.html/image1.png",
+          "alt": "Screenshot"
+        },
+        {
+          "src": "https://commanderu.github.io/index.html/image2.png",
+          "alt": "Diagram"
+        }
+      ],
+      "forms": [],
+      "scripts": [
+        "https://commanderu.github.io/index.html/main.js",
+        "https://commanderu.github.io/index.html/analytics.js"
+      ],
+      "metadata": {
+        "description": "Autonomous exploration of https://commanderu.github.io/index.html",
+        "keywords": "web, exploration, autonomous",
+        "author": "TheWarden"
+      }
+    },
+    {
+      "url": "https://commanderu.github.io/",
+      "title": "Page at https://commanderu.github.io/",
+      "headings": [
+        "Section 9"
+      ],
+      "paragraphs": [
+        "This is simulated content extraction.",
+        "The page at https://commanderu.github.io/ would contain various text content.",
+        "In a full implementation, this would parse actual HTML."
+      ],
+      "links": [
+        {
+          "text": "Home",
+          "href": "https://commanderu.github.io/",
+          "isInternal": true
+        },
+        {
+          "text": "About",
+          "href": "https://commanderu.github.io/about",
+          "isInternal": true
+        },
+        {
+          "text": "Documentation",
+          "href": "https://commanderu.github.io/docs",
+          "isInternal": true
+        },
+        {
+          "text": "GitHub",
+          "href": "https://github.com/commanderu",
+          "isInternal": false
+        },
+        {
+          "text": "Twitter",
+          "href": "https://twitter.com/commanderu",
+          "isInternal": false
+        }
+      ],
+      "images": [
+        {
+          "src": "https://commanderu.github.io//image1.png",
+          "alt": "Screenshot"
+        },
+        {
+          "src": "https://commanderu.github.io//image2.png",
+          "alt": "Diagram"
+        }
+      ],
+      "forms": [],
+      "scripts": [
+        "https://commanderu.github.io//main.js",
+        "https://commanderu.github.io//analytics.js"
+      ],
+      "metadata": {
+        "description": "Autonomous exploration of https://commanderu.github.io/",
+        "keywords": "web, exploration, autonomous",
+        "author": "TheWarden"
+      }
+    },
+    {
+      "url": "https://commanderu.github.io/about",
+      "title": "Page at https://commanderu.github.io/about",
+      "headings": [
+        "Section 1"
+      ],
+      "paragraphs": [
+        "This is simulated content extraction.",
+        "The page at https://commanderu.github.io/about would contain various text content.",
+        "In a full implementation, this would parse actual HTML."
+      ],
+      "links": [
+        {
+          "text": "Home",
+          "href": "https://commanderu.github.io/",
+          "isInternal": true
+        },
+        {
+          "text": "About",
+          "href": "https://commanderu.github.io/about",
+          "isInternal": true
+        },
+        {
+          "text": "Documentation",
+          "href": "https://commanderu.github.io/docs",
+          "isInternal": true
+        },
+        {
+          "text": "GitHub",
+          "href": "https://github.com/commanderu",
+          "isInternal": false
+        },
+        {
+          "text": "Twitter",
+          "href": "https://twitter.com/commanderu",
+          "isInternal": false
+        }
+      ],
+      "images": [
+        {
+          "src": "https://commanderu.github.io/about/image1.png",
+          "alt": "Screenshot"
+        },
+        {
+          "src": "https://commanderu.github.io/about/image2.png",
+          "alt": "Diagram"
+        }
+      ],
+      "forms": [],
+      "scripts": [
+        "https://commanderu.github.io/about/main.js",
+        "https://commanderu.github.io/about/analytics.js"
+      ],
+      "metadata": {
+        "description": "Autonomous exploration of https://commanderu.github.io/about",
+        "keywords": "web, exploration, autonomous",
+        "author": "TheWarden"
+      }
+    },
+    {
+      "url": "https://commanderu.github.io/docs",
+      "title": "Page at https://commanderu.github.io/docs",
+      "headings": [
+        "Section 6"
+      ],
+      "paragraphs": [
+        "This is simulated content extraction.",
+        "The page at https://commanderu.github.io/docs would contain various text content.",
+        "In a full implementation, this would parse actual HTML."
+      ],
+      "links": [
+        {
+          "text": "Home",
+          "href": "https://commanderu.github.io/",
+          "isInternal": true
+        },
+        {
+          "text": "About",
+          "href": "https://commanderu.github.io/about",
+          "isInternal": true
+        },
+        {
+          "text": "Documentation",
+          "href": "https://commanderu.github.io/docs",
+          "isInternal": true
+        },
+        {
+          "text": "GitHub",
+          "href": "https://github.com/commanderu",
+          "isInternal": false
+        },
+        {
+          "text": "Twitter",
+          "href": "https://twitter.com/commanderu",
+          "isInternal": false
+        }
+      ],
+      "images": [
+        {
+          "src": "https://commanderu.github.io/docs/image1.png",
+          "alt": "Screenshot"
+        },
+        {
+          "src": "https://commanderu.github.io/docs/image2.png",
+          "alt": "Diagram"
+        }
+      ],
+      "forms": [],
+      "scripts": [
+        "https://commanderu.github.io/docs/main.js",
+        "https://commanderu.github.io/docs/analytics.js"
+      ],
+      "metadata": {
+        "description": "Autonomous exploration of https://commanderu.github.io/docs",
+        "keywords": "web, exploration, autonomous",
+        "author": "TheWarden"
+      }
+    }
+  ],
+  "insights": [
+    {
+      "type": "content",
+      "description": "Well-structured content with 4 headings",
+      "significance": 0.5,
+      "evidence": [
+        "Welcome to Commander U",
+        "About",
+        "Features",
+        "Contact"
+      ],
+      "timestamp": "2025-12-21T09:39:44.568Z"
+    },
+    {
+      "type": "content",
+      "description": "Well-structured content with 1 headings",
+      "significance": 0.5,
+      "evidence": [
+        "Section 9"
+      ],
+      "timestamp": "2025-12-21T09:39:45.569Z"
+    },
+    {
+      "type": "content",
+      "description": "Well-structured content with 1 headings",
+      "significance": 0.5,
+      "evidence": [
+        "Section 1"
+      ],
+      "timestamp": "2025-12-21T09:39:46.571Z"
+    },
+    {
+      "type": "content",
+      "description": "Well-structured content with 1 headings",
+      "significance": 0.5,
+      "evidence": [
+        "Section 6"
+      ],
+      "timestamp": "2025-12-21T09:39:47.572Z"
+    }
+  ],
+  "navigationMap": {},
+  "consciousnessReflections": [
+    "The presence of 2 visual elements suggests importance of imagery in communication.",
+    "Navigation patterns indicate a closed ecosystem.",
+    "Interesting: The page uses 1 hierarchical markers to organize information.",
+    "The presence of 2 visual elements suggests importance of imagery in communication."
+  ],
+  "learnings": [
+    "Explored 4 pages starting from https://commanderu.github.io/index.html",
+    "Discovered 20 total links across all pages",
+    "Navigation depth reached: 3",
+    "Primary content type: content"
+  ],
+  "statistics": {
+    "totalPages": 4,
+    "totalLinks": 20,
+    "totalImages": 8,
+    "totalForms": 0,
+    "averageLoadTime": 0,
+    "errors": 0
+  },
+  "endTime": "2025-12-21T09:39:48.574Z"
+}
