@@ -147,7 +147,7 @@ def _chainbase_mcp(address, chains, keys):
                 "tx_count": tx_count,
                 "balance_raw": bal,
                 "tokens": tokens,
-                "source": "chainbase_mcp"
+                "source": "chainbase_mcp ✅ GL-L29 fixed"
             }
         except Exception as e:
             out[chain_id] = {"error": str(e), "chain_name": CHAIN_NAMES.get(chain_id, chain_id)}
