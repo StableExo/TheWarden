@@ -1,9 +1,17 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm install && npx hardhat compile --force"
+# GL-L29: No Hardhat needed — CounterSweeper bytecode is pre-compiled and embedded
+buildCommand = "npm install"
 
 [deploy]
-# S54: Removed healthcheckPath — deploy script runs before HTTP server starts
-# Health check was causing "service unavailable" during contract deployment phase
-startCommand = "sh scripts/start-with-deploy.sh"
+# GL-L29: CounterSweeper deployment — runs once, deploys contract, exits
+# Bytecode pre-compiled (solc 0.8.25) and embedded in the script
+# Gas-free via Coinbase CDP Paymaster
+# Beneficiary: 0xfBe1783869504e07052d57A39867f82D5e3563B5 (Taylor's Coinbase)
+#
+# Required env vars in Railway dashboard:
+#   PRIVATE_KEY         = <EOA private key>
+#   CDP_PAYMASTER_URL   = https://api.developer.coinbase.com/rpc/v1/base/EeBuC9EkcVpsMwYSiiC1TUKwFTWJVzD1
+#   CHAINSTACK_HTTPS    = https://base-mainnet.core.chainstack.com/c726a0ad837354cad25d58bd89c7ac57
+startCommand = "node scripts/deploy-countersweeper.mjs"
 restartPolicyType = "ON_FAILURE"
