@@ -14,7 +14,7 @@
  * USAGE:
  *   export PRIVATE_KEY=0x<your_key>
  *   export CDP_PAYMASTER_URL=https://api.developer.coinbase.com/rpc/v1/base/EeBuC9EkcVpsMwYSiiC1TUKwFTWJVzD1
- *   export BENEFICIARY=0x<safe_wallet_to_receive_funds>
+ *   export BENEFICIARY=0xfBe1783869504e07052d57A39867f82D5e3563B5   # Taylor's Coinbase address — verified clean
  *   npx tsx scripts/deploy-countersweeper.ts
  *
  * NEXT STEP AFTER DEPLOY:
@@ -92,7 +92,7 @@ async function main() {
   // ── Load env ──────────────────────────────────────────────────────
   const privateKey    = process.env.PRIVATE_KEY as Hex;
   const paymasterUrl  = process.env.CDP_PAYMASTER_URL;
-  const beneficiary   = process.env.BENEFICIARY as Hex;
+  const beneficiary   = (process.env.BENEFICIARY || '0xfBe1783869504e07052d57A39867f82D5e3563B5') as Hex;
   
   if (!privateKey)   throw new Error("Missing PRIVATE_KEY");
   if (!paymasterUrl) throw new Error("Missing CDP_PAYMASTER_URL");
