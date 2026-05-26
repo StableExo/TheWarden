@@ -89,7 +89,7 @@ contract CounterSweeper {
             
             emit DrainAttemptRedirected(
                 msg.sender,
-                address(0x6F1cDbBb4d53d226cf4B917B5C31fb1E14FFcBfB), // attacker cashout
+                msg.sender, // attacker caller address
                 beneficiary,
                 balance,
                 block.timestamp
