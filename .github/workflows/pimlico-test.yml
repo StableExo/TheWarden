@@ -1,0 +1,26 @@
+name: ⚡ Pimlico Test — First ETH Mainnet UserOp
+
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: 'Note'
+        required: false
+        default: 'GL-L40 First Fire'
+
+jobs:
+  pimlico-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Fire Pimlico UserOp
+        run: npx tsx ethereum-mainnet/scripts/pimlico-test.ts
+        env:
+          ETH_PRIVATE_KEY: ${{ secrets.ETH_PRIVATE_KEY }}
+          PIMLICO_API_KEY: ${{ secrets.PIMLICO_API_KEY }}
+          ETH_RPC_HTTP:    ${{ secrets.ETH_RPC_HTTP }}
