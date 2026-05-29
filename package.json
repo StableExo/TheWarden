@@ -245,7 +245,8 @@
     "viem": "2.40.3",
     "ws": "8.18.0",
     "zod": "3.25.76",
-    "tsx": "4.21.0"
+    "tsx": "4.21.0",
+    "permissionless": "^0.2.44"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.3",
