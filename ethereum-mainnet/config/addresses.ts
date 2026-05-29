@@ -1,0 +1,46 @@
+/**
+ * ETH Mainnet Contract & Protocol Addresses
+ * GL-L40 | TheWarden
+ */
+
+export const ADDRESSES = {
+  uniswapV3: {
+    factory:   '0x1F98431c8aD98523631AE4a59f267346ea31F984',
+    router:    '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+    quoterV2:  '0x61fFE014bA17989E743c5F6cB21bF9697530B21e',
+    multicall: '0x1F98415757620B543A52E61c46B32eB19261F984',
+  },
+  balancer: {
+    vault:   '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
+    helpers: '0x5aDDCCa35b7A0D07C74063c48700C8590E0C47bC',
+  },
+  curve: {
+    registry: '0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f6',
+    router:   '0x99a58482BD75cbab83b27EC03CA68fF489b5788f',
+    pool3:    '0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7', // DAI/USDC/USDT
+    stETH:    '0xDC24316b9AE028F1497c275EB9192a3Ea0f67022',
+  },
+  aaveV3: {
+    pool:     '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2',
+    provider: '0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e',
+  },
+  dydx: {
+    soloMargin: '0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e',
+  },
+  entryPoints: {
+    v06: '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789',
+    v07: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+    v08: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+  },
+  tokens: {
+    WETH:  '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    USDC:  '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    USDT:  '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    DAI:   '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    WBTC:  '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    stETH: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84',
+  },
+  // FlashSwapV3 on Base (reference): 0x4744EAB93112A3cD52967e6B2d0d7b7C8DA682f3
+  // FlashSwapV3 on ETH mainnet: TODO — deploy and fill in
+  flashSwapV3ETH: '' as string,
+} as const;
