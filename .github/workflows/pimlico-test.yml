@@ -16,9 +16,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - name: Fire Pimlico UserOp
+      - name: Install dependencies
+        run: npm install
+      - name: Fire Pimlico UserOp ⚡
         run: npx tsx ethereum-mainnet/scripts/pimlico-test.ts
         env:
           ETH_PRIVATE_KEY: ${{ secrets.ETH_PRIVATE_KEY }}
