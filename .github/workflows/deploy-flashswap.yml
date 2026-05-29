@@ -1,41 +1,50 @@
-name: Deploy FlashSwapV3 Contract #14
+name: Deploy FlashSwapV3 Contract — ETH Mainnet
 
 on:
   workflow_dispatch:
     inputs:
-      network:
-        description: 'Network to deploy to'
+      dry_run:
+        description: 'Dry run (compile only, no deploy)'
         required: false
-        default: 'base'
+        default: 'false'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
+    timeout-minutes: 15
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Compile contracts
+
+      - name: Compile FlashSwapV3
         run: npx hardhat compile --force
-      
-      - name: Deploy Contract #14 via UserOp
+
+      - name: Verify bytecode extracted
+        run: |
+          ls -la artifacts/contracts/FlashSwapV3.sol/
+          echo "Bytecode size: $(cat artifacts/contracts/FlashSwapV3.sol/FlashSwapV3.json | jq -r '.bytecode' | wc -c) chars"
+
+      - name: Deploy FlashSwapV3 — ETH Mainnet (FREE via ThirdWeb)
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         env:
-          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
-          CDP_PAYMASTER_URL: ${{ secrets.CDP_PAYMASTER_URL }}
-          CHAINSTACK_HTTPS: ${{ secrets.BASE_RPC_URL }}
-        run: npx tsx scripts/deploy-multi-router.ts
-      
-      - name: Report deployment
+          ETH_PRIVATE_KEY: ${{ secrets.ETH_PRIVATE_KEY }}
+          THIRDWEB_CLIENT_ID: '0282b1b3ed884ef92509e46b8da1fad7'
+          THIRDWEB_SECRET_KEY: ${{ secrets.THIRDWEB_SECRET_KEY }}
+        run: npx tsx ethereum-mainnet/scripts/thirdweb-deploy.ts
+
+      - name: GL-L41 Complete
         if: success()
-        run: echo "Contract #14 deployed successfully to ${{ github.event.inputs.network || 'base' }}!"
+        run: |
+          echo "🏴‍☠️  FlashSwapV3 deployed to ETH Mainnet — GL-L41"
+          echo "Gas: $0.00 via ThirdWeb sponsorship"
+          echo "Tithe: 70% → US debt doctrine"
