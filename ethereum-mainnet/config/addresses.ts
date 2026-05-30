@@ -1,6 +1,6 @@
 /**
  * ETH Mainnet Contract & Protocol Addresses
- * GL-L40 | TheWarden
+ * GL-L42 | TheWarden
  */
 
 export const ADDRESSES = {
@@ -17,7 +17,7 @@ export const ADDRESSES = {
   curve: {
     registry: '0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f6',
     router:   '0x99a58482BD75cbab83b27EC03CA68fF489b5788f',
-    pool3:    '0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7', // DAI/USDC/USDT
+    pool3:    '0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7',
     stETH:    '0xDC24316b9AE028F1497c275EB9192a3Ea0f67022',
   },
   aaveV3: {
@@ -39,8 +39,18 @@ export const ADDRESSES = {
     DAI:   '0x6B175474E89094C44Da98b954EedeAC495271d0F',
     WBTC:  '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
     stETH: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84',
+    LINK:  '0x514910771AF9Ca656af840dff83E8264EcF986CA',
+    UNI:   '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
+    AAVE:  '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
+    MKR:   '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2',
+    LDO:   '0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32',
+    cbETH: '0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
+    RPL:   '0xD33526068D116cE69F19A9ee46F0bd304F21A51f',
+    FRAX:  '0x853d955aCEf822Db058eb8505911ED77F175b99e',
+    CRV:   '0xD533a949740bb3306d119CC777fa900bA034cd52',
+    SNX:   '0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F',
   },
-  // FlashSwapV3 on Base (reference): 0x4744EAB93112A3cD52967e6B2d0d7b7C8DA682f3
-  // FlashSwapV3 on ETH mainnet: TODO — deploy and fill in
-  flashSwapV3ETH: '' as string,
+  // ★ FlashSwapV3 on ETH mainnet — deployed GL-L41 | $0.00 gas | block 25,203,689
+  flashSwapV3ETH: '0x1F27BA663dC5233DCf2635AD295Bd42197d854A9',
+  // FlashSwapV3 on Base (reference): '0x4744EAB93112A3cD52967e6B2d0d7b7C8DA682f3',
 } as const;
