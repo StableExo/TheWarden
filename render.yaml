@@ -1,0 +1,26 @@
+services:
+  # ── CoalitionBundleAPI ──────────────────────────────────────────────────────
+  # TheWarden AEV Block Builder — Path B searcher endpoint
+  # eth_sendBundle compatible | 95% refund | beats Quasar 90%
+  # GL-L43 | Taylor Marlow (@StableExo)
+  - type: web
+    name: thewarden-coalition-api
+    runtime: node
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: npm install
+    startCommand: node --import tsx ethereum-mainnet/builder/CoalitionBundleAPI.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: BUILDER_BLS_PUBKEY
+        value: "0xa2186b0978a787f43b945336712901bd732fd09331dd479d59dced423277b4ac47a8de65ba6e668065f63cbe8a713f29"
+      - key: BUILDER_BLS_SK
+        sync: false
+      - key: BUILDER_FEE_RECIPIENT
+        value: "0x92d1d44C37Eb5a6996968FE4F2907f403757E611"
+    healthCheckPath: /health
+    autoDeploy: true
