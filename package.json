@@ -219,7 +219,9 @@
     "demo:philosophical-depth": "node --import tsx scripts/consciousness/demo-philosophical-depth.ts",
     "demo:consciousness-impact": "node --import tsx scripts/consciousness/demo-consciousness-impact.ts",
     "explore:autonomous": "node --import tsx scripts/consciousness/autonomous-exploration.ts",
-    "prestart": "npm install tsx@4.21.0 --no-save"
+    "prestart": "npm install tsx@4.21.0 --no-save",
+    "start:coalition": "node --import tsx ethereum-mainnet/builder/CoalitionBundleAPI.ts",
+    "start:builder": "node --import tsx ethereum-mainnet/scripts/build-block.ts"
   },
   "dependencies": {
     "@solana/web3.js": "1.98.4",
@@ -246,7 +248,9 @@
     "ws": "8.18.0",
     "zod": "3.25.76",
     "tsx": "4.21.0",
-    "permissionless": "^0.2.44"
+    "permissionless": "^0.2.44",
+    "axios": "^1.7.9",
+    "@noble/curves": "^1.6.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.3",
