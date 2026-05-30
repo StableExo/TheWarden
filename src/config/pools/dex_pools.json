@@ -138,5 +138,241 @@
       "factory": "0x0c3c1c532F1e39EdF36BE9Fe0bE1410313E074Bf",
       "router": "0xAc48FcF1049668B285f3dC72483DF5Ae2162f7e8"
     }
+  },
+  "ethereum": {
+    "uniswapV3": {
+      "factory": "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+      "router": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "quoterV2": "0x61fFE014bA17989E743c5F6cB21bF9697530B21e",
+      "multicall3": "0xcA11bde05977b3631167028862bE2a173976CA11",
+      "pools": [
+        {
+          "label": "USDC/WETH 0.05%",
+          "address": "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640",
+          "token0": "USDC",
+          "token1": "WETH",
+          "fee": 500
+        },
+        {
+          "label": "USDC/WETH 0.30%",
+          "address": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8",
+          "token0": "USDC",
+          "token1": "WETH",
+          "fee": 3000
+        },
+        {
+          "label": "USDC/WETH 1.00%",
+          "address": "0x7bea39867e4169dbe237d55c8242a8f2fcDcc387",
+          "token0": "USDC",
+          "token1": "WETH",
+          "fee": 10000
+        },
+        {
+          "label": "USDT/WETH 0.05%",
+          "address": "0x11b815efB8f581194ae79006d24E0d814B7697F6",
+          "token0": "WETH",
+          "token1": "USDT",
+          "fee": 500
+        },
+        {
+          "label": "USDT/WETH 0.30%",
+          "address": "0x4e68Ccd3E89f51C3074ca5072bbAC773960dFa36",
+          "token0": "WETH",
+          "token1": "USDT",
+          "fee": 3000
+        },
+        {
+          "label": "WBTC/WETH 0.05%",
+          "address": "0x4585FE77225b41b697C938B018E2Ac67Ac5a20c0",
+          "token0": "WBTC",
+          "token1": "WETH",
+          "fee": 500
+        },
+        {
+          "label": "WBTC/WETH 0.30%",
+          "address": "0xCBCdF9626bC03E24f779434178A73a0B4bad62eD",
+          "token0": "WBTC",
+          "token1": "WETH",
+          "fee": 3000
+        },
+        {
+          "label": "WBTC/USDC 0.30%",
+          "address": "0x99ac8cA7087fA4A2A1FB6357269965A2014ABc35",
+          "token0": "WBTC",
+          "token1": "USDC",
+          "fee": 3000
+        },
+        {
+          "label": "DAI/WETH 0.30%",
+          "address": "0xC2e9F25Be6257c210d7Adf0D4Cd6E3E881ba25f8",
+          "token0": "DAI",
+          "token1": "WETH",
+          "fee": 3000
+        },
+        {
+          "label": "USDC/USDT 0.01%",
+          "address": "0x3416cF6C708Da44DB2624D63ea0AAef7113527C6",
+          "token0": "USDC",
+          "token1": "USDT",
+          "fee": 100
+        },
+        {
+          "label": "USDT/USDC 0.05%",
+          "address": "0x7858E59e0C01EA06Df3aF3D20aC7B0003275D4Bf",
+          "token0": "USDC",
+          "token1": "USDT",
+          "fee": 500
+        },
+        {
+          "label": "DAI/USDC 0.05%",
+          "address": "0x6c6Bc977E13Df9b0de53b251522280BB72383700",
+          "token0": "DAI",
+          "token1": "USDC",
+          "fee": 500
+        },
+        {
+          "label": "DAI/USDT 0.01%",
+          "address": "0x48DA0965ab2d2CBF1C17C09CFB5cbe67AD5B1406",
+          "token0": "DAI",
+          "token1": "USDT",
+          "fee": 100
+        },
+        {
+          "label": "FRAX/USDC 0.05%",
+          "address": "0xc63B0708E2F7e69CB8A1df0e1389A98C35A76D52",
+          "token0": "FRAX",
+          "token1": "USDC",
+          "fee": 500
+        },
+        {
+          "label": "stETH/WETH 0.01%",
+          "address": "0x8f8EAaf88448BA31BDfFF6ad8c42830c032C6392",
+          "token0": "WETH",
+          "token1": "stETH",
+          "fee": 100
+        },
+        {
+          "label": "cbETH/WETH 0.05%",
+          "address": "0x840DEEef2f115Cf50DA625F7368C24AF6Fe74410",
+          "token0": "cbETH",
+          "token1": "WETH",
+          "fee": 500
+        },
+        {
+          "label": "cbETH/WETH 0.01%",
+          "address": "0x177622E79Acece98C39F6E12fa78Ac7FC8a8BF62",
+          "token0": "cbETH",
+          "token1": "WETH",
+          "fee": 100
+        },
+        {
+          "label": "LINK/WETH 0.30%",
+          "address": "0xa6Cc3C2531FdaA6Ae1A3CA84c2855806728693e8",
+          "token0": "LINK",
+          "token1": "WETH",
+          "fee": 3000
+        },
+        {
+          "label": "LINK/WETH 0.05%",
+          "address": "0x5d4f3c6FA16908609bAC31FF148bd002aA6B8C83",
+          "token0": "LINK",
+          "token1": "WETH",
+          "fee": 500
+        },
+        {
+          "label": "UNI/WETH 0.30%",
+          "address": "0x1d42064Fc4beb5F8aAF85F4617AE8b3b5B8Bd801",
+          "token0": "UNI",
+          "token1": "WETH",
+          "fee": 3000
+        },
+        {
+          "label": "AAVE/WETH 0.30%",
+          "address": "0x5aB53EE1d50eeF2C1DD3d5402789cd27bB52c1bB",
+          "token0": "AAVE",
+          "token1": "WETH",
+          "fee": 3000
+        },
+        {
+          "label": "AAVE/WETH 0.05%",
+          "address": "0x4674AbC5796E1334B5075326b39B748bee9EAa34",
+          "token0": "AAVE",
+          "token1": "WETH",
+          "fee": 500
+        },
+        {
+          "label": "MKR/WETH 0.30%",
+          "address": "0xe8c6c9227491C0a8156A0106A0204d881BB7E531",
+          "token0": "MKR",
+          "token1": "WETH",
+          "fee": 3000
+        },
+        {
+          "label": "LDO/WETH 0.30%",
+          "address": "0xa3f558AebaEcaF0e11cA4b2199Cc5Ed341edFD74",
+          "token0": "LDO",
+          "token1": "WETH",
+          "fee": 3000
+        },
+        {
+          "label": "LDO/WETH 0.05%",
+          "address": "0xcFECC1C9F3CB6190Cb1fF7F65a130BFBe5107D38",
+          "token0": "LDO",
+          "token1": "WETH",
+          "fee": 500
+        },
+        {
+          "label": "RPL/WETH 0.30%",
+          "address": "0xe42318EA3b998E8355a3dA364eb9D48ec725eB45",
+          "token0": "RPL",
+          "token1": "WETH",
+          "fee": 3000
+        },
+        {
+          "label": "CRV/WETH 0.30%",
+          "address": "0x919Fa96e88d67499339577Fa202345436bcDaf79",
+          "token0": "WETH",
+          "token1": "CRV",
+          "fee": 3000
+        },
+        {
+          "label": "SNX/WETH 0.30%",
+          "address": "0xede8DD046586d22625Ae7fF2708F879eF7bdb8cF",
+          "token0": "SNX",
+          "token1": "WETH",
+          "fee": 3000
+        }
+      ]
+    },
+    "balancerV2": {
+      "vault": "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
+      "pools": [
+        {
+          "label": "wstETH/WETH",
+          "address": "0x32296969Ef14EB0c6d29669C550D4a0449130230",
+          "poolId": "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080"
+        },
+        {
+          "label": "WETH/USDC 80/20",
+          "address": "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56",
+          "poolId": "0x5c6ee304399dbdb9c8ef030ab642b10820db8f5600020000000000000000014a"
+        }
+      ]
+    },
+    "curve": {
+      "pools": [
+        {
+          "label": "3pool",
+          "address": "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7"
+        },
+        {
+          "label": "stETH/ETH",
+          "address": "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022"
+        }
+      ]
+    },
+    "multicall3": "0xcA11bde05977b3631167028862bE2a173976CA11",
+    "flashSwapV3": "0x1F27BA663dC5233DCf2635AD295Bd42197d854A9",
+    "note": "GL-L42: 28 UniV3 pools + 2 Balancer + 2 Curve. All addresses factory-verified. Use Multicall3 for batch reads."
   }
 }
