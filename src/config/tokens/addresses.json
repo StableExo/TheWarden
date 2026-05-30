@@ -19,6 +19,66 @@
       "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
       "decimals": 18,
       "symbol": "DAI"
+    },
+    "WBTC": {
+      "address": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+      "decimals": 8,
+      "symbol": "WBTC"
+    },
+    "stETH": {
+      "address": "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+      "decimals": 18,
+      "symbol": "stETH"
+    },
+    "LINK": {
+      "address": "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+      "decimals": 18,
+      "symbol": "LINK"
+    },
+    "UNI": {
+      "address": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+      "decimals": 18,
+      "symbol": "UNI"
+    },
+    "AAVE": {
+      "address": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+      "decimals": 18,
+      "symbol": "AAVE"
+    },
+    "MKR": {
+      "address": "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2",
+      "decimals": 18,
+      "symbol": "MKR"
+    },
+    "LDO": {
+      "address": "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32",
+      "decimals": 18,
+      "symbol": "LDO"
+    },
+    "cbETH": {
+      "address": "0xBe9895146f7AF43049ca1c1AE358B0541Ea49704",
+      "decimals": 18,
+      "symbol": "cbETH"
+    },
+    "RPL": {
+      "address": "0xD33526068D116cE69F19A9ee46F0bd304F21A51f",
+      "decimals": 18,
+      "symbol": "RPL"
+    },
+    "FRAX": {
+      "address": "0x853d955aCEf822Db058eb8505911ED77F175b99e",
+      "decimals": 18,
+      "symbol": "FRAX"
+    },
+    "CRV": {
+      "address": "0xD533a949740bb3306d119CC777fa900bA034cd52",
+      "decimals": 18,
+      "symbol": "CRV"
+    },
+    "SNX": {
+      "address": "0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F",
+      "decimals": 18,
+      "symbol": "SNX"
     }
   },
   "arbitrum": {
