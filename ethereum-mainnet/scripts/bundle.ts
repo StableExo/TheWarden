@@ -36,6 +36,7 @@ import { ADDRESSES } from '../config/addresses';
 import { EthPoolScanner } from '../scanner/EthPoolScanner';
 import { QuasarComposer } from '../bundle/QuasarComposer';
 import { MultiBuilderSubmitter } from '../bundle/MultiBuilderSubmitter';
+// Note: FLASH_ABI and buildArbPath also available from '../config/arb' (GL-L44)
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 const PRIVATE_KEY      = process.env.ETH_PRIVATE_KEY as `0x${string}`;
@@ -48,7 +49,7 @@ const MIN_POOL_BPS     = ETH_MAINNET.monitor.poolFireBps;
 const QUOTE_AMT_USDC   = ETH_MAINNET.monitor.quoteAmountUsdc;
 
 // ─── FlashSwapV3 ABI ─────────────────────────────────────────────────────────
-export const FLASH_ABI = [{
+const FLASH_ABI = [{
   name: 'executeArbitrage',
   type: 'function',
   inputs: [
@@ -129,7 +130,7 @@ function calcSpreadBps(a: number, b: number): number {
   return Math.round((a - b) / b * 10000);
 }
 
-export function buildArbPath(
+function buildArbPath(
   step1Pool: string, step1In: string, step1Out: string, step1Fee: number, step1MinOut: bigint,
   step2Pool: string, step2In: string, step2Out: string, step2Fee: number, step2MinOut: bigint,
   borrowAmount: bigint, minFinalAmount: bigint,
