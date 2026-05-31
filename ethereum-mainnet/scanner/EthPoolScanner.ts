@@ -18,7 +18,7 @@
  *   Seq equivalent: ~6,048ms | Speedup: ~24x
  */
 
-import { createPublicClient, http, type Address, parseAbi } from 'viem';
+import { createPublicClient, http, type Address } from 'viem';
 import { mainnet } from 'viem/chains';
 import { ETH_MAINNET } from '../config/network';
 import { ADDRESSES } from '../config/addresses';
@@ -35,9 +35,20 @@ const UNIV3_ABI = parseAbi([
   'function liquidity() view returns (uint128)',
 ]);
 
-const MULTICALL3_ABI = parseAbi([
-  'function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) payable returns (tuple(bool success, bytes returnData)[] returnData)',
-]);
+const MULTICALL3_ABI = [{
+  name: 'aggregate3',
+  type: 'function',
+  stateMutability: 'payable',
+  inputs: [{ name: 'calls', type: 'tuple[]', components: [
+    { name: 'target',       type: 'address' },
+    { name: 'allowFailure', type: 'bool'    },
+    { name: 'callData',     type: 'bytes'   },
+  ]}],
+  outputs: [{ name: 'returnData', type: 'tuple[]', components: [
+    { name: 'success',    type: 'bool'  },
+    { name: 'returnData', type: 'bytes' },
+  ]}],
+}] as const;
 
 export interface PoolPrice { pool: PoolConfig; price: number; priceInv: number; liquidity: bigint; timestamp: number; }
 export interface ArbOpportunity {
