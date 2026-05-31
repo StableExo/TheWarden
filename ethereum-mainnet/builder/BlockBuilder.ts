@@ -105,7 +105,14 @@ export interface SignedBuilderBid {
 // ─── Block assembler ─────────────────────────────────────────────────────────
 export class BlockBuilder {
   private client = createPublicClient({ chain: mainnet, transport: http(ETH_MAINNET.rpc.http) });
-  private wss    = createPublicClient({ chain: mainnet, transport: webSocket(ETH_MAINNET.rpc.wss) });
+  private wss: ReturnType<typeof createPublicClient> | null = null;
+
+  private getWss() {
+    if (!this.wss) {
+      this.wss = createPublicClient({ chain: mainnet, transport: webSocket(ETH_MAINNET.rpc.wss) });
+    }
+    return this.wss;
+  }
 
   /**
    * assemble — build a complete ordered tx list for the next slot
@@ -231,7 +238,7 @@ export class BlockBuilder {
 
   /** Subscribe to new slots via WSS (fires every 12 seconds) */
   async watchSlots(onNewSlot: (slot: number, parentHash: string) => void): Promise<void> {
-    await this.wss.watchBlockNumber({
+    await this.getWss().watchBlockNumber({
       onBlockNumber: async (blockNumber) => {
         const block = await this.client.getBlock({ blockNumber, includeTransactions: false });
         const slot  = this.getCurrentSlot();
