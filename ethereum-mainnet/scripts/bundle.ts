@@ -48,7 +48,7 @@ const MIN_POOL_BPS     = ETH_MAINNET.monitor.poolFireBps;
 const QUOTE_AMT_USDC   = ETH_MAINNET.monitor.quoteAmountUsdc;
 
 // ─── FlashSwapV3 ABI ─────────────────────────────────────────────────────────
-const FLASH_ABI = [{
+export const FLASH_ABI = [{
   name: 'executeArbitrage',
   type: 'function',
   inputs: [
@@ -129,7 +129,7 @@ function calcSpreadBps(a: number, b: number): number {
   return Math.round((a - b) / b * 10000);
 }
 
-function buildArbPath(
+export function buildArbPath(
   step1Pool: string, step1In: string, step1Out: string, step1Fee: number, step1MinOut: bigint,
   step2Pool: string, step2In: string, step2Out: string, step2Fee: number, step2MinOut: bigint,
   borrowAmount: bigint, minFinalAmount: bigint,
