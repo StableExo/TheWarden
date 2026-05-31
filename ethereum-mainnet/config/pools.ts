@@ -73,7 +73,8 @@ export const CURVE_POOLS: PoolConfig[] = [
 
 export const ALL_POOLS: PoolConfig[] = [
   ...UNISWAP_V3_POOLS,
-  ...SUSHIV3_POOLS,
+  // SushiV3 pools excluded from arb until router address verified — GL-L45
+  // ...SUSHIV3_POOLS,
   ...BALANCER_POOLS,
   ...CURVE_POOLS,
 ];
