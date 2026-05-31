@@ -72,7 +72,7 @@ export const ETH_MAINNET = {
   },
 
   wallet: {
-    eoa:    '0x1Aa04F01106Aa53bc7A112C502A934a6d72062d4'  // stableexo.base.eth — GL-L44 profit dest,
+    eoa:    '0x1Aa04F01106Aa53bc7A112C502A934a6d72062d4',  // stableexo.base.eth — profit dest GL-L44,
     cbw:    '0x1Aa04F01106Aa53bc7A112C502A934a6d72062d4',
     cbwEns: 'stableexo.base.eth',
   },
