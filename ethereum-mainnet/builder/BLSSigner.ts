@@ -5,15 +5,18 @@
  * Signs BuilderBid messages so relays can verify block origin.
  *
  * GL-L43: Live signing wired to build-block.ts continuous loop.
+ * GL-L45 FIX: require("crypto") → import { createHash } — was breaking all
+ *             signatures in ESM/tsx context causing wins=0.
  *
  * Key: 0xa2186b...13f29 (full key in TheWardenKeys.pdf)
  * Curve: BLS12-381 G1 compressed — Ethereum beacon chain standard
  */
 
+import { createHash } from 'crypto';
 import { bls12_381 } from '@noble/curves/bls12-381';
 import type { BidTrace } from './BlockBuilder';
 
-// ── Domain constants ─────────────────────────────────────────────────────────
+// ── Domain constants ────────────────────────────────────────────────────────
 // DOMAIN_APPLICATION_BUILDER = 0x00000001 per EIP-4399 / builder specs
 const BUILDER_DOMAIN = Buffer.concat([
   Buffer.from('00000001', 'hex'),  // domain type
@@ -21,35 +24,27 @@ const BUILDER_DOMAIN = Buffer.concat([
   Buffer.alloc(28),                // padding
 ]);
 
-// ── BLSSigner class ──────────────────────────────────────────────────────────
+// ── BLSSigner ────────────────────────────────────────────────────────────────
 export class BLSSigner {
   private readonly sk: bigint;
   readonly pubkey: string;
 
   constructor(privateKeyHex: string) {
     if (!privateKeyHex || privateKeyHex === '0x' || privateKeyHex === '') {
-      throw new Error('BLSSigner: BUILDER_BLS_SK is empty — set env var before starting block builder');
+      throw new Error('BLSSigner: BUILDER_BLS_SK is empty — set env var');
     }
     const skHex   = privateKeyHex.startsWith('0x') ? privateKeyHex.slice(2) : privateKeyHex;
     const skBytes = Buffer.from(skHex, 'hex');
-    if (skBytes.length === 0) {
-      throw new Error('BLSSigner: BUILDER_BLS_SK produced empty bytes — check hex format');
-    }
+    if (skBytes.length === 0) throw new Error('BLSSigner: empty key bytes');
     this.sk = BigInt('0x' + skBytes.toString('hex'));
 
-    // Derive pubkey
     const pkBytes = bls12_381.getPublicKey(this.sk);
     this.pubkey = '0x' + Buffer.from(pkBytes).toString('hex');
+    console.log('[BLSSigner] ✅ Initialised | pubkey=' + this.pubkey.slice(0, 22) + '...');
   }
 
-  /**
-   * hashTreeRoot — SSZ hash of BidTrace for signing
-   * Simplified SSZ: sha256 of concatenated fixed-width fields
-   */
+  /** SSZ hash of BidTrace fields for signing */
   private hashBidTrace(bid: BidTrace): Buffer {
-    const { createHash } = require('crypto');
-
-    // Pad all fields to 32 bytes for consistent hashing
     const encode = (hex: string, len = 32) =>
       Buffer.from(hex.replace('0x', '').padStart(len * 2, '0'), 'hex');
 
@@ -57,43 +52,31 @@ export class BLSSigner {
       encode(bid.slot.toString(16), 8),
       encode(bid.parent_hash),
       encode(bid.block_hash),
-      encode(bid.builder_pubkey, 48),
-      encode(bid.proposer_pubkey, 48),
+      encode(bid.builder_pubkey,         48),
+      encode(bid.proposer_pubkey,        48),
       encode(bid.proposer_fee_recipient, 20),
-      encode(bid.gas_limit.toString(16), 8),
-      encode(bid.gas_used.toString(16), 8),
-      encode(bid.value.toString(16), 32),
+      encode(bid.gas_limit.toString(16),  8),
+      encode(bid.gas_used.toString(16),   8),
+      encode(bid.value.toString(16),     32),
     ]);
 
     return createHash('sha256').update(data).digest();
   }
 
-  /**
-   * computeSigningRoot — SSZ signing root per beacon chain spec
-   * signing_root = sha256(object_root || domain)
-   */
+  /** signing_root = sha256(object_root || domain) */
   private computeSigningRoot(objectRoot: Buffer): Buffer {
-    const { createHash } = require('crypto');
-    return createHash('sha256')
-      .update(objectRoot)
-      .update(BUILDER_DOMAIN)
-      .digest();
+    return createHash('sha256').update(objectRoot).update(BUILDER_DOMAIN).digest();
   }
 
-  /**
-   * signBid — signs a BidTrace for relay submission
-   * Returns hex signature string (0x-prefixed, 96 bytes)
-   */
+  /** Signs a BidTrace → hex signature (0x-prefixed, 96 bytes) */
   signBid(bid: BidTrace): string {
-    const bidRoot    = this.hashBidTrace(bid);
+    const bidRoot     = this.hashBidTrace(bid);
     const signingRoot = this.computeSigningRoot(bidRoot);
-    const sig        = bls12_381.sign(signingRoot, this.sk);
+    const sig         = bls12_381.sign(signingRoot, this.sk);
     return '0x' + Buffer.from(sig).toString('hex');
   }
 
-  /**
-   * verifyBid — verify a bid signature (sanity check before submission)
-   */
+  /** Verify a bid signature */
   verifyBid(bid: BidTrace, signature: string): boolean {
     try {
       const bidRoot     = this.hashBidTrace(bid);
@@ -101,47 +84,28 @@ export class BLSSigner {
       const sigBytes    = Buffer.from(signature.replace('0x', ''), 'hex');
       const pkBytes     = Buffer.from(this.pubkey.replace('0x', ''), 'hex');
       return bls12_381.verify(sigBytes, signingRoot, pkBytes);
-    } catch {
-      return false;
-    }
+    } catch { return false; }
   }
 
-  /**
-   * signRegistration — sign a builder registration message
-   * Used for relay-specific whitelisting flows
-   */
+  /** Sign a builder registration message */
   signRegistration(feeRecipient: string, gasLimit: number, timestamp: number): {
-    message: object;
-    signature: string;
+    message: object; signature: string;
   } {
-    const { createHash } = require('crypto');
-
     const msgBuffer = Buffer.concat([
-      Buffer.from(feeRecipient.replace('0x', ''), 'hex'),  // 20 bytes
-      Buffer.alloc(8).fill(0),                              // gas_limit placeholder
-      Buffer.alloc(8).fill(0),                              // timestamp placeholder
-      Buffer.from(this.pubkey.replace('0x', ''), 'hex'),   // 48 bytes pubkey
+      Buffer.from(feeRecipient.replace('0x', ''), 'hex'),
+      Buffer.alloc(8).fill(0),
+      Buffer.alloc(8).fill(0),
+      Buffer.from(this.pubkey.replace('0x', ''), 'hex'),
     ]);
-
-    // Write gas_limit and timestamp as LE uint64
-    msgBuffer.writeBigUInt64LE(BigInt(gasLimit), 20);
-    msgBuffer.writeBigUInt64LE(BigInt(timestamp), 28);
-
+    msgBuffer.writeBigUInt64LE(BigInt(gasLimit),   20);
+    msgBuffer.writeBigUInt64LE(BigInt(timestamp),  28);
     const msgRoot     = createHash('sha256').update(msgBuffer).digest();
     const signingRoot = this.computeSigningRoot(msgRoot);
     const sig         = bls12_381.sign(signingRoot, this.sk);
-
     return {
-      message: {
-        fee_recipient: feeRecipient,
-        gas_limit:     String(gasLimit),
-        timestamp:     String(timestamp),
-        pubkey:        this.pubkey,
-      },
+      message: { fee_recipient: feeRecipient, gas_limit: String(gasLimit), timestamp: String(timestamp), pubkey: this.pubkey },
       signature: '0x' + Buffer.from(sig).toString('hex'),
     };
   }
 }
-
-// Singleton removed GL-L44 — instantiate BLSSigner directly in build-block.ts with validated env var
-// export const signer = new BLSSigner(process.env.BUILDER_BLS_SK!);
+// Singleton removed GL-L44 — instantiate directly in build-block.ts
