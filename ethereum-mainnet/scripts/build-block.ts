@@ -97,6 +97,21 @@ let arbsInjected   = 0;
 let totalProfit    = 0n;
 const startTime    = Date.now();
 
+// ── Render health server (required for free web service) ─────────────────────
+import { createServer } from 'node:http';
+const PORT = parseInt(process.env.PORT ?? '3001');
+createServer((_, res) => {
+  const uptime  = Math.floor((Date.now() - startTime) / 1000);
+  const winRate = slotsProcessed > 0 ? ((blocksWon / slotsProcessed) * 100).toFixed(1) : '0.0';
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ 
+    status: 'building', slots: slotsProcessed, wins: blocksWon, 
+    winRate: `${winRate}%`, arbs: arbsInjected,
+    profit: `${(Number(totalProfit)/1e18).toFixed(6)} ETH`, uptime: `${uptime}s`
+  }));
+}).listen(PORT, () => console.log(`[build-block] 🏥 Health: http://0.0.0.0:${PORT}/`));
+
+
 console.log(`
 ╔══════════════════════════════════════════════════════════════════╗
 ║       TheWarden AEV Block Builder — GL-L44 LIVE ARB WIRED       ║
