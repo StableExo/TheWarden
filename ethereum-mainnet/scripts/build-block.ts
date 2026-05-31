@@ -36,7 +36,7 @@ import { ADDRESSES } from '../config/addresses';
 const COALITION_API   = process.env.COALITION_API_URL  ?? 'https://thewarden.onrender.com';
 const BLS_SK          = process.env.BUILDER_BLS_SK     ?? '';
 const PRIVATE_KEY     = process.env.ETH_PRIVATE_KEY    as `0x${string}`;
-const FEE_RECIPIENT   = process.env.BUILDER_FEE_RECIPIENT ?? '0x92d1d44C37Eb5a6996968FE4F2907f403757E611';
+const FEE_RECIPIENT   = process.env.BUILDER_FEE_RECIPIENT ?? '0x1Aa04F01106Aa53bc7A112C502A934a6d72062d4';  // stableexo.base.eth
 const MIN_PROFIT_ETH  = parseFloat(process.env.MIN_PROFIT_ETH ?? '0.00005');
 const PORT            = parseInt(process.env.PORT ?? '3001');
 const BORROW_AMOUNT   = parseUnits('100000', 6);   // 100K USDC flash loan
