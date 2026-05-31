@@ -1,6 +1,6 @@
 /**
  * ETH Mainnet Contract & Protocol Addresses
- * GL-L42 | TheWarden
+ * GL-L45: SushiV3 added | TheWarden
  */
 
 export const ADDRESSES = {
@@ -9,6 +9,11 @@ export const ADDRESSES = {
     router:    '0xE592427A0AEce92De3Edee1F18E0157C05861564',
     quoterV2:  '0x61fFE014bA17989E743c5F6cB21bF9697530B21e',
     multicall: '0x1F98415757620B543A52E61c46B32eB19261F984',
+  },
+  // ★ GL-L45: SushiSwap V3 — same slot0+liquidity ABI as UniV3
+  sushiV3: {
+    factory: '0xbACEB8eC6b9355Dfc0269C18bac9d6E2Bdc29C4f',
+    router:  '0x2c9Ed6B9927EF12dD85D2CaA3Dce8DFe8e36eBf',
   },
   balancer: {
     vault:   '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
@@ -49,8 +54,9 @@ export const ADDRESSES = {
     FRAX:  '0x853d955aCEf822Db058eb8505911ED77F175b99e',
     CRV:   '0xD533a949740bb3306d119CC777fa900bA034cd52',
     SNX:   '0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F',
+    // ★ GL-L45
+    SUSHI: '0x6B3595068778DD592e39A122f4f5a5cF09C90fE2',
   },
   // ★ FlashSwapV3 on ETH mainnet — deployed GL-L41 | $0.00 gas | block 25,203,689
   flashSwapV3ETH: '0x1F27BA663dC5233DCf2635AD295Bd42197d854A9',
-  // FlashSwapV3 on Base (reference): '0x4744EAB93112A3cD52967e6B2d0d7b7C8DA682f3',
 } as const;
