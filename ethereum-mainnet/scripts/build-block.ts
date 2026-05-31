@@ -1,236 +1,83 @@
 /**
  * build-block — TheWarden AEV Block Builder
  *
- * Continuous building loop. Fires every slot (12 seconds).
- * Pulls validators, assembles block, signs with BLS, submits to all 6 relays.
- *
- * GL-L43: Live production. Wired to BLSSigner + CoalitionBundleAPI.
- * GL-L44: WIRED — executeArbitrage() injected top-of-block. Live arb.
+ * GL-L43: Live production. BLSSigner + CoalitionBundleAPI.
+ * GL-L44: Relay fan-out expanded to 6 (Titan added).
+ *         Import paths fixed. BLSSigner guard added.
+ *         Arb wiring: bundle next iteration (abitype ABI fix pending).
  *
  * Flow per slot:
  *   1. GET /relay/v1/builder/validators from each relay
- *   2. Scan for live arb opportunity (CEX-DEX + pool scanner)
- *   3. Build executeArbitrage calldata → sign arb tx
- *   4. Pull coalition bundles from CoalitionBundleAPI
- *   5. Assemble block (arb tx first + coalition bundles + mempool fill)
- *   6. Sign BidTrace with BLS12-381 builder key
- *   7. POST /relay/v1/builder/blocks to all 6 relays simultaneously
- *   8. Record result, pay coalition refunds
- *
- * AEV Doctrine: We build the block. We inject our own arb top-of-block.
- * Searchers get 95% back. Coalition grows. Compound.
- *
- * GL-L44 | TheWarden | StableExo
+ *   2. Pull coalition bundles from CoalitionBundleAPI
+ *   3. Assemble block (coalition bundles + mempool fill)
+ *   4. Sign BidTrace with BLS12-381 builder key
+ *   5. POST /relay/v1/builder/blocks to all 6 relays simultaneously
+ *   6. Record result, pay coalition refunds
  */
 
 import axios from 'axios';
-import {
-  createPublicClient, createWalletClient, http,
-  encodeFunctionData, parseUnits, parseEther,
-  type Address, type Hex
-} from 'viem';
-import { mainnet } from 'viem/chains';
-import { privateKeyToAccount } from 'viem/accounts';
 import { BlockBuilder, BUILDER_CONFIG, type BidTrace, type SignedBuilderBid } from '../builder/BlockBuilder';
 import { BLSSigner } from '../builder/BLSSigner';
-import { ETH_MAINNET } from '../config/network';
-import { ADDRESSES } from '../config/addresses';
-import { EthPoolScanner } from '../scanner/EthPoolScanner';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const COALITION_API    = process.env.COALITION_API_URL  ?? 'https://thewarden.onrender.com';
 const BLS_SK           = process.env.BUILDER_BLS_SK     ?? '';
-const PRIVATE_KEY      = process.env.ETH_PRIVATE_KEY    as `0x${string}`;
 const FEE_RECIPIENT    = process.env.BUILDER_FEE_RECIPIENT ?? '0x92d1d44C37Eb5a6996968FE4F2907f403757E611';
 const MIN_PROFIT_ETH   = parseFloat(process.env.MIN_PROFIT_ETH ?? '0.001');
-const FLASH_SWAP_ADDR  = ADDRESSES.flashSwapV3ETH as Address;
-const UNIV3_ROUTER     = '0xE592427A0AEce92De3Edee1F18E0157C05861564' as Address;
-const QUOTER_V2        = '0x61fFE014bA17989E743c5F6cB21bF9697530B21e' as Address;
-const KRAKEN_TICKER    = 'https://api.kraken.com/0/public/Ticker?pair=ETHUSD';
-const MIN_CEX_DEX_BPS  = ETH_MAINNET.monitor.cexDexFireBps;  // 15 bps
-const MIN_POOL_BPS     = ETH_MAINNET.monitor.poolFireBps;     // 10 bps
-const BORROW_AMOUNT    = parseUnits('100000', 6);             // 100K USDC
+const PORT             = parseInt(process.env.PORT ?? '3001');
 
-// ── FlashSwapV3 ABI ─────────────────────────────────────────────────────────
-const FLASH_ABI = [{
-  name: 'executeArbitrage',
-  type: 'function',
-  inputs: [
-    { name: 'borrowToken',   type: 'address' },
-    { name: 'borrowAmount',  type: 'uint256' },
-    {
-      name: 'path', type: 'tuple',
-      components: [
-        {
-          name: 'steps', type: 'tuple[]',
-          components: [
-            { name: 'pool',        type: 'address' },
-            { name: 'tokenIn',     type: 'address' },
-            { name: 'tokenOut',    type: 'address' },
-            { name: 'fee',         type: 'uint24'  },
-            { name: 'minOut',      type: 'uint256' },
-            { name: 'dexType',     type: 'uint8'   },
-            { name: 'router',      type: 'address' },
-            { name: 'useDeadline', type: 'bool'    },
-          ],
-        },
-        { name: 'borrowAmount',   type: 'uint256' },
-        { name: 'minFinalAmount', type: 'uint256' },
-      ],
-    },
-    { name: 'sourceOverride', type: 'uint8'   },
-    { name: 'flashPool',      type: 'address' },
-  ],
-  outputs: [],
-  stateMutability: 'nonpayable',
-}] as const;
+// ── Validate env ─────────────────────────────────────────────────────────────
+if (!BLS_SK || BLS_SK === '0x' || BLS_SK === '') {
+  console.error('[build-block] ❌ BUILDER_BLS_SK not set — set env var before starting');
+  process.exit(1);
+}
 
 // ── Instances ────────────────────────────────────────────────────────────────
 const builder = new BlockBuilder();
 const signer  = new BLSSigner(BLS_SK);
-const scanner = new EthPoolScanner();
 
 // ── Stats ────────────────────────────────────────────────────────────────────
 let slotsProcessed = 0;
 let blocksWon      = 0;
-let arbsInjected   = 0;
 let totalProfit    = 0n;
 const startTime    = Date.now();
 
-// ── Render health server (required for free web service) ─────────────────────
-import { createServer } from 'node:http';
-const PORT = parseInt(process.env.PORT ?? '3001');
-createServer((_, res) => {
-  const uptime  = Math.floor((Date.now() - startTime) / 1000);
-  const winRate = slotsProcessed > 0 ? ((blocksWon / slotsProcessed) * 100).toFixed(1) : '0.0';
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ 
-    status: 'building', slots: slotsProcessed, wins: blocksWon, 
-    winRate: `${winRate}%`, arbs: arbsInjected,
-    profit: `${(Number(totalProfit)/1e18).toFixed(6)} ETH`, uptime: `${uptime}s`
-  }));
-}).listen(PORT, () => console.log(`[build-block] 🏥 Health: http://0.0.0.0:${PORT}/`));
-
-
 console.log(`
 ╔══════════════════════════════════════════════════════════════════╗
-║       TheWarden AEV Block Builder — GL-L44 LIVE ARB WIRED       ║
-║              build-block.ts | 6 Relays | executeArbitrage        ║
+║         TheWarden AEV Block Builder — GL-L44                    ║
+║         6 Relays | Coalition 95% | BLS Signed                   ║
 ╚══════════════════════════════════════════════════════════════════╝
-  BLS Pubkey:     ${BLS_SK ? '[loaded]' : '[MISSING — set BUILDER_BLS_SK]'}
+  BLS Pubkey:     ${signer.pubkey.slice(0, 20)}...
   Fee Recipient:  ${FEE_RECIPIENT}
   Min Profit:     ${MIN_PROFIT_ETH} ETH
   Coalition API:  ${COALITION_API}
   Relays:         ${BUILDER_CONFIG.relays.length} configured
-  FlashSwapV3:    ${FLASH_SWAP_ADDR || '[check addresses.ts]'}
   
-  🏴‍☠️  AEV DOCTRINE: Our arb → top of block → we keep 100%.
+  🏴‍☠️  AEV DOCTRINE: Build blocks. Coalition 95%. Compound.
 `);
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-async function getKrakenPrice(): Promise<number> {
-  try {
-    const r = await axios.get(KRAKEN_TICKER, { timeout: 3000 });
-    return parseFloat(r.data.result.XETHZUSD.c[0]);
-  } catch { return 0; }
-}
-
-function buildArbPath(
-  step1Pool: string, step1In: string, step1Out: string, step1Fee: number, step1MinOut: bigint,
-  step2Pool: string, step2In: string, step2Out: string, step2Fee: number, step2MinOut: bigint,
-  borrowAmt: bigint, minFinal: bigint,
-) {
-  return {
-    steps: [
-      { pool: step1Pool as Address, tokenIn: step1In as Address, tokenOut: step1Out as Address,
-        fee: step1Fee, minOut: step1MinOut, dexType: 0, router: UNIV3_ROUTER, useDeadline: false },
-      { pool: step2Pool as Address, tokenIn: step2In as Address, tokenOut: step2Out as Address,
-        fee: step2Fee, minOut: step2MinOut, dexType: 0, router: UNIV3_ROUTER, useDeadline: false },
-    ],
-    borrowAmount:   borrowAmt,
-    minFinalAmount: minFinal,
-  };
-}
-
-/**
- * scanAndBuildArbTx — scan for opportunity, build + sign arb tx
- * Returns signed RLP tx hex if profitable opportunity found, null otherwise.
- */
-async function scanAndBuildArbTx(slot: number): Promise<`0x${string}` | null> {
-  if (!PRIVATE_KEY) return null;
-
-  const publicClient = createPublicClient({ chain: mainnet, transport: http(ETH_MAINNET.rpc.http) });
-  const walletClient = createWalletClient({
-    account: privateKeyToAccount(PRIVATE_KEY),
-    chain: mainnet,
-    transport: http(ETH_MAINNET.rpc.http),
-  });
-
-  try {
-    // 1. Parallel: Kraken price + pool scanner + nonce
-    const [ethCex, poolOpps, nonce, gasPrice] = await Promise.all([
-      getKrakenPrice(),
-      scanner.findOpportunities(),
-      publicClient.getTransactionCount({ address: privateKeyToAccount(PRIVATE_KEY).address }),
-      publicClient.getGasPrice(),
-    ]);
-
-    // 2. CEX-DEX spread check (USDC/WETH 0.05% pool)
-    let bestOpp: any = null;
-    let spreadBps = 0;
-
-    if (poolOpps.length > 0 && poolOpps[0].estimatedProfitBps >= MIN_POOL_BPS) {
-      bestOpp = poolOpps[0];
-      console.log(`[Slot ${slot}] 🔥 Pool arb: ${bestOpp.label} | ${bestOpp.estimatedProfitBps} bps`);
-    }
-
-    if (!bestOpp && ethCex > 0) {
-      // Fallback: check raw CEX-DEX spread direction
-      console.log(`[Slot ${slot}] 📊 No pool opp above ${MIN_POOL_BPS} bps (${poolOpps.length} pools scanned)`);
-      return null;
-    }
-    if (!bestOpp) return null;
-
-    // 3. Build executeArbitrage calldata
-    const minFinal = BORROW_AMOUNT * 1001n / 1000n;  // 0.1% profit floor
-    const path = buildArbPath(
-      bestOpp.buyPool.address,  bestOpp.buyPool.token0,  bestOpp.buyPool.token1,  bestOpp.buyPool.fee  ?? 500,  0n,
-      bestOpp.sellPool.address, bestOpp.sellPool.token0, bestOpp.sellPool.token1, bestOpp.sellPool.fee ?? 3000, minFinal,
-      BORROW_AMOUNT, minFinal,
-    );
-
-    const calldata = encodeFunctionData({
-      abi:          FLASH_ABI,
-      functionName: 'executeArbitrage',
-      args:         [
-        ADDRESSES.tokens.USDC as Address,
-        BORROW_AMOUNT,
-        path,
-        0,   // sourceOverride=0 → Balancer V2 (0% fee) — always first
-        '0x0000000000000000000000000000000000000000' as Address,
-      ],
-    });
-
-    // 4. Sign arb tx (NOT broadcast — we inject into our block)
-    const signedTx = await walletClient.signTransaction({
-      to:       FLASH_SWAP_ADDR,
-      data:     calldata,
-      gasPrice: gasPrice + parseUnits('2', 'gwei'),  // priority tip — we are coinbase, it pays back
-      gas:      600_000n,
-      nonce,
-      chain:    mainnet,
-    });
-
-    console.log(`[Slot ${slot}] ✍️  Arb tx signed | borrow=100K USDC | source=Balancer`);
-    arbsInjected++;
-    return signedTx as `0x${string}`;
-
-  } catch (e: any) {
-    console.log(`[Slot ${slot}] ⚠️  Arb scan failed: ${e.message?.slice(0, 80)}`);
-    return null;
-  }
-}
+// ── Minimal HTTP server (keeps Render web service alive) ─────────────────────
+import http from 'http';
+const httpServer = http.createServer((req, res) => {
+  const uptime    = Math.floor((Date.now() - startTime) / 1000);
+  const winRate   = slotsProcessed > 0 ? ((blocksWon / slotsProcessed) * 100).toFixed(1) : '0.0';
+  const profit    = (Number(totalProfit) / 1e18).toFixed(6);
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({
+    status:         'building',
+    builder:        'TheWarden AEV BlockBuilder GL-L44',
+    pubkey:         signer.pubkey.slice(0, 20) + '...',
+    relays:         BUILDER_CONFIG.relays.length,
+    slotsProcessed,
+    blocksWon,
+    winRatePct:     winRate + '%',
+    profitEth:      profit,
+    uptimeSeconds:  uptime,
+  }));
+});
+httpServer.listen(PORT, () => {
+  console.log(`[build-block] 🌐 Health server on :${PORT}`);
+});
 
 // ── Fetch validators from relay ───────────────────────────────────────────────
 async function getValidators(relayUrl: string): Promise<any[]> {
@@ -273,7 +120,7 @@ async function buildSlot(slot: number, parentHash: string): Promise<void> {
 
   console.log(`\n[Slot ${slot}] ⚡ Building... | parent=${parentHash.slice(0,12)}...`);
 
-  // 1. Get validators from all relays in parallel
+  // 1. Get validators from all 6 relays in parallel
   const validatorSets = await Promise.all(
     BUILDER_CONFIG.relays.map(r => getValidators(r.url))
   );
@@ -284,41 +131,34 @@ async function buildSlot(slot: number, parentHash: string): Promise<void> {
   }
   console.log(`[Slot ${slot}] 👥 ${allValidators.length} validators across ${BUILDER_CONFIG.relays.length} relays`);
 
-  // 2. ★ GL-L44: Scan for live arb + build signed arb tx ★
-  const signedArbTx = await scanAndBuildArbTx(slot);
-
-  // 3. Get coalition bundles
-  const currentBlock = slot; // slot ≈ block in post-merge
+  // 2. Get coalition bundles
+  const currentBlock    = slot;
   const coalitionBundles = await getCoalitionBundles(currentBlock);
   if (coalitionBundles.length > 0) {
     console.log(`[Slot ${slot}] 📦 ${coalitionBundles.length} coalition bundles`);
   }
 
-  // 4. Assemble block
-  //    arb tx goes FIRST (top-of-block) — we are the coinbase, tip pays us back
-  const arbTxForBlock  = signedArbTx ?? ('0x' as `0x${string}`);
-  const coinbaseTx     = '0x' as `0x${string}`;
+  // 3. Assemble block
+  //    GL-L44: arb tx wiring pending (abitype ABI fix) — coalition bundles active
+  const EMPTY_TX        = '0x' as `0x${string}`;
   const coalitionTxSets = coalitionBundles.map(b => b.txs as `0x${string}`[]);
 
   let assembled;
   try {
-    assembled = await builder.assemble(arbTxForBlock, coinbaseTx, coalitionTxSets);
+    assembled = await builder.assemble(EMPTY_TX, EMPTY_TX, coalitionTxSets);
   } catch (e: any) {
     console.log(`[Slot ${slot}] ❌ Assembly failed: ${e.message?.slice(0, 60)}`);
     return;
   }
 
-  // 5. Check minimum profit
+  // 4. Check minimum profit
   const profitEth = Number(assembled.estimatedProfit) / 1e18;
-  if (profitEth < MIN_PROFIT_ETH && !signedArbTx) {
-    console.log(`[Slot ${slot}] 💸 Below min profit (${profitEth.toFixed(6)} ETH) — skipping`);
+  if (profitEth < MIN_PROFIT_ETH && coalitionBundles.length === 0) {
+    console.log(`[Slot ${slot}] 💸 No profit + no coalition bundles — skipping`);
     return;
   }
-  if (signedArbTx) {
-    console.log(`[Slot ${slot}] 🏴‍☠️  ARB INJECTED top-of-block | est profit: ${profitEth.toFixed(6)} ETH`);
-  }
 
-  // 6. Build BidTrace and sign with BLS
+  // 5. Build BidTrace and sign with BLS
   const proposer = allValidators[0];
   const bidTrace: BidTrace = {
     slot:                   String(slot),
@@ -356,7 +196,7 @@ async function buildSlot(slot: number, parentHash: string): Promise<void> {
     signature,
   };
 
-  // 7. Submit to ALL 6 relays simultaneously
+  // 6. Submit to ALL 6 relays simultaneously
   const submissions = await Promise.allSettled(
     BUILDER_CONFIG.relays.map(r => submitToRelay(r.name, r.url, signedBid))
   );
@@ -374,9 +214,10 @@ async function buildSlot(slot: number, parentHash: string): Promise<void> {
   if (wins > 0) {
     blocksWon++;
     totalProfit += assembled.estimatedProfit;
-    console.log(`[Slot ${slot}] 🏆 Block submitted to ${wins}/${BUILDER_CONFIG.relays.length} relays | arb=${!!signedArbTx}`);
+    const winRate = ((blocksWon / slotsProcessed) * 100).toFixed(1);
+    console.log(`[Slot ${slot}] 🏆 Block submitted to ${wins}/${BUILDER_CONFIG.relays.length} relays | wins=${blocksWon} (${winRate}%)`);
 
-    // Notify coalition bundles of inclusion → trigger 95% refund
+    // Notify coalition bundles of inclusion → 95% refund
     for (const bundle of coalitionBundles) {
       axios.post(`${COALITION_API}/relay/v1/bundle/included`, {
         bundleId:  bundle.id,
@@ -386,8 +227,7 @@ async function buildSlot(slot: number, parentHash: string): Promise<void> {
   }
 
   const elapsed = Date.now() - slotStart;
-  const winRate = slotsProcessed > 0 ? ((blocksWon / slotsProcessed) * 100).toFixed(1) : '0.0';
-  console.log(`[Slot ${slot}] ⏱️  ${elapsed}ms | slots=${slotsProcessed} wins=${blocksWon} (${winRate}%) arbs=${arbsInjected}`);
+  console.log(`[Slot ${slot}] ⏱️  ${elapsed}ms`);
 }
 
 // ── Main loop ─────────────────────────────────────────────────────────────────
@@ -404,9 +244,9 @@ async function buildSlot(slot: number, parentHash: string): Promise<void> {
 
   // Stats every 10 minutes
   setInterval(() => {
-    const uptime   = Math.floor((Date.now() - startTime) / 60000);
-    const winRate  = slotsProcessed > 0 ? ((blocksWon / slotsProcessed) * 100).toFixed(1) : '0.0';
-    const profitEth = (Number(totalProfit) / 1e18).toFixed(6);
-    console.log(`\n📊 STATS [${uptime}m] slots=${slotsProcessed} wins=${blocksWon} (${winRate}%) arbs=${arbsInjected} profit=${profitEth} ETH\n`);
+    const uptime    = Math.floor((Date.now() - startTime) / 60000);
+    const winRate   = slotsProcessed > 0 ? ((blocksWon / slotsProcessed) * 100).toFixed(1) : '0.0';
+    const profit    = (Number(totalProfit) / 1e18).toFixed(6);
+    console.log(`\n📊 STATS [${uptime}m] slots=${slotsProcessed} wins=${blocksWon} (${winRate}%) profit=${profit} ETH\n`);
   }, 600_000);
 })();
