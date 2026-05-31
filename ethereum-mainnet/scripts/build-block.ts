@@ -28,7 +28,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { BlockBuilder, BUILDER_CONFIG, type BidTrace, type SignedBuilderBid } from '../builder/BlockBuilder';
 import { BLSSigner } from '../builder/BLSSigner';
 import { EthPoolScanner, type ArbOpportunity } from '../scanner/EthPoolScanner';
-import { FLASH_ABI, buildArbPath } from './bundle';
+import { FLASH_ABI, buildArbPath } from '../config/arb';
 import { ETH_MAINNET } from '../config/network';
 import { ADDRESSES } from '../config/addresses';
 
