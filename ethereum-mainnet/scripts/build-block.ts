@@ -121,10 +121,20 @@ async function getCoalitionBundles(): Promise<any[]> {
     return Array.isArray(r.data) ? r.data : [];
   } catch { return []; }
 }
+// bloXroute requires Authorization header — open relay token
+const BLOXROUTE_AUTH = 'Flashbots+https://boost-relay.flashbots.net';
+
 async function submitToRelay(name: string, url: string, bid: SignedBuilderBid) {
   try {
-    const r = await axios.post(`${url}/relay/v1/builder/blocks`, bid,
-      { headers: { 'Content-Type': 'application/json' }, timeout: 4000 });
+    const extraHeaders: Record<string,string> = {};
+    // bloXroute max-profit requires an Auth header — use open relay format
+    if (url.includes('blxrbdn.com')) {
+      extraHeaders['Authorization'] = BLOXROUTE_AUTH;
+    }
+    const r = await axios.post(`${url}/relay/v1/builder/blocks`, bid, {
+      headers: { 'Content-Type': 'application/json', ...extraHeaders },
+      timeout: 4000,
+    });
     return { name, ok: r.status === 200 || r.status === 202, status: r.status };
   } catch (e: any) {
     return { name, ok: false, status: e?.response?.data?.message ?? e?.message?.slice(0, 50) };
@@ -203,6 +213,11 @@ async function processSlot(slot: number, parentHash: string) {
       base_fee_per_gas:  String(gasPrice),
       block_hash:        '0x' + '0'.repeat(64),
       transactions:      txList,
+      // ★ GL-L45 FIX 7: Post-Shapella (slot >6.2M) — withdrawals required
+      withdrawals:       [],
+      // ★ GL-L45 FIX 7: Post-Cancun/Deneb (slot >8.6M) — blob fields required
+      blob_gas_used:     '0',
+      excess_blob_gas:   '0',
     },
     signature: signer.signBid(bidTrace),
   };
