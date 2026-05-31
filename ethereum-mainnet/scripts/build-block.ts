@@ -9,7 +9,7 @@ import http from 'http';
 import axios from 'axios';
 import {
   createPublicClient, createWalletClient, http as viemHttp, webSocket,
-  encodeFunctionData, parseUnits, type Address, type Hex
+  encodeFunctionData, parseUnits, getAddress, type Address, type Hex
 } from 'viem';
 import { mainnet } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -78,9 +78,10 @@ async function buildArbTx(opp: ArbOpportunity, slot: number): Promise<Hex | null
     const minFinal     = BORROW_AMOUNT * 1001n / 1000n;
     const d1           = dexTypeFor(opp.buyPool.protocol);
     const d2           = dexTypeFor(opp.sellPool.protocol);
+    // getAddress() normalises EIP-55 checksum on all pool+token addresses
     const path         = buildArbPath(
-      opp.buyPool.address,  opp.buyPool.token0,  opp.buyPool.token1,  opp.buyPool.fee  ?? 500,  0n,       d1,
-      opp.sellPool.address, opp.sellPool.token0, opp.sellPool.token1, opp.sellPool.fee ?? 3000, minFinal, d2,
+      getAddress(opp.buyPool.address),  getAddress(opp.buyPool.token0),  getAddress(opp.buyPool.token1),  opp.buyPool.fee  ?? 500,  0n,       d1,
+      getAddress(opp.sellPool.address), getAddress(opp.sellPool.token0), getAddress(opp.sellPool.token1), opp.sellPool.fee ?? 3000, minFinal, d2,
       BORROW_AMOUNT, minFinal,
     );
     const calldata = encodeFunctionData({
