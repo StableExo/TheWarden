@@ -31,8 +31,8 @@ import {
 } from 'viem';
 import { mainnet } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
-import { BlockBuilder, BUILDER_CONFIG, type BidTrace, type SignedBuilderBid } from './BlockBuilder';
-import { BLSSigner } from './BLSSigner';
+import { BlockBuilder, BUILDER_CONFIG, type BidTrace, type SignedBuilderBid } from '../builder/BlockBuilder';
+import { BLSSigner } from '../builder/BLSSigner';
 import { ETH_MAINNET } from '../config/network';
 import { ADDRESSES } from '../config/addresses';
 import { EthPoolScanner } from '../scanner/EthPoolScanner';
