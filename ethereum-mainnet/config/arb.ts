@@ -5,7 +5,7 @@
  *         dexType 0 = UniV3 | dexType 1 = SushiV3 (same interface, different router)
  */
 
-import { type Address } from 'viem';
+import { type Address, getAddress } from 'viem';
 
 // ── FlashSwapV3 ABI ───────────────────────────────────────────────────────────
 export const FLASH_ABI = [{
@@ -42,9 +42,9 @@ export const FLASH_ABI = [{
 }] as const;
 
 // ── Routers ───────────────────────────────────────────────────────────────────
-export const UNIV3_ROUTER   = '0xE592427A0AEce92De3Edee1F18E0157C05861564' as Address;
+export const UNIV3_ROUTER   = getAddress('0xE592427A0AEce92De3Edee1F18E0157C05861564') as Address;
 // ★ GL-L45: SushiSwap V3 SwapRouter — identical exactInputSingle interface to UniV3
-export const SUSHIV3_ROUTER = '0x2c9Ed6B9927EF12dD85D2CaA3Dce8DFe8e36eBf' as Address;
+export const SUSHIV3_ROUTER = getAddress('0x2c9ed6b9927ef12dd85d2caa3dce8dfe8e36ebf') as Address;
 
 /** Map dexType uint8 → router address */
 export function routerForDex(dexType: 0 | 1): Address {
