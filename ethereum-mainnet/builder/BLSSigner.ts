@@ -27,7 +27,14 @@ export class BLSSigner {
   readonly pubkey: string;
 
   constructor(privateKeyHex: string) {
-    const skBytes = Buffer.from(privateKeyHex.replace('0x', ''), 'hex');
+    if (!privateKeyHex || privateKeyHex === '0x' || privateKeyHex === '') {
+      throw new Error('BLSSigner: BUILDER_BLS_SK is empty — set env var before starting block builder');
+    }
+    const skHex   = privateKeyHex.startsWith('0x') ? privateKeyHex.slice(2) : privateKeyHex;
+    const skBytes = Buffer.from(skHex, 'hex');
+    if (skBytes.length === 0) {
+      throw new Error('BLSSigner: BUILDER_BLS_SK produced empty bytes — check hex format');
+    }
     this.sk = BigInt('0x' + skBytes.toString('hex'));
 
     // Derive pubkey
@@ -136,7 +143,5 @@ export class BLSSigner {
   }
 }
 
-// ── Singleton export ─────────────────────────────────────────────────────────
-export const signer = new BLSSigner(
-  process.env.BUILDER_BLS_SK ?? ''
-);
+// Singleton removed GL-L44 — instantiate BLSSigner directly in build-block.ts with validated env var
+// export const signer = new BLSSigner(process.env.BUILDER_BLS_SK!);
