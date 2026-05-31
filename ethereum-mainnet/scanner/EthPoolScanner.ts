@@ -18,7 +18,7 @@
  *   Seq equivalent: ~6,048ms | Speedup: ~24x
  */
 
-import { createPublicClient, http, type Address } from 'viem';
+import { createPublicClient, http, type Address, parseAbi } from 'viem';
 import { mainnet } from 'viem/chains';
 import { ETH_MAINNET } from '../config/network';
 import { ADDRESSES } from '../config/addresses';
