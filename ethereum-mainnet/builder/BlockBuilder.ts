@@ -44,11 +44,12 @@ export const BUILDER_CONFIG = {
 
   // Our MEV-Boost relay endpoints (6 relays for maximum coverage)
   relays: [
-    { name: 'Flashbots',    url: 'https://boost-relay.flashbots.net',          regulated: false },
-    { name: 'Ultra Sound',  url: 'https://relay.ultrasound.money',              regulated: false },
-    { name: 'Aestus',       url: 'https://mainnet.aestus.live',                 regulated: false },
-    { name: 'bloXroute',    url: 'https://bloxroute.max-profit.blxrbdn.com',    regulated: false },
-    { name: 'Agnostic',     url: 'https://agnostic-relay.net',                  regulated: false },
+    { name: 'Flashbots',              url: 'https://boost-relay.flashbots.net',            regulated: false },
+    { name: 'Ultra Sound',            url: 'https://relay.ultrasound.money',                regulated: false },
+    { name: 'Aestus',                 url: 'https://mainnet.aestus.live',                   regulated: false },
+    { name: 'bloXroute Max-Profit',   url: 'https://bloxroute.max-profit.blxrbdn.com',      regulated: false },
+    { name: 'Agnostic',               url: 'https://agnostic-relay.net',                    regulated: false },
+    { name: 'Titan',                  url: 'https://titanrelay.xyz',                        regulated: false },  // GL-L44: +55v
   ],
 
   // Our profit destination — same EOA that gets Quasar refunds
