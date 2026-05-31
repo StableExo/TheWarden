@@ -1,18 +1,20 @@
 /**
  * EthPoolScanner — ETH Mainnet Pool Price Scanner
- * GL-L42 BATCH FIX | GL-L45: SushiV3 added to Multicall3 V3 batch | TheWarden
+ * GL-L42 BATCH FIX | GL-L45 | TheWarden
  *
- * GL-L42 FIX: String-prefixed batch IDs to avoid QuickNode response reordering.
- * GL-L45 CHANGE: sushi-v3 pools included in Multicall3 batch (same slot0+liquidity ABI).
- *   Pool addresses factory-verified on-chain. Curve stays sequential (pool-specific ABI).
+ * GL-L45 FIX 2: getAddress() normalises all pool addresses before Multicall3 call.
+ *   Fixes "Address 0x7bea..." viem checksum error → scanner stays in Multicall3 fast path.
  *
- * Total: 36 pools (27 UniV3 + 9 SushiV3 + 2 Curve + 2 Balancer)
- * V3 Multicall3 batch: 36 calls (18 slot0 + 18 liquidity) in one round-trip ~250ms
+ * GL-L45 FIX 3: Cross-protocol phantom arb filter.
+ *   stETH/ETH Curve pool removed — get_dy(0,1,1e6) is wrong scale for ETH (18dec).
+ *   Curve 3pool kept — get_dy(0,1,1e6) valid for stablecoin scale.
+ *   Also added max 500bps cross-protocol spread cap to filter any future noise.
  *
- * LIQUIDITY GATE: slot0() returns price even on zero-liq pools — always gate on liq > 0.
+ * Total pools: 35 (27 UniV3 + 8 SushiV3 + 2 Balancer + 1 Curve 3pool)
+ * Multicall3 batch: 70 calls (35 slot0 + 35 liquidity) in one round-trip
  */
 
-import { createPublicClient, http, type Address, parseAbi } from 'viem';
+import { createPublicClient, http, getAddress, type Address, parseAbi } from 'viem';
 import { mainnet } from 'viem/chains';
 import { ETH_MAINNET } from '../config/network';
 import { ADDRESSES } from '../config/addresses';
@@ -59,20 +61,17 @@ export class EthPoolScanner {
   private cache   = new Map<string, PoolPrice>();
   private CACHE   = 12_000;
   private MIN_BPS = 10;
+  // Max spread for CROSS-protocol comparisons — >500bps almost always means denomination mismatch
+  private MAX_CROSS_BPS = 500;
 
-  /**
-   * Multicall3 batch: slot0 + liquidity for ALL V3 pools (UniV3 + SushiV3) in ONE round-trip.
-   * Curve stays sequential via getPrice() — pool-specific ABI, not worth batching.
-   * Balancer uses getPoolTokens() — separate call, different ABI.
-   */
   async scanAll(): Promise<PoolPrice[]> {
-    // ★ GL-L45: include both uniswap-v3 AND sushi-v3 in the same Multicall3 batch
     const v3Pools    = ALL_POOLS.filter(p => p.protocol === 'uniswap-v3' || p.protocol === 'sushi-v3');
     const otherPools = ALL_POOLS.filter(p => p.protocol !== 'uniswap-v3' && p.protocol !== 'sushi-v3');
 
+    // FIX: getAddress() normalises EIP-55 checksum — prevents viem address errors in Multicall3
     const calls = v3Pools.flatMap(p => [
-      { target: p.address as Address, allowFailure: true, callData: SLOT0_DATA },
-      { target: p.address as Address, allowFailure: true, callData: LIQ_DATA   },
+      { target: getAddress(p.address) as Address, allowFailure: true, callData: SLOT0_DATA },
+      { target: getAddress(p.address) as Address, allowFailure: true, callData: LIQ_DATA   },
     ]);
 
     let results: readonly { success: boolean; returnData: `0x${string}` }[] = [];
@@ -82,7 +81,7 @@ export class EthPoolScanner {
         functionName: 'aggregate3', args: [calls],
       }) as any;
     } catch (e) {
-      console.warn('[Scanner] Multicall3 failed, falling back', (e as Error).message?.slice(0, 40));
+      console.warn('[Scanner] Multicall3 failed, falling back:', (e as Error).message?.slice(0, 60));
       return this._fallback(v3Pools, otherPools);
     }
 
@@ -95,8 +94,7 @@ export class EthPoolScanner {
 
       const sqrtP = s0.returnData?.length >= 66 ? BigInt('0x' + s0.returnData.slice(2, 66)) : 0n;
       const liq   = lq.returnData?.length >= 66  ? BigInt('0x' + lq.returnData.slice(2, 66)) : 0n;
-
-      if (sqrtP === 0n || liq === 0n) continue;  // liquidity gate
+      if (sqrtP === 0n || liq === 0n) continue;
 
       const price = Number((sqrtP * sqrtP) / (1n << 192n));
       if (price === 0) continue;
@@ -106,7 +104,7 @@ export class EthPoolScanner {
       out.push(r);
     }
 
-    // Curve + Balancer: sequential (different ABIs)
+    // Curve + Balancer: sequential (different ABIs per protocol)
     await Promise.allSettled(otherPools.map(async p => {
       const r = await this.getPrice(p);
       if (r) out.push(r);
@@ -131,6 +129,10 @@ export class EthPoolScanner {
           const bps      = Math.round(spread * 10_000);
           if (bps < this.MIN_BPS) continue;
 
+          // FIX: filter phantom cross-protocol arbs (denomination mismatch noise)
+          const crossProto = lo.pool.protocol !== hi.pool.protocol;
+          if (crossProto && bps > this.MAX_CROSS_BPS) continue;
+
           opps.push({
             label:             `${pair.label} [${lo.pool.protocol}→${hi.pool.protocol}]`,
             buyPool:           lo.pool, sellPool: hi.pool,
@@ -151,9 +153,10 @@ export class EthPoolScanner {
 
     try {
       if (p.protocol === 'uniswap-v3' || p.protocol === 'sushi-v3') {
+        const addr = getAddress(p.address) as Address;
         const [slot0, liq] = await Promise.all([
-          this.client.readContract({ address: p.address as Address, abi: UNIV3_ABI, functionName: 'slot0' }),
-          this.client.readContract({ address: p.address as Address, abi: UNIV3_ABI, functionName: 'liquidity' }),
+          this.client.readContract({ address: addr, abi: UNIV3_ABI, functionName: 'slot0' }),
+          this.client.readContract({ address: addr, abi: UNIV3_ABI, functionName: 'liquidity' }),
         ]);
         const sqrtP = (slot0 as bigint[])[0] as bigint;
         if (sqrtP === 0n || (liq as bigint) === 0n) return null;
@@ -165,7 +168,7 @@ export class EthPoolScanner {
 
       if (p.protocol === 'balancer') {
         const VAULT = ADDRESSES.balancer.vault as Address;
-        const [tokens, balances] = await this.client.readContract({
+        const [, balances] = await this.client.readContract({
           address: VAULT, abi: BAL_ABI,
           functionName: 'getPoolTokens', args: [p.poolId as `0x${string}`],
         }) as [readonly Address[], readonly bigint[], bigint];
@@ -177,8 +180,9 @@ export class EthPoolScanner {
       }
 
       if (p.protocol === 'curve') {
+        // Only 3pool (stablecoin scale: 1e6 = 1 USDC) — stETH pool removed (wrong scale)
         const amtOut = await this.client.readContract({
-          address: p.address as Address, abi: CURVE_ABI,
+          address: getAddress(p.address) as Address, abi: CURVE_ABI,
           functionName: 'get_dy', args: [0n, 1n, BigInt(1e6)],
         }) as bigint;
         if (amtOut === 0n) return null;
@@ -205,7 +209,6 @@ export class EthPoolScanner {
   }
 
   async getGasPrice(): Promise<string> {
-    const gwei = Number(await this.client.getGasPrice()) / 1e9;
-    return `${gwei.toFixed(1)} Gwei`;
+    return `${(Number(await this.client.getGasPrice()) / 1e9).toFixed(1)} Gwei`;
   }
 }
