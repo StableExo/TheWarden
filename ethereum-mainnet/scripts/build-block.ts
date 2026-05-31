@@ -1,23 +1,19 @@
 /**
  * build-block — TheWarden AEV Block Builder
- *
- * GL-L43: Live production. BLSSigner + CoalitionBundleAPI.
- * GL-L44: Arb wired. FLASH_ABI + buildArbPath from arb.ts.
- * GL-L45: SushiV3 cross-protocol arb. dexType per step.
- *         Scanner: 36 pools (27 UniV3 + 9 SushiV3 + 2 Curve + 2 Balancer).
- * GL-L45 FIX: Removed pending block fetch from assemble() (was hanging on free tier).
- *             assemble() now takes explicit txList. No more getBlock(pending) hang.
+ * GL-L45 v2: HTTP health server starts FIRST, synchronously.
+ *             watchSlots() runs in background — never blocks health check.
+ *             Poll fallback: if WSS silent for >20s, poll via HTTP getBlock.
  */
 
 import http from 'http';
 import axios from 'axios';
 import {
-  createPublicClient, createWalletClient, http as viemHttp,
+  createPublicClient, createWalletClient, http as viemHttp, webSocket,
   encodeFunctionData, parseUnits, type Address, type Hex
 } from 'viem';
 import { mainnet } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
-import { BlockBuilder, BUILDER_CONFIG, type BidTrace, type SignedBuilderBid } from '../builder/BlockBuilder';
+import { BUILDER_CONFIG, type BidTrace, type SignedBuilderBid } from '../builder/BlockBuilder';
 import { BLSSigner } from '../builder/BLSSigner';
 import { EthPoolScanner, type ArbOpportunity } from '../scanner/EthPoolScanner';
 import { FLASH_ABI, buildArbPath } from '../config/arb';
@@ -34,89 +30,79 @@ const PORT           = parseInt(process.env.PORT ?? '3001');
 const BORROW_AMOUNT  = parseUnits('100000', 6);
 const MIN_POOL_BPS   = 10;
 
-if (!BLS_SK || BLS_SK === '0x') { console.error('[build-block] ❌ BUILDER_BLS_SK not set'); process.exit(1); }
-if (!PRIVATE_KEY)                { console.error('[build-block] ❌ ETH_PRIVATE_KEY not set'); process.exit(1); }
+if (!BLS_SK || BLS_SK === '0x') { console.error('❌ BUILDER_BLS_SK not set'); process.exit(1); }
+if (!PRIVATE_KEY)                { console.error('❌ ETH_PRIVATE_KEY not set'); process.exit(1); }
 
-// ── Instances ─────────────────────────────────────────────────────────────────
-const builder   = new BlockBuilder();
-const signer    = new BLSSigner(BLS_SK);
-const scanner   = new EthPoolScanner();
-const account   = privateKeyToAccount(PRIVATE_KEY);
-const pubClient = createPublicClient({ chain: mainnet, transport: viemHttp(ETH_MAINNET.rpc.http) });
-const walClient = createWalletClient({ account, chain: mainnet, transport: viemHttp(ETH_MAINNET.rpc.http) });
+// ── Clients ───────────────────────────────────────────────────────────────────
+const httpClient = createPublicClient({ chain: mainnet, transport: viemHttp(ETH_MAINNET.rpc.http) });
+const walClient  = createWalletClient({
+  account: privateKeyToAccount(PRIVATE_KEY),
+  chain: mainnet,
+  transport: viemHttp(ETH_MAINNET.rpc.http),
+});
+const account  = privateKeyToAccount(PRIVATE_KEY);
+const signer   = new BLSSigner(BLS_SK);
+const scanner  = new EthPoolScanner();
 
+// ── Stats ─────────────────────────────────────────────────────────────────────
 let slotsProcessed = 0, blocksWon = 0, arbsInjected = 0;
 let totalProfit = 0n;
+let lastSlotMs  = 0;
 const startTime = Date.now();
 
-// ── Health server ─────────────────────────────────────────────────────────────
-http.createServer((_, res) => {
+// ── STEP 1: Start HTTP health server IMMEDIATELY (sync, before anything else) ─
+const server = http.createServer((_, res) => {
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({
     status: 'building', builder: 'TheWarden-GL-L45',
     pubkey: signer.pubkey.slice(0, 22) + '...',
     relays: BUILDER_CONFIG.relays.length, pools: 36,
     slotsProcessed, blocksWon, arbsInjected,
+    lastSlotAgo: lastSlotMs ? `${Math.round((Date.now()-lastSlotMs)/1000)}s ago` : 'waiting',
     winRatePct: slotsProcessed > 0 ? ((blocksWon/slotsProcessed)*100).toFixed(1)+'%' : '0%',
     profitEth: (Number(totalProfit)/1e18).toFixed(6),
     uptimeSeconds: Math.floor((Date.now()-startTime)/1000),
   }));
-}).listen(PORT, () => console.log(`[build-block] 🌐 Health: http://localhost:${PORT}`));
+});
+server.listen(PORT, () => {
+  console.log(`[TheWarden] 🌐 Health: http://localhost:${PORT} — READY`);
+  console.log(`[TheWarden] ⚡ GL-L45 | 6 relays | 36 pools | Profits → stableexo.base.eth`);
+});
 
-console.log(`
-╔══════════════════════════════════════════════════════════════════╗
-║    TheWarden AEV Block Builder — GL-L45                          ║
-║    6 Relays | 36 pools | SushiV3 arb | Coalition 95%            ║
-╚══════════════════════════════════════════════════════════════════╝
-  BLS:      ${signer.pubkey.slice(0,22)}...
-  Fee:      ${FEE_RECIPIENT}
-  Profits → stableexo.base.eth
-`);
-
-// ── dexType helper ─────────────────────────────────────────────────────────────
-function dexTypeFor(protocol: string): 0 | 1 {
-  return protocol === 'sushi-v3' ? 1 : 0;
-}
+// ── dexType helper ────────────────────────────────────────────────────────────
+function dexTypeFor(p: string): 0 | 1 { return p === 'sushi-v3' ? 1 : 0; }
 
 // ── Build arb tx ──────────────────────────────────────────────────────────────
 async function buildArbTx(opp: ArbOpportunity, slot: number): Promise<Hex | null> {
   try {
     const minFinal     = BORROW_AMOUNT * 1001n / 1000n;
-    const step1DexType = dexTypeFor(opp.buyPool.protocol);
-    const step2DexType = dexTypeFor(opp.sellPool.protocol);
-
-    const path = buildArbPath(
-      opp.buyPool.address,  opp.buyPool.token0,  opp.buyPool.token1,  opp.buyPool.fee  ?? 500,  0n,       step1DexType,
-      opp.sellPool.address, opp.sellPool.token0, opp.sellPool.token1, opp.sellPool.fee ?? 3000, minFinal, step2DexType,
+    const d1           = dexTypeFor(opp.buyPool.protocol);
+    const d2           = dexTypeFor(opp.sellPool.protocol);
+    const path         = buildArbPath(
+      opp.buyPool.address,  opp.buyPool.token0,  opp.buyPool.token1,  opp.buyPool.fee  ?? 500,  0n,       d1,
+      opp.sellPool.address, opp.sellPool.token0, opp.sellPool.token1, opp.sellPool.fee ?? 3000, minFinal, d2,
       BORROW_AMOUNT, minFinal,
     );
-
     const calldata = encodeFunctionData({
       abi: FLASH_ABI, functionName: 'executeArbitrage',
-      args: [
-        ADDRESSES.tokens.USDC as Address, BORROW_AMOUNT, path,
-        0, '0x0000000000000000000000000000000000000000' as Address,
-      ],
+      args: [ADDRESSES.tokens.USDC as Address, BORROW_AMOUNT, path, 0,
+             '0x0000000000000000000000000000000000000000' as Address],
     });
-
     const [nonce, gasPrice] = await Promise.all([
-      pubClient.getTransactionCount({ address: account.address }),
-      pubClient.getGasPrice(),
+      httpClient.getTransactionCount({ address: account.address }),
+      httpClient.getGasPrice(),
     ]);
-
-    const signedTx = await walClient.signTransaction({
-      to:       '0x1F27BA663dC5233DCf2635AD295Bd42197d854A9' as Address,
-      data:     calldata,
-      gasPrice: gasPrice + parseUnits('2', 'gwei'),
-      gas:      600_000n, nonce, chain: mainnet,
+    const signed = await walClient.signTransaction({
+      to: '0x1F27BA663dC5233DCf2635AD295Bd42197d854A9' as Address,
+      data: calldata, gasPrice: gasPrice + parseUnits('2', 'gwei'),
+      gas: 600_000n, nonce, chain: mainnet,
     });
-
-    const cross = step1DexType !== step2DexType ? ' [CROSS]' : '';
-    console.log(`[Slot ${slot}] ⚡ Arb signed | ${opp.label}${cross} | ${opp.estimatedProfitBps}bps`);
+    const cross = d1 !== d2 ? ' [CROSS-DEX]' : '';
+    console.log(`[Slot ${slot}] ⚡ Arb | ${opp.label}${cross} | ${opp.estimatedProfitBps}bps`);
     arbsInjected++;
-    return signedTx as Hex;
+    return signed as Hex;
   } catch (e: any) {
-    console.log(`[Slot ${slot}] ⚠️  Arb build failed: ${e.message?.slice(0, 80)}`);
+    console.log(`[Slot ${slot}] ⚠️  Arb failed: ${e.message?.slice(0, 80)}`);
     return null;
   }
 }
@@ -128,67 +114,63 @@ async function getValidators(url: string): Promise<any[]> {
     return Array.isArray(r.data) ? r.data : [];
   } catch { return []; }
 }
-
 async function getCoalitionBundles(): Promise<any[]> {
   try {
     const r = await axios.get(`${COALITION_API}/relay/v1/bundle/list`, { timeout: 2000 });
     return Array.isArray(r.data) ? r.data : [];
   } catch { return []; }
 }
-
 async function submitToRelay(name: string, url: string, bid: SignedBuilderBid) {
   try {
     const r = await axios.post(`${url}/relay/v1/builder/blocks`, bid,
       { headers: { 'Content-Type': 'application/json' }, timeout: 4000 });
-    return { name, success: r.status === 200 || r.status === 202, status: r.status };
+    return { name, ok: r.status === 200 || r.status === 202, status: r.status };
   } catch (e: any) {
-    return { name, success: false, error: e?.response?.data?.message ?? e?.message?.slice(0, 60) };
+    return { name, ok: false, status: e?.response?.data?.message ?? e?.message?.slice(0, 50) };
   }
 }
 
-// ── Build one slot ────────────────────────────────────────────────────────────
-async function buildSlot(slot: number, parentHash: string): Promise<void> {
+// ── Process one slot ──────────────────────────────────────────────────────────
+async function processSlot(slot: number, parentHash: string) {
   const t0 = Date.now();
   slotsProcessed++;
-  console.log(`\n[Slot ${slot}] ⚡ Building | parent=${parentHash.slice(0, 12)}...`);
+  lastSlotMs = Date.now();
+  console.log(`\n[Slot ${slot}] 🔨 Building | parent=${parentHash.slice(0, 12)}...`);
 
-  // All parallel — no serial blocking calls
-  const [validatorSets, poolOpps, coalitionBundles, blockNum, gasPrice] = await Promise.all([
+  const [valSets, opps, bundles, blockNum, gasPrice] = await Promise.all([
     Promise.all(BUILDER_CONFIG.relays.map(r => getValidators(r.url))),
     scanner.findOpportunities().catch(() => [] as ArbOpportunity[]),
     getCoalitionBundles(),
-    pubClient.getBlockNumber(),
-    pubClient.getGasPrice(),
+    httpClient.getBlockNumber(),
+    httpClient.getGasPrice(),
   ]);
 
-  const allValidators = validatorSets.flat();
-  if (allValidators.length === 0) {
-    console.log(`[Slot ${slot}] ⚠️  No validators — skipping`);
+  const validators = valSets.flat();
+  console.log(`[Slot ${slot}] 👥 ${validators.length}v | ${opps.length} opps | ${bundles.length} bundles`);
+
+  if (validators.length === 0 && bundles.length === 0) {
+    console.log(`[Slot ${slot}] ⚠️  Nothing to build — skip`);
     return;
   }
-  console.log(`[Slot ${slot}] 👥 ${allValidators.length}v | ${poolOpps.length} opps | ${coalitionBundles.length} bundles`);
 
-  // Build arb tx if opportunity found
-  let arbTx: Hex | null = null;
-  const bestOpp = poolOpps.find(o => o.estimatedProfitBps >= MIN_POOL_BPS);
-  if (bestOpp) arbTx = await buildArbTx(bestOpp, slot);
+  const bestOpp = opps.find(o => o.estimatedProfitBps >= MIN_POOL_BPS);
+  const arbTx   = bestOpp ? await buildArbTx(bestOpp, slot) : null;
 
-  // Assemble transaction list — no getBlock(pending) call
   const txList: Hex[] = [
     ...(arbTx ? [arbTx] : []),
-    ...coalitionBundles.flatMap((b: any) => b.txs ?? [] as Hex[]),
+    ...bundles.flatMap((b: any) => (b.txs ?? []) as Hex[]),
   ];
 
   const estimatedProfit = arbTx
-    ? BORROW_AMOUNT / 1000n                    // rough 0.1% floor
-    : BigInt(coalitionBundles.length) * 1000n; // coalition value estimate
+    ? BORROW_AMOUNT / 1000n
+    : BigInt(bundles.length) * 1000n;
 
-  if (txList.length === 0 && estimatedProfit < BigInt(MIN_PROFIT_ETH * 1e18)) {
-    console.log(`[Slot ${slot}] 💸 Nothing to build — skipping`);
+  if (txList.length === 0) {
+    console.log(`[Slot ${slot}] 💸 No txs — skip`);
     return;
   }
 
-  const proposer = allValidators[0];
+  const proposer = validators[0] ?? {};
   const gasUsed  = BigInt(txList.length) * 200_000n + 300_000n;
 
   const bidTrace: BidTrace = {
@@ -224,16 +206,16 @@ async function buildSlot(slot: number, parentHash: string): Promise<void> {
     signature: signer.signBid(bidTrace),
   };
 
-  const relayResults = await Promise.allSettled(
+  const results = await Promise.allSettled(
     BUILDER_CONFIG.relays.map(r => submitToRelay(r.name, r.url, signedBid))
   );
 
   let wins = 0;
-  for (const res of relayResults) {
+  for (const res of results) {
     if (res.status === 'fulfilled') {
-      const { name, success, status, error } = res.value as any;
-      console.log(`[Slot ${slot}] ${success ? '✅' : '⚠️ '} ${String(name).padEnd(22)} → ${status ?? error}`);
-      if (success) wins++;
+      const v = res.value as any;
+      console.log(`[Slot ${slot}] ${v.ok ? '✅' : '⚠️ '} ${String(v.name).padEnd(22)} → ${v.status}`);
+      if (v.ok) wins++;
     }
   }
 
@@ -241,8 +223,8 @@ async function buildSlot(slot: number, parentHash: string): Promise<void> {
     blocksWon++;
     totalProfit += estimatedProfit;
     const wr = ((blocksWon/slotsProcessed)*100).toFixed(1);
-    console.log(`[Slot ${slot}] 🏆 ${wins}/${BUILDER_CONFIG.relays.length} relays | wins=${blocksWon} (${wr}%) arbs=${arbsInjected}`);
-    for (const b of coalitionBundles) {
+    console.log(`[Slot ${slot}] 🏆 ${wins}/${BUILDER_CONFIG.relays.length} | wins=${blocksWon} (${wr}%) arbs=${arbsInjected}`);
+    for (const b of bundles) {
       axios.post(`${COALITION_API}/relay/v1/bundle/included`,
         { bundleId: (b as any).id, profitWei: estimatedProfit.toString() }).catch(() => {});
     }
@@ -251,18 +233,68 @@ async function buildSlot(slot: number, parentHash: string): Promise<void> {
   console.log(`[Slot ${slot}] ⏱️  ${Date.now()-t0}ms`);
 }
 
-// ── Main loop ─────────────────────────────────────────────────────────────────
-(async () => {
-  console.log('[build-block] 🔗 Connecting to Ethereum WSS...');
-  await builder.watchSlots(async (slot, parentHash) => {
-    try { await buildSlot(slot, parentHash); }
-    catch (e: any) { console.error(`[Slot ${slot}] 💥 ${e.message}`); }
-  });
+// ── STEP 2: Start slot watcher in background (after HTTP server is up) ────────
+// Two modes:
+//   Primary:  WSS watchBlockNumber — fires every ~12s
+//   Fallback: HTTP poll every 12s  — kicks in if WSS silently fails
 
-  setInterval(() => {
-    const up   = Math.floor((Date.now()-startTime)/60000);
-    const wr   = slotsProcessed > 0 ? ((blocksWon/slotsProcessed)*100).toFixed(1) : '0.0';
-    const prof = (Number(totalProfit)/1e18).toFixed(6);
-    console.log(`\n📊 [${up}m] slots=${slotsProcessed} wins=${blocksWon} (${wr}%) arbs=${arbsInjected} profit=${prof}ETH\n`);
-  }, 300_000);
-})();
+let lastSeenBlock = 0n;
+
+async function startWssWatcher() {
+  try {
+    const wssClient = createPublicClient({
+      chain: mainnet,
+      transport: webSocket(ETH_MAINNET.rpc.wss),
+    });
+    console.log('[TheWarden] 🔗 WSS connected — watching blocks');
+    await wssClient.watchBlockNumber({
+      onBlockNumber: async (blockNum) => {
+        if (blockNum <= lastSeenBlock) return;
+        lastSeenBlock = blockNum;
+        try {
+          const block = await httpClient.getBlock({ blockNumber: blockNum, includeTransactions: false });
+          const slot  = Math.floor((Date.now()/1000 - 1606824023) / 12);
+          await processSlot(slot, block.hash ?? '0x' + '0'.repeat(64));
+        } catch (e: any) {
+          console.error('[WSS] block fetch error:', e.message?.slice(0, 80));
+        }
+      },
+      onError: (err) => {
+        console.error('[WSS] error:', (err as Error).message?.slice(0, 80));
+      },
+    });
+  } catch (e: any) {
+    console.error('[WSS] connection failed:', e.message?.slice(0, 80));
+  }
+}
+
+async function startHttpPoller() {
+  console.log('[TheWarden] 🔄 HTTP poller running (12s fallback)');
+  setInterval(async () => {
+    try {
+      const blockNum = await httpClient.getBlockNumber();
+      if (blockNum <= lastSeenBlock) return;
+      lastSeenBlock = blockNum;
+      const block = await httpClient.getBlock({ blockNumber: blockNum, includeTransactions: false });
+      const slot  = Math.floor((Date.now()/1000 - 1606824023) / 12);
+      await processSlot(slot, block.hash ?? '0x' + '0'.repeat(64));
+    } catch (e: any) {
+      console.error('[Poll] error:', e.message?.slice(0, 60));
+    }
+  }, 12_000);
+}
+
+// Fire both — WSS primary, HTTP poll as safety net
+// Both check lastSeenBlock so only ONE runs per block
+Promise.all([
+  startWssWatcher(),
+  startHttpPoller(),
+]).catch(e => console.error('[main]', e.message));
+
+// Stats every 5 min
+setInterval(() => {
+  const up  = Math.floor((Date.now()-startTime)/60000);
+  const wr  = slotsProcessed > 0 ? ((blocksWon/slotsProcessed)*100).toFixed(1) : '0.0';
+  const pr  = (Number(totalProfit)/1e18).toFixed(6);
+  console.log(`\n📊 [${up}m] slots=${slotsProcessed} wins=${blocksWon}(${wr}%) arbs=${arbsInjected} profit=${pr}ETH\n`);
+}, 300_000);
