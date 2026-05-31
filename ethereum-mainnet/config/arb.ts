@@ -1,11 +1,13 @@
 /**
  * arb.ts — Shared arbitrage constants + helpers
- * GL-L44: Extracted from bundle.ts — zero side effects, safe to import anywhere.
- * GL-L45: SushiV3 router added. buildArbPath now accepts dexType per step.
- *         dexType 0 = UniV3 | dexType 1 = SushiV3 (same interface, different router)
+ * GL-L44: Extracted from bundle.ts — zero side effects.
+ * GL-L45: SushiV3 router address was 39 hex chars (invalid). Removed.
+ *         UNIV3_ROUTER used for all dexTypes until correct SushiV3 router verified on-chain.
+ *         SushiV3 pools remain in scanner for price monitoring + cross-pool spread detection.
+ *         TODO GL-L46: verify SushiV3 SwapRouter address + re-enable dexType=1 routing.
  */
 
-import { type Address, getAddress } from 'viem';
+import { type Address } from 'viem';
 
 // ── FlashSwapV3 ABI ───────────────────────────────────────────────────────────
 export const FLASH_ABI = [{
@@ -41,22 +43,20 @@ export const FLASH_ABI = [{
   stateMutability: 'nonpayable',
 }] as const;
 
-// ── Routers ───────────────────────────────────────────────────────────────────
-export const UNIV3_ROUTER   = getAddress('0xE592427A0AEce92De3Edee1F18E0157C05861564') as Address;
-// ★ GL-L45: SushiSwap V3 SwapRouter — identical exactInputSingle interface to UniV3
-export const SUSHIV3_ROUTER = getAddress('0x2c9ed6b9927ef12dd85d2caa3dce8dfe8e36ebf') as Address;
+// ── UniV3 Router (verified EIP-55 checksum) ───────────────────────────────────
+// Used for ALL arb paths until SushiV3 router address is verified.
+export const UNIV3_ROUTER = '0xE592427A0AEce92De3Edee1F18E0157C05861564' as Address;
 
-/** Map dexType uint8 → router address */
-export function routerForDex(dexType: 0 | 1): Address {
-  return dexType === 1 ? SUSHIV3_ROUTER : UNIV3_ROUTER;
+// ── SUSHIV3_ROUTER placeholder — DISABLED GL-L45 ─────────────────────────────
+// Original address was 39 hex chars (invalid). TODO GL-L46: find correct 40-char address.
+// export const SUSHIV3_ROUTER = '0x...' as Address;
+
+/** Always returns UniV3 router — safe for all dexTypes until SushiV3 router verified */
+export function routerForDex(_dexType: 0 | 1): Address {
+  return UNIV3_ROUTER;
 }
 
 // ── buildArbPath ──────────────────────────────────────────────────────────────
-// Constructs UniversalSwapPath for executeArbitrage()
-// sourceOverride=0 → Balancer V2 (0% fee) — always use first
-//
-// dexType: 0 = UniV3 (default) | 1 = SushiV3
-// Cross-protocol arb: pass dexType=0 for step1, dexType=1 for step2 (or vice versa)
 export function buildArbPath(
   step1Pool: string, step1In: string, step1Out: string, step1Fee: number, step1MinOut: bigint, step1DexType: 0 | 1,
   step2Pool: string, step2In: string, step2Out: string, step2Fee: number, step2MinOut: bigint, step2DexType: 0 | 1,
