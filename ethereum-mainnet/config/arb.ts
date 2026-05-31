@@ -1,14 +1,13 @@
 /**
  * arb.ts — Shared arbitrage constants + helpers
- * GL-L44: Extracted from bundle.ts so build-block.ts can import
- *         without triggering bundle.ts main() execution.
- *
- * Zero side effects — safe to import from any module.
+ * GL-L44: Extracted from bundle.ts — zero side effects, safe to import anywhere.
+ * GL-L45: SushiV3 router added. buildArbPath now accepts dexType per step.
+ *         dexType 0 = UniV3 | dexType 1 = SushiV3 (same interface, different router)
  */
 
 import { type Address } from 'viem';
 
-// ── FlashSwapV3 ABI ──────────────────────────────────────────────────────────
+// ── FlashSwapV3 ABI ───────────────────────────────────────────────────────────
 export const FLASH_ABI = [{
   name: 'executeArbitrage',
   type: 'function',
@@ -42,30 +41,51 @@ export const FLASH_ABI = [{
   stateMutability: 'nonpayable',
 }] as const;
 
-// ── UniV3 Router ─────────────────────────────────────────────────────────────
-export const UNIV3_ROUTER = '0xE592427A0AEce92De3Edee1F18E0157C05861564' as Address;
+// ── Routers ───────────────────────────────────────────────────────────────────
+export const UNIV3_ROUTER   = '0xE592427A0AEce92De3Edee1F18E0157C05861564' as Address;
+// ★ GL-L45: SushiSwap V3 SwapRouter — identical exactInputSingle interface to UniV3
+export const SUSHIV3_ROUTER = '0x2c9Ed6B9927EF12dD85D2CaA3Dce8DFe8e36eBf' as Address;
 
-// ── buildArbPath ─────────────────────────────────────────────────────────────
+/** Map dexType uint8 → router address */
+export function routerForDex(dexType: 0 | 1): Address {
+  return dexType === 1 ? SUSHIV3_ROUTER : UNIV3_ROUTER;
+}
+
+// ── buildArbPath ──────────────────────────────────────────────────────────────
 // Constructs UniversalSwapPath for executeArbitrage()
 // sourceOverride=0 → Balancer V2 (0% fee) — always use first
+//
+// dexType: 0 = UniV3 (default) | 1 = SushiV3
+// Cross-protocol arb: pass dexType=0 for step1, dexType=1 for step2 (or vice versa)
 export function buildArbPath(
-  step1Pool: string, step1In: string, step1Out: string, step1Fee: number, step1MinOut: bigint,
-  step2Pool: string, step2In: string, step2Out: string, step2Fee: number, step2MinOut: bigint,
+  step1Pool: string, step1In: string, step1Out: string, step1Fee: number, step1MinOut: bigint, step1DexType: 0 | 1,
+  step2Pool: string, step2In: string, step2Out: string, step2Fee: number, step2MinOut: bigint, step2DexType: 0 | 1,
   borrowAmount: bigint, minFinalAmount: bigint,
 ) {
   return {
     steps: [
       {
-        pool: step1Pool as Address, tokenIn: step1In as Address, tokenOut: step1Out as Address,
-        fee: step1Fee, minOut: step1MinOut, dexType: 0, router: UNIV3_ROUTER, useDeadline: false,
+        pool:        step1Pool as Address,
+        tokenIn:     step1In   as Address,
+        tokenOut:    step1Out  as Address,
+        fee:         step1Fee,
+        minOut:      step1MinOut,
+        dexType:     step1DexType,
+        router:      routerForDex(step1DexType),
+        useDeadline: false,
       },
       {
-        pool: step2Pool as Address, tokenIn: step2In as Address, tokenOut: step2Out as Address,
-        fee: step2Fee, minOut: step2MinOut, dexType: 0, router: UNIV3_ROUTER, useDeadline: false,
+        pool:        step2Pool as Address,
+        tokenIn:     step2In   as Address,
+        tokenOut:    step2Out  as Address,
+        fee:         step2Fee,
+        minOut:      step2MinOut,
+        dexType:     step2DexType,
+        router:      routerForDex(step2DexType),
+        useDeadline: false,
       },
     ],
     borrowAmount,
     minFinalAmount,
   };
 }
-
