@@ -216,8 +216,10 @@ async function processSlot(slot: number, parentHash: string) {
       // ★ GL-L45 FIX 7: Post-Shapella (slot >6.2M) — withdrawals required
       withdrawals:       [],
       // ★ GL-L45 FIX 7: Post-Cancun/Deneb (slot >8.6M) — blob fields required
-      blob_gas_used:     '0',
-      excess_blob_gas:   '0',
+      blob_gas_used:         '0',
+      excess_blob_gas:       '0',
+      // ★ GL-L45 FIX 9: Prague/Electra (slot>11.6M, Mar 2025) — execution_requests required
+      execution_requests:    [],
     },
     signature:    signer.signBid(bidTrace),
     // ★ GL-L45 FIX 8: Post-Deneb/Cancun relay spec requires blobs_bundle
