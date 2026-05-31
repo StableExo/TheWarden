@@ -40,7 +40,7 @@ const FEE_RECIPIENT   = process.env.BUILDER_FEE_RECIPIENT ?? '0x92d1d44C37Eb5a69
 const MIN_PROFIT_ETH  = parseFloat(process.env.MIN_PROFIT_ETH ?? '0.00005');
 const PORT            = parseInt(process.env.PORT ?? '3001');
 const BORROW_AMOUNT   = parseUnits('100000', 6);   // 100K USDC flash loan
-const MIN_POOL_BPS    = ETH_MAINNET.monitor.poolFireBps ?? 10;
+const MIN_POOL_BPS    = (ETH_MAINNET.monitor as any)?.poolFireBps ?? 10;
 
 // ── Validate env ─────────────────────────────────────────────────────────────
 if (!BLS_SK || BLS_SK === '0x') {
@@ -125,7 +125,7 @@ async function buildArbTx(opp: ArbOpportunity, slot: number): Promise<`0x${strin
     ]);
 
     const signedTx = await walClient.signTransaction({
-      to:       ADDRESSES.flashSwapV3ETH as Address,
+      to:       '0x1F27BA663dC5233DCf2635AD295Bd42197d854A9' as Address,  // FlashSwapV3 ETH mainnet GL-L41
       data:     calldata,
       gasPrice: gasPrice + parseUnits('2', 'gwei'),
       gas:      600_000n,
