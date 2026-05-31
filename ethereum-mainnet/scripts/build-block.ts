@@ -219,7 +219,10 @@ async function processSlot(slot: number, parentHash: string) {
       blob_gas_used:     '0',
       excess_blob_gas:   '0',
     },
-    signature: signer.signBid(bidTrace),
+    signature:    signer.signBid(bidTrace),
+    // ★ GL-L45 FIX 8: Post-Deneb/Cancun relay spec requires blobs_bundle
+    // For non-blob blocks send empty bundle — Flashbots + Agnostic require this field
+    blobs_bundle: { commitments: [], proofs: [], blobs: [] },
   };
 
   const results = await Promise.allSettled(
