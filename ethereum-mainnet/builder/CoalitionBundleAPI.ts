@@ -18,8 +18,8 @@
  * Coalition growth: TheWarden → more searchers → bigger blocks → dominate.
  */
 
-import express, { Request, Response, NextFunction } from 'express';
-import { createHash, randomUUID } from 'crypto';
+import express, { type Request, type Response } from 'express';
+import { createHash, randomUUID } from 'node:crypto';
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
