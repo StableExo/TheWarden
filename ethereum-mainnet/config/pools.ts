@@ -68,7 +68,7 @@ export const BALANCER_POOLS: PoolConfig[] = [
 
 export const CURVE_POOLS: PoolConfig[] = [
   { address: '0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7', protocol: 'curve', token0: ADDRESSES.tokens.DAI,  token1: ADDRESSES.tokens.USDC,  label: '3pool (DAI/USDC/USDT)' },
-  { address: '0xDC24316b9AE028F1497c275EB9192a3Ea0f67022', protocol: 'curve', token0: ADDRESSES.tokens.WETH, token1: ADDRESSES.tokens.stETH, label: 'stETH/ETH Curve' },
+  // stETH/ETH Curve pool removed GL-L45: get_dy(0,1,1e6) wrong scale for ETH (18dec) → phantom 2399bps arb vs Balancer
 ];
 
 export const ALL_POOLS: PoolConfig[] = [
