@@ -94,7 +94,7 @@ async function buildArbTx(opp: ArbOpportunity, slot: number): Promise<Hex | null
       httpClient.getGasPrice(),
     ]);
     const signed = await walClient.signTransaction({
-      to: '0x1F27BA663dC5233DCf2635AD295Bd42197d854A9' as Address,
+      to: getAddress('0x1F27BA663dC5233DCf2635AD295Bd42197d854A9') as Address,
       data: calldata, gasPrice: gasPrice + parseUnits('2', 'gwei'),
       gas: 600_000n, nonce, chain: mainnet,
     });
