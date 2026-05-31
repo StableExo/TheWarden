@@ -6,8 +6,7 @@
  * Zero side effects — safe to import from any module.
  */
 
-import { encodeFunctionData, parseUnits, type Address } from 'viem';
-import { ADDRESSES } from './addresses';
+import { type Address } from 'viem';
 
 // ── FlashSwapV3 ABI ──────────────────────────────────────────────────────────
 export const FLASH_ABI = [{
@@ -70,28 +69,3 @@ export function buildArbPath(
   };
 }
 
-// ── buildArbCalldata ─────────────────────────────────────────────────────────
-// Full calldata builder — takes an arb path + params, returns encoded calldata
-export function buildArbCalldata(
-  step1Pool: string, step1In: string, step1Out: string, step1Fee: number,
-  step2Pool: string, step2In: string, step2Out: string, step2Fee: number,
-  borrowAmount: bigint = parseUnits('100000', 6),
-) {
-  const minFinal = borrowAmount * 1001n / 1000n;
-  const path = buildArbPath(
-    step1Pool, step1In, step1Out, step1Fee, 0n,
-    step2Pool, step2In, step2Out, step2Fee, minFinal,
-    borrowAmount, minFinal,
-  );
-  return encodeFunctionData({
-    abi:          FLASH_ABI,
-    functionName: 'executeArbitrage',
-    args: [
-      ADDRESSES.tokens.USDC as Address,
-      borrowAmount,
-      path,
-      0,    // Balancer V2 — 0% fee
-      '0x0000000000000000000000000000000000000000' as Address,
-    ],
-  });
-}
