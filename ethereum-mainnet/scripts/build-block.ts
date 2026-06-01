@@ -225,6 +225,8 @@ async function processSlot(slot: number, parentHash: string) {
     // ★ GL-L45 FIX 8: Post-Deneb/Cancun relay spec requires blobs_bundle
     // For non-blob blocks send empty bundle — Flashbots + Agnostic require this field
     blobs_bundle: { commitments: [], proofs: [], blobs: [] },
+    // ★ GL-L45 FIX 9b: execution_requests at TOP LEVEL of bid (Electra relay spec)
+    execution_requests: [],
   };
 
   const results = await Promise.allSettled(
