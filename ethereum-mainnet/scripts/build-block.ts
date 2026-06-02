@@ -142,7 +142,7 @@ async function submitToRelay(name: string, url: string, bid: SignedBuilderBid) {
 }
 
 // ── Process one slot ──────────────────────────────────────────────────────────
-async function processSlot(slot: number, parentHash: string) {
+async function processSlot(slot: number, parentHash: string, prevRandao: string = '0x' + '0'.repeat(64)) {
   const t0 = Date.now();
   slotsProcessed++;
   lastSlotMs = Date.now();
@@ -207,7 +207,7 @@ async function processSlot(slot: number, parentHash: string) {
       state_root:        '0x' + '0'.repeat(64),
       receipts_root:     '0x' + '0'.repeat(64),
       logs_bloom:        '0x' + '0'.repeat(512),
-      prev_randao:       '0x' + '0'.repeat(64),
+      prev_randao:       prevRandao,  // ★ FIX 14: actual RANDAO mix from parent block (block.mixHash)
       block_number:      String(blockNum + 1n),
       gas_limit:         '30000000',
       gas_used:          String(gasUsed),
@@ -305,7 +305,7 @@ async function startHttpPoller() {
       lastSeenBlock = blockNum;
       const block = await httpClient.getBlock({ blockNumber: blockNum, includeTransactions: false });
       const slot  = Math.floor((Date.now()/1000 - 1606824023) / 12);
-      await processSlot(slot, block.hash ?? '0x' + '0'.repeat(64));
+      await processSlot(slot, block.hash ?? '0x' + '0'.repeat(64), (block as any).mixHash ?? '0x' + '0'.repeat(64));
     } catch (e: any) {
       console.error('[Poll] error:', e.message?.slice(0, 60));
     }
