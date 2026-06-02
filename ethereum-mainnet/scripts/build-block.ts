@@ -282,7 +282,7 @@ async function startWssWatcher() {
         try {
           const block = await httpClient.getBlock({ blockNumber: blockNum, includeTransactions: false });
           const slot  = Math.floor((Date.now()/1000 - 1606824023) / 12);
-          await processSlot(slot, block.hash ?? '0x' + '0'.repeat(64));
+          await processSlot(slot, block.hash ?? '0x' + '0'.repeat(64), (block as any).mixHash ?? '0x' + '0'.repeat(64));
         } catch (e: any) {
           console.error('[WSS] block fetch error:', e.message?.slice(0, 80));
         }
