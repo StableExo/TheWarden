@@ -208,7 +208,9 @@ async function processSlot(slot: number, parentHash: string) {
       block_number:      String(blockNum + 1n),
       gas_limit:         '30000000',
       gas_used:          String(gasUsed),
-      timestamp:         String(Math.floor(Date.now()/1000)),
+      // ★ FIX 12: Exact beacon slot timestamp — GENESIS + (slot+1)*12
+      // Relay requires slot N+1 start time, NOT wall clock
+      timestamp:         String(1606824023 + (slot + 1) * 12),
       extra_data:        '0x' + Buffer.from('TheWarden-GL-L45').toString('hex'),
       base_fee_per_gas:  String(gasPrice),
       block_hash:        '0x' + '0'.repeat(64),
