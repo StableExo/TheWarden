@@ -185,7 +185,7 @@ async function processSlot(slot: number, parentHash: string) {
   const gasUsed  = BigInt(txList.length) * 200_000n + 300_000n;
 
   const bidTrace: BidTrace = {
-    slot:                   String(slot),
+    slot:                   String(slot + 1),  // ★ FIX 11: bid for NEXT slot (N+1), relay wants upcoming slot
     parent_hash:            parentHash,
     block_hash:             '0x' + '0'.repeat(64),
     builder_pubkey:         signer.pubkey,
