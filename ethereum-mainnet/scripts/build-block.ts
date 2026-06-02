@@ -181,7 +181,9 @@ async function processSlot(slot: number, parentHash: string) {
     return;
   }
 
-  const proposer = validators[0] ?? {};
+  // FIX 13: Find validator registered for our TARGET slot (slot+1)
+  const targetSlot = String(slot + 1);
+  const proposer = validators.find((v: any) => v.slot === targetSlot) ?? validators[0] ?? {};
   const gasUsed  = BigInt(txList.length) * 200_000n + 300_000n;
 
   const bidTrace: BidTrace = {
@@ -190,7 +192,7 @@ async function processSlot(slot: number, parentHash: string) {
     block_hash:             '0x' + '0'.repeat(64),
     builder_pubkey:         signer.pubkey,
     proposer_pubkey:        proposer?.entry?.registration?.message?.pubkey ?? '0x' + '0'.repeat(96),
-    proposer_fee_recipient: proposer?.entry?.registration?.message?.fee_recipient ?? FEE_RECIPIENT,
+    proposer_fee_recipient: proposer?.entry?.message?.fee_recipient ?? FEE_RECIPIENT,
     gas_limit:              String(gasUsed),
     gas_used:               String(gasUsed),
     value:                  String(estimatedProfit),
@@ -200,7 +202,8 @@ async function processSlot(slot: number, parentHash: string) {
     message: bidTrace,
     execution_payload: {
       parent_hash:       parentHash,
-      fee_recipient:     FEE_RECIPIENT,
+      // FIX 13: execution_payload fee_recipient = proposer's registered address
+      fee_recipient:     proposer?.entry?.message?.fee_recipient ?? FEE_RECIPIENT,
       state_root:        '0x' + '0'.repeat(64),
       receipts_root:     '0x' + '0'.repeat(64),
       logs_bloom:        '0x' + '0'.repeat(512),
