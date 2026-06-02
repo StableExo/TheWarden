@@ -218,15 +218,15 @@ async function processSlot(slot: number, parentHash: string) {
       // ★ GL-L45 FIX 7: Post-Cancun/Deneb (slot >8.6M) — blob fields required
       blob_gas_used:         '0',
       excess_blob_gas:       '0',
-      // ★ GL-L45 FIX 9: Prague/Electra (slot>11.6M, Mar 2025) — execution_requests required
-      execution_requests:    [],
+      // ★ GL-L45 FIX 10: execution_requests as proper Electra struct
+      execution_requests:    { deposits: [], withdrawals: [], consolidations: [] },
     },
     signature:    signer.signBid(bidTrace),
     // ★ GL-L45 FIX 8: Post-Deneb/Cancun relay spec requires blobs_bundle
     // For non-blob blocks send empty bundle — Flashbots + Agnostic require this field
     blobs_bundle: { commitments: [], proofs: [], blobs: [] },
-    // ★ GL-L45 FIX 9b: execution_requests at TOP LEVEL of bid (Electra relay spec)
-    execution_requests: [],
+    // ★ GL-L45 FIX 10: execution_requests as Electra struct (deposits/withdrawals/consolidations)
+    execution_requests: { deposits: [], withdrawals: [], consolidations: [] },
   };
 
   const results = await Promise.allSettled(
