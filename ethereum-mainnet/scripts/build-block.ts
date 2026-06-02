@@ -143,6 +143,18 @@ async function submitToRelay(name: string, url: string, bid: SignedBuilderBid) {
 
 // ── Process one slot ──────────────────────────────────────────────────────────
 async function processSlot(slot: number, parentHash: string, prevRandao: string = '0x' + '0'.repeat(64)) {
+  // ★ FIX 15: Query beacon chain for actual RANDAO (block.mixHash = randao[N-1], we need randao[N])
+  // block.mixHash is the RANDAO *before* the latest slot's reveal — one slot stale
+  // Beacon API returns the up-to-date randao_mix after the latest slot's reveal
+  try {
+    const randaoResp = await fetch(`${ETH_MAINNET.rpc.http}eth/v1/beacon/states/head/randao`);
+    if (randaoResp.ok) {
+      const randaoData = await randaoResp.json();
+      if (randaoData?.data?.randao) {
+        prevRandao = randaoData.data.randao;
+      }
+    }
+  } catch { /* fallback to block.mixHash */ }
   const t0 = Date.now();
   slotsProcessed++;
   lastSlotMs = Date.now();
