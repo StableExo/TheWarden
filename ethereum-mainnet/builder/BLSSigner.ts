@@ -1,13 +1,27 @@
 /**
  * BLSSigner — TheWarden AEV Block Builder
  *
- * GL-L47 FIX 20: Default import — @noble/bls12-381 is CJS, ESM namespace import
- *   hides all methods under .default. Use: import bls from '@noble/bls12-381'
+ * GL-L47 FIX 21: createRequire — load CJS @noble/bls12-381 from ESM "type":"module" project
+ *
+ * @noble/bls12-381 is CommonJS-only. In a "type":"module" package:
+ *   import * as bls → .signSync undefined (namespace wraps default)
+ *   import bls      → SyntaxError: no export named 'default'
+ *   createRequire() → ✅ loads CJS module correctly, exposes all functions
  */
 
 import { createHash } from 'crypto';
-import bls from '@noble/bls12-381';   // default import — exposes signSync, sign, etc.
+import { createRequire } from 'module';
 import type { BidTrace } from './BlockBuilder';
+
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const bls = require('@noble/bls12-381') as {
+  getPublicKey: (sk: Uint8Array) => Uint8Array;
+  sign:     (msg: Uint8Array, sk: Uint8Array) => Promise<Uint8Array>;
+  signSync: (msg: Uint8Array, sk: Uint8Array) => Uint8Array;
+  verify:     (sig: Uint8Array, msg: Uint8Array, pk: Uint8Array) => Promise<boolean>;
+  verifySync: (sig: Uint8Array, msg: Uint8Array, pk: Uint8Array) => boolean;
+};
 
 // ── Domain ───────────────────────────────────────────────────────────────────
 const FORK_VERSION_CHUNK = Buffer.concat([Buffer.from('00000000', 'hex'), Buffer.alloc(28)]);
@@ -71,7 +85,7 @@ export class BLSSigner {
     this.pubkey = '0x' + Buffer.from(pubBytes).toString('hex');
     console.log('[BLSSigner] ✅ Initialised | pubkey=' + this.pubkey.slice(0, 22) + '...');
     console.log('[BLSSigner] 🔑 Domain=' + BUILDER_DOMAIN.toString('hex'));
-    console.log('[BLSSigner] 📚 @noble/bls12-381 default import | PopScheme | signSync');
+    console.log('[BLSSigner] 📚 @noble/bls12-381 via createRequire | PopScheme | signSync');
   }
 
   signBid(bid: BidTrace): string {
