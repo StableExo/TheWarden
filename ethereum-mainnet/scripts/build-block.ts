@@ -338,7 +338,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     if (pb?.gasUsed !== undefined && pb.gasUsed !== null) parentGasUsed = pb.gasUsed;
   } catch {}
   // EIP-4844/7516: excessBlobGas[N] = max(0, excessBlobGas[N-1] + blobGasUsed[N-1] - TARGET)
-  const TARGET_BLOB_GAS = 786432n; // Prague: 6 blobs * 131072
+  const TARGET_BLOB_GAS = 1572864n; // GL-L51 FIX 47: 12 blobs * 131072 (post-Pectra mainnet upgrade)
   const ourExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed > TARGET_BLOB_GAS
     ? parentExcessBlobGas + parentBlobGasUsed - TARGET_BLOB_GAS : 0n;
   // GL-L51 FIX 46: EIP-1559 baseFee — exact go-ethereum CalcBaseFee() formula
