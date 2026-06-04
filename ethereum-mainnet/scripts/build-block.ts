@@ -312,10 +312,18 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     getParentBeaconBlockRoot(slot),    // GL-L48: EIP-4788
   ]);
   let parentStateRoot = '0x'+'0'.repeat(64);
+  let parentExcessBlobGas = 0n;
+  let parentBlobGasUsed = 0n;
   try {
     const pb = await httpClient.getBlock({blockNumber:blockNum,includeTransactions:false});
     if (pb?.stateRoot) parentStateRoot = pb.stateRoot;
+    if (pb?.excessBlobGas !== undefined && pb.excessBlobGas !== null) parentExcessBlobGas = pb.excessBlobGas;
+    if (pb?.blobGasUsed !== undefined && pb.blobGasUsed !== null) parentBlobGasUsed = pb.blobGasUsed;
   } catch {}
+  // EIP-4844/7516: excessBlobGas[N] = max(0, excessBlobGas[N-1] + blobGasUsed[N-1] - TARGET)
+  const TARGET_BLOB_GAS = 786432n; // Prague: 6 blobs * 131072
+  const ourExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed > TARGET_BLOB_GAS
+    ? parentExcessBlobGas + parentBlobGasUsed - TARGET_BLOB_GAS : 0n;
 
   const validators = valSets.flat();
   console.log(`[Slot ${slot}] 👥 ${validators.length}v | ${opps.length} opps | ${bundles.length} bundles`);
@@ -367,7 +375,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     '0x'+'00'.repeat(256), prevRandao,
     blockNum+1n, '30000000', '0', slotTs,
     '0x'+Buffer.from('TheWarden-GL-L48').toString('hex'),
-    gasPrice, withdrawalsRoot, '0', '0', parentBeaconRoot
+    gasPrice, withdrawalsRoot, '0', String(ourExcessBlobGas), parentBeaconRoot
   );
   bidTrace.block_hash = realBlockHash;
   console.log(`[Slot ${slot}] 🔑 blockHash=${realBlockHash.slice(0,18)}...`);
@@ -391,7 +399,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
       transactions:      [],         // GL-L48: empty block for valid simulation
       withdrawals:       withdrawals,  // GL-L48: real beacon withdrawals
       blob_gas_used:     '0',                           // Deneb
-      excess_blob_gas:   '0',                           // Deneb
+      excess_blob_gas:   String(ourExcessBlobGas),      // GL-L50: real excessBlobGas
     },
     blobs_bundle: { commitments: [], proofs: [], blobs: [] },  // Deneb bid spec
     // Prague Electra: execution_requests at TOP LEVEL of SignedBuilderBid (not in payload)
