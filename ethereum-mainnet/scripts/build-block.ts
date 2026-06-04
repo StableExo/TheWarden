@@ -76,26 +76,42 @@ function numRlp(n: string|number|bigint): `0x${string}` {
   const h=v.toString(16); return `0x${h.length%2===0?h:'0'+h}` as `0x${string}`;
 }
 /** Compute withdrawals MPT root using HexaryTrie (EIP-4895) */
-// ── Patricia-Merkle Trie helpers (for computeWithdrawalsRoot) ────────────────
-function _rlpIdx(i: number): Buffer { return _rlpB(_minB(i)); }
-function _toNib(b: Buffer): number[] { const n:number[]=[]; for(const x of b){n.push(x>>4);n.push(x&0xf);} return n; }
-function _compact(nibs: number[], isLeaf: boolean): Buffer {
+// ── Patricia-Merkle Trie helpers (GL-L49 FIX 39 — verified vs real blocks) ───
+// Key insight: branch node items are pre-encoded refs, NOT raw bytes.
+// Leaf/extension: rlpB each raw-bytes item. Branch: items already encoded, concat directly.
+function _rlpLenc(items:Buffer[]): Buffer {  // branch node: items already encoded
+  const enc=Buffer.concat(items);
+  if(enc.length<=55) return Buffer.concat([Buffer.from([0xc0+enc.length]),enc]);
+  const h=Buffer.from(enc.length.toString(16).padStart(enc.length.toString(16).length%2?enc.length.toString(16).length+1:enc.length.toString(16).length,'0'),'hex');
+  return Buffer.concat([Buffer.from([0xf7+h.length]),h,enc]);
+}
+function _rlpIdx(i:number):Buffer { return _rlpB(_minB(i)); }
+function _toNib(b:Buffer):number[] { const n:number[]=[]; for(const x of b){n.push(x>>4);n.push(x&0xf);} return n; }
+function _compact(nibs:number[],isLeaf:boolean):Buffer {
   const odd=nibs.length%2; const flag=(isLeaf?2:0)+odd;
   const p=odd?[flag,...nibs]:[flag,0,...nibs]; const o:number[]=[];
   for(let i=0;i<p.length;i+=2) o.push((p[i]<<4)|p[i+1]); return Buffer.from(o);
 }
-type _KV = {nibs:number[];val:Buffer};
-function _ref(b:Buffer):Buffer { return b.length<32?b:_kHash(b); }
+type _KV={nibs:number[];val:Buffer};
+/** Encode a child reference: hash (32B, wrapped as string) or inline node (as-is) */
+function _encRef(node:Buffer):Buffer {
+  return node.length>=32 ? _rlpB(_kHash(node)) : node;
+}
 function _mkNode(kvs:_KV[], d:number): Buffer {
   if(!kvs.length) return Buffer.alloc(0);
-  if(kvs.length===1) return _rlpL([_compact(kvs[0].nibs.slice(d),true),kvs[0].val]);
+  if(kvs.length===1) return _rlpL([_compact(kvs[0].nibs.slice(d),true), kvs[0].val]);
   let c=d; const ml=Math.min(...kvs.map(k=>k.nibs.length));
   while(c<ml && kvs.every(k=>k.nibs[c]===kvs[0].nibs[c])) c++;
-  if(c>d) { const shared=kvs[0].nibs.slice(d,c); return _rlpL([_compact(shared,false),_ref(_mkNode(kvs,c))]); }
-  const ch:Buffer[]=Array(17).fill(null).map(()=>Buffer.alloc(0));
-  for(let n=0;n<16;n++){const g=kvs.filter(k=>k.nibs.length>d&&k.nibs[d]===n);if(g.length) ch[n]=_rlpB(_ref(_mkNode(g,d+1)));}
-  const tv=kvs.filter(k=>k.nibs.length===d); ch[16]=tv.length?_rlpB(tv[0].val):Buffer.alloc(0);
-  return _rlpL(ch);
+  if(c>d) {
+    const child=_mkNode(kvs,c);
+    return _rlpL([_compact(kvs[0].nibs.slice(d,c),false), child.length>=32?_kHash(child):child]);
+  }
+  // Branch node: 17 pre-encoded items (NO rlpB wrapping — items already encoded)
+  const EMPTY=Buffer.from([0x80]); // RLP of empty string
+  const ch:Buffer[]=Array(17).fill(EMPTY);
+  for(let n=0;n<16;n++){const g=kvs.filter(k=>k.nibs.length>d&&k.nibs[d]===n);if(g.length) ch[n]=_encRef(_mkNode(g,d+1));}
+  const tv=kvs.filter(k=>k.nibs.length===d); ch[16]=tv.length?_rlpB(tv[0].val):EMPTY;
+  return _rlpLenc(ch); // branch uses _rlpLenc — items already encoded
 }
 
 function computeWithdrawalsRoot(withdrawals: any[]): string {
