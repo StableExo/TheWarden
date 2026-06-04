@@ -64,7 +64,9 @@ function _minB(n: bigint|number): Buffer {
 }
 function _hfull(h:any): Buffer {
   if (Buffer.isBuffer(h)) return h;
-  const s = String(h??'').replace('0x','').replace(/^0+$/,'00') || '00';
+  // No zero-collapsing — logsBloom is 256 zero bytes and must stay that way
+  const s = String(h??'0x').replace('0x','');
+  if (!s || s.length === 0) return Buffer.alloc(0);
   return Buffer.from(s.length%2?'0'+s:s,'hex');
 }
 function _kHash(b: Buffer): Buffer {
