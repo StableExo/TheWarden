@@ -239,10 +239,11 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
       withdrawals:       withdrawals,                    // GL-L46 FIX 10: real beacon withdrawals
       blob_gas_used:     '0',                           // Deneb
       excess_blob_gas:   '0',                           // Deneb
-      execution_requests: { deposits: [], withdrawals: [], consolidations: [] }, // Prague
     },
     blobs_bundle: { commitments: [], proofs: [], blobs: [] },  // Deneb bid spec
-    execution_requests: { deposits: [], withdrawals: [], consolidations: [] },   // Prague bid spec
+    // Prague Electra: execution_requests at TOP LEVEL of SignedBuilderBid (not in payload)
+    // Titan relay requires: {deposits:[], withdrawals:[], consolidations:[]}
+    execution_requests: { deposits: [], withdrawals: [], consolidations: [] },
     signature: await signer.signBid(bidTrace),
   };
 
