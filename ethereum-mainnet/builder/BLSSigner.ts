@@ -1,32 +1,22 @@
 /**
  * BLSSigner — TheWarden AEV Block Builder
  *
- * GL-L47 FIX 17: @noble/bls12-381 — correct PopScheme DST, pure JS
- * GL-L47 FIX 18: bls.sign() not bls.signSync() — v1.x API is synchronous
- *
- * @noble/bls12-381 v1.x:
- *   bls.sign(msg, sk)        → Uint8Array  (SYNC in v1.x)
- *   bls.verify(sig, msg, pk) → boolean     (SYNC in v1.x)
- *   getPublicKey(sk)         → Uint8Array
- *   DST: BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_  ← ETH2 correct
+ * GL-L47 FIX 17: @noble/bls12-381 (PopScheme DST)
+ * GL-L47 FIX 18: bls.sign() not bls.signSync()
+ * GL-L47 FIX 19: Uint8Array coercion — @noble/bls12-381 v1.x rejects raw Buffer
  */
 
 import { createHash } from 'crypto';
 import * as bls from '@noble/bls12-381';
 import type { BidTrace } from './BlockBuilder';
 
-// ── Domain (SSZ ForkData HTR with empty Root{}) ──────────────────────────────
+// ── Domain ───────────────────────────────────────────────────────────────────
 const FORK_VERSION_CHUNK = Buffer.concat([Buffer.from('00000000', 'hex'), Buffer.alloc(28)]);
-const FORK_DATA_ROOT = createHash('sha256')
-  .update(FORK_VERSION_CHUNK)
-  .update(Buffer.alloc(32))
-  .digest();
-const BUILDER_DOMAIN = Buffer.concat([
-  Buffer.from('00000001', 'hex'),
-  FORK_DATA_ROOT.subarray(0, 28),
-]);
+const FORK_DATA_ROOT = createHash('sha256').update(FORK_VERSION_CHUNK).update(Buffer.alloc(32)).digest();
+const BUILDER_DOMAIN = Buffer.concat([Buffer.from('00000001', 'hex'), FORK_DATA_ROOT.subarray(0, 28)]);
 
 // ── SSZ helpers ──────────────────────────────────────────────────────────────
+const toU8 = (b: Buffer): Uint8Array => new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
 const merkle2 = (a: Buffer, b: Buffer): Buffer =>
   createHash('sha256').update(a).update(b).digest();
 const ZERO_HASH = Buffer.alloc(32);
@@ -88,14 +78,14 @@ export class BLSSigner {
     this.pubkey = '0x' + Buffer.from(pubBytes).toString('hex');
     console.log('[BLSSigner] ✅ Initialised | pubkey=' + this.pubkey.slice(0, 22) + '...');
     console.log('[BLSSigner] 🔑 Domain=' + BUILDER_DOMAIN.toString('hex').slice(0, 16) + '...');
-    console.log('[BLSSigner] 📚 @noble/bls12-381 v1.x | PopScheme DST | bls.sign() sync');
+    console.log('[BLSSigner] 📚 @noble/bls12-381 v1.x | PopScheme DST | Uint8Array coerced');
   }
 
-  /** signing_root = sha256(SSZ_HTR(bidTrace) || domain) — PopScheme DST */
   signBid(bid: BidTrace): string {
     const bidRoot     = sszHashBidTrace(bid);
     const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
-    const sigBytes    = bls.sign(signingRoot, this.skBytes);  // sync in v1.x
+    // v1.x requires Uint8Array, not Buffer (even though Buffer extends Uint8Array)
+    const sigBytes    = bls.sign(toU8(signingRoot), this.skBytes);
     const sig = '0x' + Buffer.from(sigBytes).toString('hex');
     console.log('[BLSSigner] ✍️  sig=' + sig.slice(0, 24) + '...');
     return sig;
@@ -106,8 +96,8 @@ export class BLSSigner {
       const bidRoot     = sszHashBidTrace(bid);
       const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
       const pubBytes    = bls.getPublicKey(this.skBytes);
-      const sigBytes    = Buffer.from(signature.replace('0x', ''), 'hex');
-      return bls.verify(sigBytes, signingRoot, pubBytes) as unknown as boolean;
+      const sigBytes    = new Uint8Array(Buffer.from(signature.replace('0x', ''), 'hex'));
+      return bls.verify(sigBytes, toU8(signingRoot), pubBytes) as unknown as boolean;
     } catch { return false; }
   }
 
@@ -116,14 +106,14 @@ export class BLSSigner {
   } {
     const msgBuffer = Buffer.concat([
       Buffer.from(feeRecipient.replace('0x', ''), 'hex'),
-      Buffer.alloc(8).fill(0), Buffer.alloc(8).fill(0),
+      Buffer.alloc(8), Buffer.alloc(8),
       Buffer.from(this.pubkey.replace('0x', ''), 'hex'),
     ]);
     msgBuffer.writeBigUInt64LE(BigInt(gasLimit), 20);
     msgBuffer.writeBigUInt64LE(BigInt(timestamp), 28);
     const msgRoot     = createHash('sha256').update(msgBuffer).digest();
     const signingRoot = createHash('sha256').update(msgRoot).update(BUILDER_DOMAIN).digest();
-    const sigBytes    = bls.sign(signingRoot, this.skBytes);
+    const sigBytes    = bls.sign(toU8(signingRoot), this.skBytes);
     return {
       message: { fee_recipient: feeRecipient, gas_limit: String(gasLimit), timestamp: String(timestamp), pubkey: this.pubkey },
       signature: '0x' + Buffer.from(sigBytes).toString('hex'),
