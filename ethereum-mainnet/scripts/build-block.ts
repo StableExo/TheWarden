@@ -82,7 +82,7 @@ function numRlp(n: string|number|bigint): `0x${string}` {
 function _rlpLenc(items:Buffer[]): Buffer {  // branch node: items already encoded
   const enc=Buffer.concat(items);
   if(enc.length<=55) return Buffer.concat([Buffer.from([0xc0+enc.length]),enc]);
-  const h=Buffer.from(enc.length.toString(16).padStart(enc.length.toString(16).length%2?enc.length.toString(16).length+1:enc.length.toString(16).length,'0'),'hex');
+  const hs=enc.length.toString(16); const h=Buffer.from(hs.length%2?'0'+hs:hs,'hex');
   return Buffer.concat([Buffer.from([0xf7+h.length]),h,enc]);
 }
 function _rlpIdx(i:number):Buffer { return _rlpB(_minB(i)); }
@@ -134,7 +134,7 @@ function computeWithdrawalsRoot(withdrawals: any[]): string {
     if (!root.length) return EMPTY_TRIE_ROOT;
     return '0x' + _kHash(root).toString('hex');
   } catch (e:any) {
-    console.warn('[withdrawalsRoot] err:', e.message?.slice(0,60));
+    console.warn('[withdrawalsRoot] err:', e.message??String(e));
     return EMPTY_TRIE_ROOT;
   }
 }
