@@ -3,33 +3,33 @@
  *
  * BLS12-381 signing for MEV-Boost relay bid submission.
  *
- * GL-L43: Live signing wired to build-block.ts continuous loop.
- * GL-L45 FIX 1: require("crypto") → import { createHash }
- * GL-L46 FIX 11-16: SSZ HTR, empty Root domain, @chainsafe/bls
+ * GL-L47 FIX 17: Replace @chainsafe/bls (deploy fails) with @noble/bls12-381
  *
- * GL-L46 FIX 16: Switch from @noble/curves to @chainsafe/bls
- *   @chainsafe/bls wraps blst (production ETH2 BLS library)
- *   Uses BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_ automatically
- *   Same library used by ETH2 validators and go-boost-utils
+ * WHY @noble/bls12-381:
+ *   - Default DST: BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_ (PopScheme) ✅
+ *   - @noble/curves uses NUL_ DST by default — WRONG for Ethereum relays
+ *   - @chainsafe/bls/herumi.js path fails ESM strict export map on Render ✅
+ *   - Pure JS, zero WASM, zero native compile, zero deploy issues ✅
+ *   - bls.signSync() keeps BLSSigner sync — zero changes to build-block.ts ✅
  */
 
 import { createHash } from 'crypto';
-import bls from '@chainsafe/bls/herumi.js'; // Pure WASM — works on all platforms
+import * as bls from '@noble/bls12-381';
 import type { BidTrace } from './BlockBuilder';
 
-// ── Domain (SSZ ForkData HTR with empty Root{}) ───────────────────────────────
-// mev-boost-relay uses: ComputeDomain(DomainTypeAppBuilder, genesisForkVersion, phase0.Root{})
+// ── Domain (SSZ ForkData HTR with empty Root{}) ──────────────────────────────
+// mev-boost-relay: ComputeDomain(DomainTypeAppBuilder, genesisForkVersion, phase0.Root{})
 const FORK_VERSION_CHUNK = Buffer.concat([Buffer.from('00000000', 'hex'), Buffer.alloc(28)]);
 const FORK_DATA_ROOT = createHash('sha256')
   .update(FORK_VERSION_CHUNK)
-  .update(Buffer.alloc(32)) // Root{} = all zeros
+  .update(Buffer.alloc(32))
   .digest();
 const BUILDER_DOMAIN = Buffer.concat([
   Buffer.from('00000001', 'hex'),
   FORK_DATA_ROOT.subarray(0, 28),
 ]);
 
-// ── SSZ helpers ───────────────────────────────────────────────────────────────
+// ── SSZ helpers ──────────────────────────────────────────────────────────────
 const merkle2 = (a: Buffer, b: Buffer): Buffer =>
   createHash('sha256').update(a).update(b).digest();
 const ZERO_HASH = Buffer.alloc(32);
@@ -76,7 +76,7 @@ function sszHashBidTrace(bid: BidTrace): Buffer {
   return layer[0];
 }
 
-// ── BLSSigner ─────────────────────────────────────────────────────────────────
+// ── BLSSigner ────────────────────────────────────────────────────────────────
 export class BLSSigner {
   private readonly skBytes: Uint8Array;
   readonly pubkey: string;
@@ -87,21 +87,21 @@ export class BLSSigner {
     }
     const hex = privateKeyHex.startsWith('0x') ? privateKeyHex.slice(2) : privateKeyHex;
     this.skBytes = new Uint8Array(Buffer.from(hex, 'hex'));
-    const sk = bls.SecretKey.fromBytes(this.skBytes);
-    const pk = sk.toPublicKey();
-    this.pubkey = '0x' + Buffer.from(pk.toBytes()).toString('hex');
+    const pubBytes = bls.getPublicKey(this.skBytes);
+    this.pubkey = '0x' + Buffer.from(pubBytes).toString('hex');
     console.log('[BLSSigner] ✅ Initialised | pubkey=' + this.pubkey.slice(0, 22) + '...');
     console.log('[BLSSigner] 🔑 Domain=' + BUILDER_DOMAIN.toString('hex').slice(0, 16) + '...');
-    console.log('[BLSSigner] 📚 Using @chainsafe/bls (ETH2-native library)');
+    console.log('[BLSSigner] 📚 @noble/bls12-381 | PopScheme DST | ETH2-native');
   }
 
-  /** signing_root = sha256(SSZ_HTR(bidTrace) || domain) */
+  /** signing_root = sha256(SSZ_HTR(bidTrace) || domain) — signed with PopScheme DST */
   signBid(bid: BidTrace): string {
     const bidRoot     = sszHashBidTrace(bid);
     const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
-    const sk          = bls.SecretKey.fromBytes(this.skBytes);
-    const sig         = sk.sign(signingRoot);
-    return '0x' + Buffer.from(sig.toBytes()).toString('hex');
+    const sigBytes    = bls.signSync(signingRoot, this.skBytes);
+    const sig = '0x' + Buffer.from(sigBytes).toString('hex');
+    console.log('[BLSSigner] ✍️  sig=' + sig.slice(0, 24) + '...');
+    return sig;
   }
 
   /** Verify a bid signature */
@@ -109,10 +109,9 @@ export class BLSSigner {
     try {
       const bidRoot     = sszHashBidTrace(bid);
       const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
-      const pk          = bls.SecretKey.fromBytes(this.skBytes).toPublicKey();
+      const pubBytes    = bls.getPublicKey(this.skBytes);
       const sigBytes    = Buffer.from(signature.replace('0x', ''), 'hex');
-      const sig         = bls.Signature.fromBytes(sigBytes);
-      return sig.verify(pk, signingRoot);
+      return bls.verifySync(sigBytes, signingRoot, pubBytes);
     } catch { return false; }
   }
 
@@ -128,11 +127,10 @@ export class BLSSigner {
     msgBuffer.writeBigUInt64LE(BigInt(timestamp), 28);
     const msgRoot     = createHash('sha256').update(msgBuffer).digest();
     const signingRoot = createHash('sha256').update(msgRoot).update(BUILDER_DOMAIN).digest();
-    const sk          = bls.SecretKey.fromBytes(this.skBytes);
-    const sig         = sk.sign(signingRoot);
+    const sigBytes    = bls.signSync(signingRoot, this.skBytes);
     return {
       message: { fee_recipient: feeRecipient, gas_limit: String(gasLimit), timestamp: String(timestamp), pubkey: this.pubkey },
-      signature: '0x' + Buffer.from(sig.toBytes()).toString('hex'),
+      signature: '0x' + Buffer.from(sigBytes).toString('hex'),
     };
   }
 }
