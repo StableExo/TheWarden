@@ -49,6 +49,41 @@ function numRlp(n: string|number|bigint): `0x${string}` {
   const v=BigInt(n); if(v===0n) return '0x';
   const h=v.toString(16); return `0x${h.length%2===0?h:'0'+h}` as `0x${string}`;
 }
+/** Compute withdrawals MPT root using HexaryTrie (EIP-4895) */
+async function computeWithdrawalsRoot(withdrawals: any[]): Promise<string> {
+  if (!withdrawals || withdrawals.length === 0) return EMPTY_TRIE_ROOT;
+  try {
+    // Dynamic import to avoid top-level await issues
+    const { Trie } = await import('@ethereumjs/trie');
+    const { RLP } = await import('@ethereumjs/rlp');
+    const trie = new Trie();
+    for (let i = 0; i < withdrawals.length; i++) {
+      const w = withdrawals[i];
+      // Key = RLP(index_in_list)
+      const key = RLP.encode(i === 0 ? new Uint8Array(0) : Uint8Array.from(
+        i.toString(16).padStart(i.toString(16).length % 2 ? i.toString(16).length + 1 : i.toString(16).length, '0')
+          .match(/.{2}/g)!.map(b => parseInt(b, 16))
+      ));
+      // Value = RLP([withdrawal_index, validator_index, address_20bytes, amount_gwei])
+      const widx  = parseInt(w.index        ?? w.withdrawalIndex ?? '0x0', 16);
+      const vidx  = parseInt(w.validatorIndex ?? '0x0', 16);
+      const addr  = Buffer.from((w.address ?? '0x'+'0'.repeat(40)).replace('0x','').padStart(40,'0'), 'hex');
+      const amtGwei = parseInt(w.amount ?? '0x0', 16);
+      const toMinBytes = (n: number) => {
+        if (n === 0) return new Uint8Array(0);
+        const h = n.toString(16); const hex = h.length%2?'0'+h:h;
+        return Uint8Array.from(hex.match(/.{2}/g)!.map(b=>parseInt(b,16)));
+      };
+      const wrlp = RLP.encode([toMinBytes(widx), toMinBytes(vidx), addr, toMinBytes(amtGwei)]);
+      await trie.put(Buffer.from(key), Buffer.from(wrlp));
+    }
+    return '0x' + Buffer.from(trie.root()).toString('hex');
+  } catch (e: any) {
+    console.warn('[withdrawalsRoot] fallback to EMPTY_TRIE_ROOT:', e.message?.slice(0,60));
+    return EMPTY_TRIE_ROOT;
+  }
+}
+
 function computeBlockHash(
   parentHash:string,feeRecipient:string,stateRoot:string,txRoot:string,receiptsRoot:string,
   logsBloom:string,prevRandao:string,blockNumber:bigint,gasLimit:string,gasUsed:string,
@@ -259,13 +294,15 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
   };
   // GL-L48 FIX 27: Compute real block_hash = keccak256(RLP(Prague header))
   const slotTs = 1606824023 + (slot+1)*12;
+  // Compute real withdrawals root for block_hash
+  const withdrawalsRoot = await computeWithdrawalsRoot(withdrawals);
   const realBlockHash = computeBlockHash(
     parentHash, proposerFeeRecipient, parentStateRoot,
     EMPTY_TRIE_ROOT, EMPTY_TRIE_ROOT,
     '0x'+'00'.repeat(256), prevRandao,
     blockNum+1n, '30000000', '0', slotTs,
     '0x'+Buffer.from('TheWarden-GL-L48').toString('hex'),
-    gasPrice, EMPTY_TRIE_ROOT, '0', '0', parentBeaconRoot
+    gasPrice, withdrawalsRoot, '0', '0', parentBeaconRoot
   );
   bidTrace.block_hash = realBlockHash;
   console.log(`[Slot ${slot}] 🔑 blockHash=${realBlockHash.slice(0,18)}...`);
@@ -287,7 +324,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
       base_fee_per_gas:  String(gasPrice),
       block_hash:        realBlockHash,  // GL-L48: computed
       transactions:      [],         // GL-L48: empty block for valid simulation
-      withdrawals:       [],         // GL-L48: empty block — empty withdrawals for valid hash
+      withdrawals:       withdrawals,  // GL-L48: real beacon withdrawals
       blob_gas_used:     '0',                           // Deneb
       excess_blob_gas:   '0',                           // Deneb
     },
