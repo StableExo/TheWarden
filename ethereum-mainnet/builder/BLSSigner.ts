@@ -1,16 +1,14 @@
 /**
  * BLSSigner — TheWarden AEV Block Builder
  *
- * BLS12-381 signing for MEV-Boost relay bid submission.
+ * GL-L47 FIX 17: @noble/bls12-381 — correct PopScheme DST, pure JS
+ * GL-L47 FIX 18: bls.sign() not bls.signSync() — v1.x API is synchronous
  *
- * GL-L47 FIX 17: Replace @chainsafe/bls (deploy fails) with @noble/bls12-381
- *
- * WHY @noble/bls12-381:
- *   - Default DST: BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_ (PopScheme) ✅
- *   - @noble/curves uses NUL_ DST by default — WRONG for Ethereum relays
- *   - @chainsafe/bls/herumi.js path fails ESM strict export map on Render ✅
- *   - Pure JS, zero WASM, zero native compile, zero deploy issues ✅
- *   - bls.signSync() keeps BLSSigner sync — zero changes to build-block.ts ✅
+ * @noble/bls12-381 v1.x:
+ *   bls.sign(msg, sk)        → Uint8Array  (SYNC in v1.x)
+ *   bls.verify(sig, msg, pk) → boolean     (SYNC in v1.x)
+ *   getPublicKey(sk)         → Uint8Array
+ *   DST: BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_  ← ETH2 correct
  */
 
 import { createHash } from 'crypto';
@@ -18,7 +16,6 @@ import * as bls from '@noble/bls12-381';
 import type { BidTrace } from './BlockBuilder';
 
 // ── Domain (SSZ ForkData HTR with empty Root{}) ──────────────────────────────
-// mev-boost-relay: ComputeDomain(DomainTypeAppBuilder, genesisForkVersion, phase0.Root{})
 const FORK_VERSION_CHUNK = Buffer.concat([Buffer.from('00000000', 'hex'), Buffer.alloc(28)]);
 const FORK_DATA_ROOT = createHash('sha256')
   .update(FORK_VERSION_CHUNK)
@@ -91,27 +88,26 @@ export class BLSSigner {
     this.pubkey = '0x' + Buffer.from(pubBytes).toString('hex');
     console.log('[BLSSigner] ✅ Initialised | pubkey=' + this.pubkey.slice(0, 22) + '...');
     console.log('[BLSSigner] 🔑 Domain=' + BUILDER_DOMAIN.toString('hex').slice(0, 16) + '...');
-    console.log('[BLSSigner] 📚 @noble/bls12-381 | PopScheme DST | ETH2-native');
+    console.log('[BLSSigner] 📚 @noble/bls12-381 v1.x | PopScheme DST | bls.sign() sync');
   }
 
-  /** signing_root = sha256(SSZ_HTR(bidTrace) || domain) — signed with PopScheme DST */
+  /** signing_root = sha256(SSZ_HTR(bidTrace) || domain) — PopScheme DST */
   signBid(bid: BidTrace): string {
     const bidRoot     = sszHashBidTrace(bid);
     const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
-    const sigBytes    = bls.signSync(signingRoot, this.skBytes);
+    const sigBytes    = bls.sign(signingRoot, this.skBytes);  // sync in v1.x
     const sig = '0x' + Buffer.from(sigBytes).toString('hex');
     console.log('[BLSSigner] ✍️  sig=' + sig.slice(0, 24) + '...');
     return sig;
   }
 
-  /** Verify a bid signature */
   verifyBid(bid: BidTrace, signature: string): boolean {
     try {
       const bidRoot     = sszHashBidTrace(bid);
       const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
       const pubBytes    = bls.getPublicKey(this.skBytes);
       const sigBytes    = Buffer.from(signature.replace('0x', ''), 'hex');
-      return bls.verifySync(sigBytes, signingRoot, pubBytes);
+      return bls.verify(sigBytes, signingRoot, pubBytes) as unknown as boolean;
     } catch { return false; }
   }
 
@@ -127,7 +123,7 @@ export class BLSSigner {
     msgBuffer.writeBigUInt64LE(BigInt(timestamp), 28);
     const msgRoot     = createHash('sha256').update(msgBuffer).digest();
     const signingRoot = createHash('sha256').update(msgRoot).update(BUILDER_DOMAIN).digest();
-    const sigBytes    = bls.signSync(signingRoot, this.skBytes);
+    const sigBytes    = bls.sign(signingRoot, this.skBytes);
     return {
       message: { fee_recipient: feeRecipient, gas_limit: String(gasLimit), timestamp: String(timestamp), pubkey: this.pubkey },
       signature: '0x' + Buffer.from(sigBytes).toString('hex'),
