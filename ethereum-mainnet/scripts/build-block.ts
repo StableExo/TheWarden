@@ -45,6 +45,30 @@ const EMPTY_UNCLE_HASH = '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a1
 const EMPTY_TRIE_ROOT  = '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421';
 const EMPTY_REQ_HASH   = '0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 
+// ── Shared RLP + hash helpers (used by computeBlockHash and computeWithdrawalsRoot) ──
+function _rlpB(b: Buffer): Buffer {
+  if (b.length===1 && b[0]<0x80) return b;
+  if (b.length<=55) return Buffer.concat([Buffer.from([0x80+b.length]),b]);
+  const h = b.length.toString(16); const lb = Buffer.from(h.length%2?'0'+h:h,'hex');
+  return Buffer.concat([Buffer.from([0xb7+lb.length]),lb,b]);
+}
+function _rlpL(items: Buffer[]): Buffer {
+  const enc = Buffer.concat(items.map(_rlpB));
+  if (enc.length<=55) return Buffer.concat([Buffer.from([0xc0+enc.length]),enc]);
+  const h = enc.length.toString(16); const lb = Buffer.from(h.length%2?'0'+h:h,'hex');
+  return Buffer.concat([Buffer.from([0xf7+lb.length]),lb,enc]);
+}
+function _minB(n: bigint|number): Buffer {
+  const v=BigInt(n); if(v===0n) return Buffer.alloc(0);
+  const h=v.toString(16); return Buffer.from(h.length%2?'0'+h:h,'hex');
+}
+function _hfull(h:string): Buffer {
+  const s = h.replace('0x',''); return Buffer.from(s.length%2?'0'+s:s||'00','hex');
+}
+function _kHash(b: Buffer): Buffer {
+  return Buffer.from(keccak256(('0x'+b.toString('hex')) as `0x${string}`).slice(2),'hex');
+}
+
 function numRlp(n: string|number|bigint): `0x${string}` {
   const v=BigInt(n); if(v===0n) return '0x';
   const h=v.toString(16); return `0x${h.length%2===0?h:'0'+h}` as `0x${string}`;
@@ -90,28 +114,24 @@ function computeBlockHash(
   timestamp:number, extraData:string, baseFeePerGas:bigint, withdrawalsRoot:string,
   blobGasUsed:string, excessBlobGas:string, parentBeaconRoot:string
 ):string {
-  // Use inline RLP (NOT viem toRlp — "Length is too large" for 256-byte logsBloom)
-  const h2b = (h:string) => Buffer.from(h.replace('0x','').replace(/^0+/,'').padStart(h.replace('0x','').replace(/^0+/,'').length%2?h.replace('0x','').replace(/^0+/,'').length+1:h.replace('0x','').replace(/^0+/,'').length||2,'0'),'hex');
-  const hfull=(h:string)=>Buffer.from(h.replace('0x','').padStart(h.replace('0x','').length%2?h.replace('0x','').length+1:h.replace('0x','').length,'0'),'hex');
+  // Inline RLP — avoids viem toRlp "Length too large" for 256-byte logsBloom
   const fields = [
-    hfull(parentHash), hfull(EMPTY_UNCLE_HASH), hfull(feeRecipient),
-    hfull(stateRoot), hfull(txRoot), hfull(receiptsRoot),
-    hfull(logsBloom),             // 256 bytes — must use _rlpB not viem toRlp
-    Buffer.alloc(0),              // difficulty = 0 → RLP empty
+    _hfull(parentHash), _hfull(EMPTY_UNCLE_HASH), _hfull(feeRecipient),
+    _hfull(stateRoot), _hfull(txRoot), _hfull(receiptsRoot),
+    _hfull(logsBloom),
+    Buffer.alloc(0),                        // difficulty = 0 → RLP 0x80
     _minB(blockNumber), _minB(BigInt(gasLimit)), _minB(BigInt(gasUsed||'0')),
     _minB(BigInt(timestamp)),
-    hfull(extraData||'0x'),
-    hfull(prevRandao), Buffer.from('0000000000000000','hex'),  // nonce
+    _hfull(extraData||'0x'),
+    _hfull(prevRandao), Buffer.from('0000000000000000','hex'),
     _minB(baseFeePerGas),
-    hfull(withdrawalsRoot),
+    _hfull(withdrawalsRoot),
     _minB(BigInt(blobGasUsed||'0')), _minB(BigInt(excessBlobGas||'0')),
-    hfull(parentBeaconRoot),
-    hfull(EMPTY_REQ_HASH),
+    _hfull(parentBeaconRoot),
+    _hfull(EMPTY_REQ_HASH),
   ];
-  const rlpHeader = _rlpL(fields);
-  return '0x' + _kHash(rlpHeader).toString('hex');
-}
-if (!BLS_SK || BLS_SK === '0x') { console.error('❌ BUILDER_BLS_SK not set'); process.exit(1); }
+  return '0x' + _kHash(_rlpL(fields)).toString('hex');
+}if (!BLS_SK || BLS_SK === '0x') { console.error('❌ BUILDER_BLS_SK not set'); process.exit(1); }
 if (!PRIVATE_KEY)               { console.error('❌ ETH_PRIVATE_KEY not set'); process.exit(1); }
 
 // ── Clients ─────────────────────────────────────────────────────────────────
