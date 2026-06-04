@@ -19,7 +19,7 @@ import http from 'http';
 import axios from 'axios';
 import {
   createPublicClient, createWalletClient, http as viemHttp, webSocket,
-  encodeFunctionData, parseUnits, getAddress, keccak256, toRlp, type Address, type Hex
+  encodeFunctionData, parseUnits, getAddress, keccak256, type Address, type Hex
 } from 'viem';
 import { mainnet } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -85,24 +85,32 @@ async function computeWithdrawalsRoot(withdrawals: any[]): Promise<string> {
 }
 
 function computeBlockHash(
-  parentHash:string,feeRecipient:string,stateRoot:string,txRoot:string,receiptsRoot:string,
-  logsBloom:string,prevRandao:string,blockNumber:bigint,gasLimit:string,gasUsed:string,
-  timestamp:number,extraData:string,baseFeePerGas:bigint,withdrawalsRoot:string,
-  blobGasUsed:string,excessBlobGas:string,parentBeaconRoot:string
+  parentHash:string, feeRecipient:string, stateRoot:string, txRoot:string, receiptsRoot:string,
+  logsBloom:string, prevRandao:string, blockNumber:bigint, gasLimit:string, gasUsed:string,
+  timestamp:number, extraData:string, baseFeePerGas:bigint, withdrawalsRoot:string,
+  blobGasUsed:string, excessBlobGas:string, parentBeaconRoot:string
 ):string {
-  const f:(`0x${string}`)[]=[
-    parentHash as `0x${string}`, EMPTY_UNCLE_HASH as `0x${string}`, feeRecipient as `0x${string}`,
-    stateRoot as `0x${string}`, txRoot as `0x${string}`, receiptsRoot as `0x${string}`,
-    logsBloom as `0x${string}`, '0x',
-    numRlp(blockNumber), numRlp(gasLimit), numRlp(gasUsed), numRlp(timestamp),
-    extraData as `0x${string}`, prevRandao as `0x${string}`, '0x0000000000000000',
-    numRlp(baseFeePerGas), withdrawalsRoot as `0x${string}`,
-    numRlp(blobGasUsed), numRlp(excessBlobGas),
-    parentBeaconRoot as `0x${string}`, EMPTY_REQ_HASH as `0x${string}`,
+  // Use inline RLP (NOT viem toRlp — "Length is too large" for 256-byte logsBloom)
+  const h2b = (h:string) => Buffer.from(h.replace('0x','').replace(/^0+/,'').padStart(h.replace('0x','').replace(/^0+/,'').length%2?h.replace('0x','').replace(/^0+/,'').length+1:h.replace('0x','').replace(/^0+/,'').length||2,'0'),'hex');
+  const hfull=(h:string)=>Buffer.from(h.replace('0x','').padStart(h.replace('0x','').length%2?h.replace('0x','').length+1:h.replace('0x','').length,'0'),'hex');
+  const fields = [
+    hfull(parentHash), hfull(EMPTY_UNCLE_HASH), hfull(feeRecipient),
+    hfull(stateRoot), hfull(txRoot), hfull(receiptsRoot),
+    hfull(logsBloom),             // 256 bytes — must use _rlpB not viem toRlp
+    Buffer.alloc(0),              // difficulty = 0 → RLP empty
+    _minB(blockNumber), _minB(BigInt(gasLimit)), _minB(BigInt(gasUsed||'0')),
+    _minB(BigInt(timestamp)),
+    hfull(extraData||'0x'),
+    hfull(prevRandao), Buffer.from('0000000000000000','hex'),  // nonce
+    _minB(baseFeePerGas),
+    hfull(withdrawalsRoot),
+    _minB(BigInt(blobGasUsed||'0')), _minB(BigInt(excessBlobGas||'0')),
+    hfull(parentBeaconRoot),
+    hfull(EMPTY_REQ_HASH),
   ];
-  return keccak256(toRlp(f));
+  const rlpHeader = _rlpL(fields);
+  return '0x' + _kHash(rlpHeader).toString('hex');
 }
-
 if (!BLS_SK || BLS_SK === '0x') { console.error('❌ BUILDER_BLS_SK not set'); process.exit(1); }
 if (!PRIVATE_KEY)               { console.error('❌ ETH_PRIVATE_KEY not set'); process.exit(1); }
 
