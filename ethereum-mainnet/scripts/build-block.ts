@@ -378,6 +378,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     gasPrice, withdrawalsRoot, '0', String(ourExcessBlobGas), parentBeaconRoot
   );
   bidTrace.block_hash = realBlockHash;
+  console.log(`[BH] slot=${slot+1} hash=${realBlockHash.slice(0,18)}... wRoot=${withdrawalsRoot.slice(0,14)} sRoot=${parentStateRoot.slice(0,14)} excess=${ourExcessBlobGas} beacon=${parentBeaconRoot.slice(0,14)} miner=${proposerFeeRecipient.slice(0,12)}`);
   console.log(`[Slot ${slot}] 🔑 blockHash=${realBlockHash.slice(0,18)}...`);
 
   const signedBid: SignedBuilderBid = {
