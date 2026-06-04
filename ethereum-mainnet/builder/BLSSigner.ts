@@ -21,10 +21,9 @@ import { bls12_381 } from '@noble/curves/bls12-381';
 import type { BidTrace } from './BlockBuilder';
 
 // ── Domain (CORRECT SSZ: ForkData HTR + DOMAIN_APPLICATION_BUILDER) ──────────
-// genesis_validators_root = Ethereum mainnet genesis
-const GENESIS_VALIDATORS_ROOT = Buffer.from(
-  '4b363db94e286120d76eb905340fdd4e54bfe9f06bf33ff6cf5ad27f511bfe95', 'hex'
-);
+// Root{} = all zeros — mev-boost-relay uses empty root for DomainBuilder, NOT real GVR
+// Source: ComputeDomain(DomainTypeAppBuilder, genesisForkVersion, phase0.Root{}.String())
+const GENESIS_VALIDATORS_ROOT = Buffer.alloc(32);
 // ForkData SSZ HTR = sha256(fork_version_padded_to_32 || genesis_validators_root)
 const FORK_VERSION_CHUNK = Buffer.concat([Buffer.from('00000000','hex'), Buffer.alloc(28)]);
 const FORK_DATA_ROOT = createHash('sha256')
