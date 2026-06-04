@@ -46,7 +46,7 @@ function bytes48HTR(hex: string): Buffer {
   return merkle2(b.subarray(0, 32), Buffer.concat([b.subarray(32, 48), Buffer.alloc(16)]));
 }
 function uint256LE(val: string | bigint): Buffer {
-  const hex = (typeof val === 'bigint' ? val.toString(16) : String(val).replace('0x', '')).padStart(64, '0');
+  const hex = BigInt(val).toString(16).padStart(64, '0'); // always decimal→bigint→hex
   const be = Buffer.from(hex, 'hex'); const le = Buffer.allocUnsafe(32);
   for (let i = 0; i < 32; i++) le[i] = be[31 - i]; return le;
 }
