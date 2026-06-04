@@ -287,7 +287,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
       base_fee_per_gas:  String(gasPrice),
       block_hash:        realBlockHash,  // GL-L48: computed
       transactions:      [],         // GL-L48: empty block for valid simulation
-      withdrawals:       withdrawals,                    // GL-L46 FIX 10: real beacon withdrawals
+      withdrawals:       [],         // GL-L48: empty block — empty withdrawals for valid hash
       blob_gas_used:     '0',                           // Deneb
       excess_blob_gas:   '0',                           // Deneb
     },
