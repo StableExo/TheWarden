@@ -243,7 +243,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     },
     blobs_bundle: { commitments: [], proofs: [], blobs: [] },  // Deneb bid spec
     execution_requests: { deposits: [], withdrawals: [], consolidations: [] },   // Prague bid spec
-    signature: signer.signBid(bidTrace),
+    signature: await signer.signBid(bidTrace),
   };
 
   const results = await Promise.allSettled(
