@@ -4,6 +4,7 @@
  * GL-L43: Live production. BLSSigner + CoalitionBundleAPI.
  * GL-L44: Arb wired. FLASH_ABI + buildArbPath from arb.ts.
  * GL-L45: All Ethereum fork fields correct. Relay payload compliant.
+ * GL-L51 FIX 46: EIP-1559 baseFee via CalcBaseFee() — 6/6 relays.
  *
  * Relay payload compliance (all fork fields):
  *   Shapella (slot 6.2M):  withdrawals: []
@@ -324,16 +325,38 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
   let parentStateRoot = '0x'+'0'.repeat(64);
   let parentExcessBlobGas = 0n;
   let parentBlobGasUsed = 0n;
+  let parentBaseFee = gasPrice;   // fallback: live gasPrice
+  let parentGasLimit = 60_000_000n;
+  let parentGasUsed = 0n;
   try {
     const pb = await httpClient.getBlock({blockNumber:blockNum,includeTransactions:false});
     if (pb?.stateRoot) parentStateRoot = pb.stateRoot;
     if (pb?.excessBlobGas !== undefined && pb.excessBlobGas !== null) parentExcessBlobGas = pb.excessBlobGas;
     if (pb?.blobGasUsed !== undefined && pb.blobGasUsed !== null) parentBlobGasUsed = pb.blobGasUsed;
+    if (pb?.baseFeePerGas !== undefined && pb.baseFeePerGas !== null) parentBaseFee = pb.baseFeePerGas;
+    if (pb?.gasLimit !== undefined && pb.gasLimit !== null) parentGasLimit = pb.gasLimit;
+    if (pb?.gasUsed !== undefined && pb.gasUsed !== null) parentGasUsed = pb.gasUsed;
   } catch {}
   // EIP-4844/7516: excessBlobGas[N] = max(0, excessBlobGas[N-1] + blobGasUsed[N-1] - TARGET)
   const TARGET_BLOB_GAS = 786432n; // Prague: 6 blobs * 131072
   const ourExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed > TARGET_BLOB_GAS
     ? parentExcessBlobGas + parentBlobGasUsed - TARGET_BLOB_GAS : 0n;
+  // GL-L51 FIX 46: EIP-1559 baseFee — exact go-ethereum CalcBaseFee() formula
+  const _gasTarget = parentGasLimit / 2n;
+  let ourBaseFee: bigint;
+  if (parentGasUsed === _gasTarget) {
+    ourBaseFee = parentBaseFee;
+  } else if (parentGasUsed > _gasTarget) {
+    const _gasUsedDelta = parentGasUsed - _gasTarget;
+    const _delta = parentBaseFee * _gasUsedDelta / _gasTarget / 8n;
+    ourBaseFee = parentBaseFee + (_delta > 0n ? _delta : 1n);
+  } else {
+    const _gasUsedDelta = _gasTarget - parentGasUsed;
+    const _delta = parentBaseFee * _gasUsedDelta / _gasTarget / 8n;
+    ourBaseFee = parentBaseFee > _delta ? parentBaseFee - _delta : 1n;
+  }
+  if (ourBaseFee < 1n) ourBaseFee = 1n;
+  console.log(\`[BaseFee] parentBaseFee=\${parentBaseFee} parentGasUsed=\${parentGasUsed} gasTarget=\${_gasTarget} ourBaseFee=\${ourBaseFee}\`);
 
   const validators = valSets.flat();
   console.log(`[Slot ${slot}] 👥 ${validators.length}v | ${opps.length} opps | ${bundles.length} bundles`);
@@ -384,8 +407,8 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     EMPTY_TRIE_ROOT, EMPTY_TRIE_ROOT,
     '0x'+'00'.repeat(256), prevRandao,
     blockNum+1n, '60000000', '0', slotTs,
-    '0x'+Buffer.from('TheWarden-GL-L48').toString('hex'),
-    gasPrice, withdrawalsRoot, '0', String(ourExcessBlobGas), parentBeaconRoot
+    '0x'+Buffer.from('TheWarden-GL-L51').toString('hex'),
+    ourBaseFee, withdrawalsRoot, '0', String(ourExcessBlobGas), parentBeaconRoot
   );
   bidTrace.block_hash = realBlockHash;
   console.log(`[BH] slot=${slot+1} hash=${realBlockHash.slice(0,18)}... wRoot=${withdrawalsRoot.slice(0,14)} sRoot=${parentStateRoot.slice(0,14)} excess=${ourExcessBlobGas} beacon=${parentBeaconRoot.slice(0,14)} miner=${proposerFeeRecipient.slice(0,12)}`);
@@ -405,7 +428,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
       gas_used:          '0',         // GL-L48: empty block
       timestamp:         String(slotTimestamp),         // ← exact slot start time
       extra_data:        '0x' + Buffer.from('TheWarden-GL-L48').toString('hex'),
-      base_fee_per_gas:  String(gasPrice),
+      base_fee_per_gas:  String(ourBaseFee),  // GL-L51 FIX 46: EIP-1559 CalcBaseFee
       block_hash:        realBlockHash,  // GL-L48: computed
       transactions:      [],         // GL-L48: empty block for valid simulation
       withdrawals:       withdrawals,  // GL-L48: real beacon withdrawals
