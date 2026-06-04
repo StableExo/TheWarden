@@ -87,6 +87,19 @@ async function getBeaconRandao(): Promise<string> {
   }
 }
 
+// ── Get expected withdrawals for next slot from beacon node ────────────────
+async function getExpectedWithdrawals(proposalSlot: number): Promise<any[]> {
+  try {
+    const resp = await axios.get(
+      `${BEACON_RPC}eth/v1/builder/states/head/expected_withdrawals`,
+      { params: { proposal_slot: proposalSlot }, timeout: 3000 }
+    );
+    return Array.isArray(resp.data?.data) ? resp.data.data : [];
+  } catch {
+    return []; // graceful fallback
+  }
+}
+
 // ── Build arb tx ─────────────────────────────────────────────────────────────
 async function buildArbTx(opp: ArbOpportunity, slot: number): Promise<Hex | null> {
   try {
@@ -150,13 +163,14 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
   console.log(`\n[Slot ${slot}] 🔨 | parent=${parentHash.slice(0, 12)}...`);
 
   // Fetch everything in parallel — including beacon RANDAO
-  const [valSets, opps, bundles, blockNum, gasPrice, prevRandao] = await Promise.all([
+  const [valSets, opps, bundles, blockNum, gasPrice, prevRandao, withdrawals] = await Promise.all([
     Promise.all(BUILDER_CONFIG.relays.map(r => getValidators(r.url))),
     scanner.findOpportunities().catch(() => [] as ArbOpportunity[]),
     getCoalitionBundles(),
     httpClient.getBlockNumber(),
     httpClient.getGasPrice(),
     getBeaconRandao(),
+    getExpectedWithdrawals(slot + 1),  // GL-L46 FIX 10: real beacon withdrawals
   ]);
 
   const validators = valSets.flat();
@@ -220,7 +234,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
       base_fee_per_gas:  String(gasPrice),
       block_hash:        '0x' + '0'.repeat(64),
       transactions:      txList,
-      withdrawals:       [],                            // Shapella
+      withdrawals:       withdrawals,                    // GL-L46 FIX 10: real beacon withdrawals
       blob_gas_used:     '0',                           // Deneb
       excess_blob_gas:   '0',                           // Deneb
       execution_requests: { deposits: [], withdrawals: [], consolidations: [] }, // Prague
