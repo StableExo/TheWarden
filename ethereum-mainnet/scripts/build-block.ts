@@ -406,7 +406,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
 
   // GL-L48: Submit empty blocks — valid empty payload wins slots
 
-  const estimatedProfit = 0n;  // GL-L51 FIX 53: 0 bid — empty block delivers 0 to proposer (Titan verifies payment)
+  const estimatedProfit = 1_000_000_000n;  // REVERTED: 0 broke UltraSound/Aestus/Titan — need payment tx (GL-L52)
   const _unusedGasCalc = 0; // GL-L48: gas_used=0 for empty block
   const targetSlotNum = slot + 1;
   const slotTimestamp = 1606824023 + targetSlotNum * 12;  // exact beacon slot start time
