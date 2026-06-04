@@ -76,40 +76,30 @@ function numRlp(n: string|number|bigint): `0x${string}` {
   const h=v.toString(16); return `0x${h.length%2===0?h:'0'+h}` as `0x${string}`;
 }
 /** Compute withdrawals MPT root using HexaryTrie (EIP-4895) */
-async function computeWithdrawalsRoot(withdrawals: any[]): Promise<string> {
+function computeWithdrawalsRoot(withdrawals: any[]): string {
   if (!withdrawals || withdrawals.length === 0) return EMPTY_TRIE_ROOT;
   try {
-    // Dynamic import to avoid top-level await issues
-    const { Trie } = await import('@ethereumjs/trie');
-    const { RLP } = await import('@ethereumjs/rlp');
-    const trie = new Trie();
-    for (let i = 0; i < withdrawals.length; i++) {
-      const w = withdrawals[i];
-      // Key = RLP(index_in_list)
-      const key = RLP.encode(i === 0 ? new Uint8Array(0) : Uint8Array.from(
-        i.toString(16).padStart(i.toString(16).length % 2 ? i.toString(16).length + 1 : i.toString(16).length, '0')
-          .match(/.{2}/g)!.map(b => parseInt(b, 16))
-      ));
-      // Value = RLP([withdrawal_index, validator_index, address_20bytes, amount_gwei])
-      const widx  = parseInt(w.index        ?? w.withdrawalIndex ?? '0x0', 16);
-      const vidx  = parseInt(w.validatorIndex ?? '0x0', 16);
-      const addr  = Buffer.from((w.address ?? '0x'+'0'.repeat(40)).replace('0x','').padStart(40,'0'), 'hex');
-      const amtGwei = parseInt(w.amount ?? '0x0', 16);
-      const toMinBytes = (n: number) => {
-        if (n === 0) return new Uint8Array(0);
-        const h = n.toString(16); const hex = h.length%2?'0'+h:h;
-        return Uint8Array.from(hex.match(/.{2}/g)!.map(b=>parseInt(b,16)));
-      };
-      const wrlp = RLP.encode([toMinBytes(widx), toMinBytes(vidx), addr, toMinBytes(amtGwei)]);
-      await trie.put(Buffer.from(key), Buffer.from(wrlp));
-    }
-    return '0x' + Buffer.from(trie.root()).toString('hex');
-  } catch (e: any) {
-    console.warn('[withdrawalsRoot] fallback to EMPTY_TRIE_ROOT:', e.message?.slice(0,60));
+    const kvs:_KV[] = withdrawals.map((w:any, i:number) => {
+      // Beacon API returns snake_case: index, validator_index, address, amount (all 0x hex)
+      const rawIdx  = w.index   ?? w.withdrawalIndex  ?? '0x0';
+      const rawVIdx = w.validator_index ?? w.validatorIndex ?? '0x0';
+      const rawAddr = w.address ?? '0x'+'0'.repeat(40);
+      const rawAmt  = w.amount  ?? '0x0';
+      const toBI = (v:any) => BigInt(typeof v==='string'&&v.startsWith('0x') ? v : ('0x'+Number(v).toString(16)));
+      const wI = _minB(toBI(rawIdx));
+      const vI = _minB(toBI(rawVIdx));
+      const addr = Buffer.from(rawAddr.replace('0x','').padStart(40,'0'), 'hex');
+      const amt  = _minB(toBI(rawAmt));
+      return { nibs: _toNib(_rlpIdx(i)), val: _rlpL([wI, vI, addr, amt]) };
+    });
+    const root = _mkNode(kvs, 0);
+    if (!root.length) return EMPTY_TRIE_ROOT;
+    return '0x' + _kHash(root).toString('hex');
+  } catch (e:any) {
+    console.warn('[withdrawalsRoot] err:', e.message?.slice(0,60));
     return EMPTY_TRIE_ROOT;
   }
 }
-
 function computeBlockHash(
   parentHash:string, feeRecipient:string, stateRoot:string, txRoot:string, receiptsRoot:string,
   logsBloom:string, prevRandao:string, blockNumber:bigint, gasLimit:string, gasUsed:string,
