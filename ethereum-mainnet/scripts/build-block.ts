@@ -217,7 +217,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     builder_pubkey:         signer.pubkey,
     proposer_pubkey:        proposer?.entry?.message?.pubkey ?? proposer?.entry?.registration?.message?.pubkey ?? '0x' + '0'.repeat(96),
     proposer_fee_recipient: proposerFeeRecipient,
-    gas_limit:              String(gasUsed),
+    gas_limit:              '30000000',  // must match execution_payload.gas_limit
     gas_used:               String(gasUsed),
     value:                  String(estimatedProfit),
   };
