@@ -62,8 +62,9 @@ function _minB(n: bigint|number): Buffer {
   const v=BigInt(n); if(v===0n) return Buffer.alloc(0);
   const h=v.toString(16); return Buffer.from(h.length%2?'0'+h:h,'hex');
 }
-function _hfull(h:string): Buffer {
-  const s = h.replace('0x',''); return Buffer.from(s.length%2?'0'+s:s||'00','hex');
+function _hfull(h:string|null|undefined): Buffer {
+  const s = (h??'0x').replace('0x','') || '00';
+  return Buffer.from(s.length%2?'0'+s:s,'hex');
 }
 function _kHash(b: Buffer): Buffer {
   return Buffer.from(keccak256(('0x'+b.toString('hex')) as `0x${string}`).slice(2),'hex');
