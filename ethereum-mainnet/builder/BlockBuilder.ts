@@ -45,7 +45,8 @@ export const BUILDER_CONFIG = {
   // Our MEV-Boost relay endpoints (6 relays for maximum coverage)
   relays: [
     { name: 'Flashbots',              url: 'https://boost-relay.flashbots.net',            regulated: false },
-    { name: 'Ultra Sound',            url: 'https://relay.ultrasound.money',                regulated: false },
+    { name: 'Ultra Sound (EU)',       url: 'https://relay-builders-eu.ultrasound.money',    regulated: false },
+    { name: 'Ultra Sound (US)',       url: 'https://relay-builders-us.ultrasound.money',    regulated: false },
     { name: 'Aestus',                 url: 'https://mainnet.aestus.live',                   regulated: false },
     // bloXroute removed GL-L45 — requires paid subscription
     { name: 'Agnostic',               url: 'https://agnostic-relay.net',                    regulated: false },
