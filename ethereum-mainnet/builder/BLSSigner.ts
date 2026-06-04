@@ -1,23 +1,23 @@
 /**
  * BLSSigner — TheWarden AEV Block Builder
  *
- * GL-L47 FIX 22: async signBid() + await bls.sign() via createRequire
+ * GL-L47 FIX 24: @noble/curves bls12-381 with explicit PopScheme DST
  *
- * @noble/bls12-381 loaded via createRequire (CJS in ESM project).
- * signSync does NOT exist in this package — sign() returns Promise<Uint8Array>.
- * signBid() is now async; build-block.ts must await it.
+ * ROOT CAUSE DISCOVERED:
+ *   @noble/bls12-381 (old pkg) and gnark-crypto (relay) produce DIFFERENT
+ *   G2 point bytes for the same input due to hash-to-curve expansion differences.
+ *   py_ecc (gnark-compatible) and @noble/bls12-381 do NOT interoperate.
+ *
+ *   @noble/curves bls12-381 IS gnark-compatible (same RFC 9380 hash-to-curve).
+ *   DST must be specified manually: BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_
  */
 
 import { createHash } from 'crypto';
-import { createRequire } from 'module';
+import { bls12_381 } from '@noble/curves/bls12-381';
 import type { BidTrace } from './BlockBuilder';
 
-const require = createRequire(import.meta.url);
-const bls = require('@noble/bls12-381') as {
-  getPublicKey: (sk: Uint8Array) => Uint8Array;
-  sign: (msg: Uint8Array, sk: Uint8Array) => Promise<Uint8Array>;
-  verify: (sig: Uint8Array, msg: Uint8Array, pk: Uint8Array) => Promise<boolean>;
-};
+// Explicit PopScheme DST — MUST match gnark-crypto relay
+const ETH2_DST = 'BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_';
 
 // ── Domain ───────────────────────────────────────────────────────────────────
 const FORK_VERSION_CHUNK = Buffer.concat([Buffer.from('00000000', 'hex'), Buffer.alloc(28)]);
@@ -26,8 +26,7 @@ const BUILDER_DOMAIN = Buffer.concat([Buffer.from('00000001', 'hex'), FORK_DATA_
 
 // ── SSZ helpers ──────────────────────────────────────────────────────────────
 const toU8 = (b: Buffer): Uint8Array => new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
-const merkle2 = (a: Buffer, b: Buffer): Buffer =>
-  createHash('sha256').update(a).update(b).digest();
+const merkle2 = (a: Buffer, b: Buffer): Buffer => createHash('sha256').update(a).update(b).digest();
 const ZERO_HASH = Buffer.alloc(32);
 
 function uint64LE(n: number | bigint | string): Buffer {
@@ -46,7 +45,8 @@ function bytes48HTR(hex: string): Buffer {
   return merkle2(b.subarray(0, 32), Buffer.concat([b.subarray(32, 48), Buffer.alloc(16)]));
 }
 function uint256LE(val: string | bigint): Buffer {
-  const hex = BigInt(val).toString(16).padStart(64, '0'); // always decimal→bigint→hex
+  // Always convert via BigInt to ensure decimal string → correct hex (not decimal-as-hex)
+  const hex = BigInt(val).toString(16).padStart(64, '0');
   const be = Buffer.from(hex, 'hex'); const le = Buffer.allocUnsafe(32);
   for (let i = 0; i < 32; i++) le[i] = be[31 - i]; return le;
 }
@@ -77,24 +77,21 @@ export class BLSSigner {
     }
     const hex = privateKeyHex.startsWith('0x') ? privateKeyHex.slice(2) : privateKeyHex;
     this.skBytes = new Uint8Array(Buffer.from(hex, 'hex'));
-    const pubBytes = bls.getPublicKey(this.skBytes);
+    const pubBytes = bls12_381.getPublicKey(this.skBytes);
     this.pubkey = '0x' + Buffer.from(pubBytes).toString('hex');
     console.log('[BLSSigner] ✅ Initialised | pubkey=' + this.pubkey.slice(0, 22) + '...');
     console.log('[BLSSigner] 🔑 Domain=' + BUILDER_DOMAIN.toString('hex'));
-    console.log('[BLSSigner] 📚 @noble/bls12-381 | async sign() | PopScheme DST');
+    console.log('[BLSSigner] 📚 @noble/curves bls12-381 | PopScheme DST | gnark-compatible');
   }
 
   async signBid(bid: BidTrace): Promise<string> {
     const bidRoot     = sszHashBidTrace(bid);
     const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
-    // DEBUG: log signing components
-    console.log('[DEBUG] slot=' + bid.slot + ' val=' + bid.value + ' gl=' + bid.gas_limit + ' gu=' + bid.gas_used);
-    console.log('[DEBUG] bidRoot=' + bidRoot.toString('hex'));
-    console.log('[DEBUG] signingRoot=' + signingRoot.toString('hex'));
-    const sigBytes    = await bls.sign(toU8(signingRoot), this.skBytes);
-    // Self-verify: confirms library signs correctly
-    const pubBytes    = bls.getPublicKey(this.skBytes);
-    const valid       = await bls.verify(sigBytes, toU8(signingRoot), pubBytes);
+    // Use explicit ETH2 PopScheme DST — gnark-crypto compatible
+    const sigBytes    = await bls12_381.sign(toU8(signingRoot), this.skBytes, { DST: ETH2_DST });
+    // Self-verify to confirm correctness
+    const pubBytes    = bls12_381.getPublicKey(this.skBytes);
+    const valid       = await bls12_381.verify(sigBytes, toU8(signingRoot), pubBytes, { DST: ETH2_DST });
     const sig = '0x' + Buffer.from(sigBytes).toString('hex');
     console.log('[BLSSigner] ✍️  sig=' + sig.slice(0, 24) + '... selfVerify=' + valid);
     return sig;
@@ -104,9 +101,9 @@ export class BLSSigner {
     try {
       const bidRoot     = sszHashBidTrace(bid);
       const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
-      const pubBytes    = bls.getPublicKey(this.skBytes);
+      const pubBytes    = bls12_381.getPublicKey(this.skBytes);
       const sigBytes    = new Uint8Array(Buffer.from(signature.replace('0x', ''), 'hex'));
-      return await bls.verify(sigBytes, toU8(signingRoot), pubBytes);
+      return await bls12_381.verify(sigBytes, toU8(signingRoot), pubBytes, { DST: ETH2_DST });
     } catch { return false; }
   }
 }
