@@ -99,19 +99,26 @@ function _encRef(node:Buffer):Buffer {
 }
 function _mkNode(kvs:_KV[], d:number): Buffer {
   if(!kvs.length) return Buffer.alloc(0);
-  if(kvs.length===1) return _rlpL([_compact(kvs[0].nibs.slice(d),true), kvs[0].val]);
+  // Leaf: path + value, both raw → encode each with _rlpB, then list
+  if(kvs.length===1) {
+    const p=_rlpB(_compact(kvs[0].nibs.slice(d),true)); const v=_rlpB(kvs[0].val);
+    return _rlpLenc([p,v]);
+  }
   let c=d; const ml=Math.min(...kvs.map(k=>k.nibs.length));
   while(c<ml && kvs.every(k=>k.nibs[c]===kvs[0].nibs[c])) c++;
   if(c>d) {
+    // Extension: path + child_ref. child_ref = hash-string OR inline-list
     const child=_mkNode(kvs,c);
-    return _rlpL([_compact(kvs[0].nibs.slice(d,c),false), child.length>=32?_kHash(child):child]);
+    const p=_rlpB(_compact(kvs[0].nibs.slice(d,c),false));
+    const cref=child.length>=32 ? _rlpB(_kHash(child)) : child; // hash→string, inline→as-is
+    return _rlpLenc([p,cref]);
   }
-  // Branch node: 17 pre-encoded items (NO rlpB wrapping — items already encoded)
-  const EMPTY=Buffer.from([0x80]); // RLP of empty string
+  // Branch: 17 pre-encoded items
+  const EMPTY=Buffer.from([0x80]);
   const ch:Buffer[]=Array(17).fill(EMPTY);
   for(let n=0;n<16;n++){const g=kvs.filter(k=>k.nibs.length>d&&k.nibs[d]===n);if(g.length) ch[n]=_encRef(_mkNode(g,d+1));}
   const tv=kvs.filter(k=>k.nibs.length===d); ch[16]=tv.length?_rlpB(tv[0].val):EMPTY;
-  return _rlpLenc(ch); // branch uses _rlpLenc — items already encoded
+  return _rlpLenc(ch);
 }
 
 function computeWithdrawalsRoot(withdrawals: any[]): string {
