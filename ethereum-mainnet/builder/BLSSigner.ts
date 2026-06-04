@@ -87,9 +87,16 @@ export class BLSSigner {
   async signBid(bid: BidTrace): Promise<string> {
     const bidRoot     = sszHashBidTrace(bid);
     const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
+    // DEBUG: log signing components
+    console.log('[DEBUG] slot=' + bid.slot + ' val=' + bid.value + ' gl=' + bid.gas_limit + ' gu=' + bid.gas_used);
+    console.log('[DEBUG] bidRoot=' + bidRoot.toString('hex'));
+    console.log('[DEBUG] signingRoot=' + signingRoot.toString('hex'));
     const sigBytes    = await bls.sign(toU8(signingRoot), this.skBytes);
+    // Self-verify: confirms library signs correctly
+    const pubBytes    = bls.getPublicKey(this.skBytes);
+    const valid       = await bls.verify(sigBytes, toU8(signingRoot), pubBytes);
     const sig = '0x' + Buffer.from(sigBytes).toString('hex');
-    console.log('[BLSSigner] ✍️  sig=' + sig.slice(0, 24) + '...');
+    console.log('[BLSSigner] ✍️  sig=' + sig.slice(0, 24) + '... selfVerify=' + valid);
     return sig;
   }
 
