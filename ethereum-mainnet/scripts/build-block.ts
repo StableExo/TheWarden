@@ -312,7 +312,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
   console.log(`\n[Slot ${slot}] 🔨 | parent=${parentHash.slice(0, 12)}...`);
 
   // Fetch everything in parallel — including beacon RANDAO
-  const [valSets, opps, bundles, blockNum, gasPrice, prevRandao, withdrawals, parentBeaconRoot] = await Promise.all([
+  const [valSets, opps, bundles, blockNumFallback, gasPrice, prevRandao, withdrawals, parentBeaconRoot] = await Promise.all([
     Promise.all(BUILDER_CONFIG.relays.map(r => getValidators(r.url))),
     scanner.findOpportunities().catch(() => [] as ArbOpportunity[]),
     getCoalitionBundles(),
@@ -322,21 +322,28 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     getExpectedWithdrawals(slot + 1),
     getParentBeaconBlockRoot(slot),    // GL-L48: EIP-4788
   ]);
+  // GL-L51 FIX 48: Fetch parent block by HASH to eliminate race condition.
+  // getBlockNumber() can return stale N-1 while parentHash is from block N.
+  // Result: block_number = N and parent block_number = N — relay rejects.
+  // Fix: getBlock(blockHash) gives exact parent number with zero ambiguity.
   let parentStateRoot = '0x'+'0'.repeat(64);
   let parentExcessBlobGas = 0n;
   let parentBlobGasUsed = 0n;
-  let parentBaseFee = gasPrice;   // fallback: live gasPrice
+  let parentBaseFee = gasPrice;
   let parentGasLimit = 60_000_000n;
   let parentGasUsed = 0n;
+  let blockNum = blockNumFallback;
   try {
-    const pb = await httpClient.getBlock({blockNumber:blockNum,includeTransactions:false});
+    const pb = await httpClient.getBlock({blockHash: parentHash as `0x${string}`, includeTransactions:false});
+    if (pb?.number !== undefined && pb.number !== null) blockNum = pb.number;
     if (pb?.stateRoot) parentStateRoot = pb.stateRoot;
     if (pb?.excessBlobGas !== undefined && pb.excessBlobGas !== null) parentExcessBlobGas = pb.excessBlobGas;
     if (pb?.blobGasUsed !== undefined && pb.blobGasUsed !== null) parentBlobGasUsed = pb.blobGasUsed;
     if (pb?.baseFeePerGas !== undefined && pb.baseFeePerGas !== null) parentBaseFee = pb.baseFeePerGas;
     if (pb?.gasLimit !== undefined && pb.gasLimit !== null) parentGasLimit = pb.gasLimit;
     if (pb?.gasUsed !== undefined && pb.gasUsed !== null) parentGasUsed = pb.gasUsed;
-  } catch {}
+    console.log("[ParentBlock] hash=" + parentHash.slice(0,14) + " number=" + blockNum + " baseFee=" + parentBaseFee);
+  } catch (e: any) { console.warn("[ParentBlock] fetch failed:", (e as any).message?.slice(0,60)); }
   // EIP-4844/7516: excessBlobGas[N] = max(0, excessBlobGas[N-1] + blobGasUsed[N-1] - TARGET)
   const TARGET_BLOB_GAS = 1572864n; // GL-L51 FIX 47: 12 blobs * 131072 (post-Pectra mainnet upgrade)
   const ourExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed > TARGET_BLOB_GAS
