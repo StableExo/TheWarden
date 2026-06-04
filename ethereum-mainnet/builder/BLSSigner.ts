@@ -123,11 +123,18 @@ export class BLSSigner {
     console.log('[BLSSigner] 🔑 Domain=' + BUILDER_DOMAIN.toString('hex').slice(0,16) + '...');
   }
 
-  /** signing_root = sha256(SSZ_HTR(bidTrace) || domain) */
+  /** signing_root = sha256(SSZ_HTR(bidTrace) || domain)
+   *  GL-L46 FIX 15: Use G2.hashToCurve directly with ETH2 DST
+   *  sign() may ignore options in some noble-curves versions.
+   *  G2.hashToCurve ALWAYS accepts DST option reliably. */
   signBid(bid: BidTrace): string {
     const bidRoot     = sszHashBidTrace(bid);
     const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
-    const sig         = bls12_381.sign(signingRoot, this.sk, { DST: 'BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_' }); // GL-L46 FIX 14: ETH signing DST (BLS_SIG_ prefix, POP_ suffix)
+    // ETH2 BLS signing: hash message to G2 with correct DST, then multiply by sk
+    const ETH2_DST  = 'BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_';
+    const msgPoint  = bls12_381.G2.hashToCurve(signingRoot, { DST: ETH2_DST });
+    const sigPoint  = msgPoint.multiply(this.sk);
+    const sig       = sigPoint.toRawBytes(true); // compressed 96-byte G2 signature
     return '0x' + Buffer.from(sig).toString('hex');
   }
 
@@ -136,9 +143,10 @@ export class BLSSigner {
     try {
       const bidRoot     = sszHashBidTrace(bid);
       const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
+      const ETH2_DST    = 'BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_';
       const sigBytes    = Buffer.from(signature.replace('0x', ''), 'hex');
       const pkBytes     = Buffer.from(this.pubkey.replace('0x', ''), 'hex');
-      return bls12_381.verify(sigBytes, signingRoot, pkBytes);
+      return bls12_381.verify(sigBytes, signingRoot, pkBytes, { DST: ETH2_DST });
     } catch { return false; }
   }
 
