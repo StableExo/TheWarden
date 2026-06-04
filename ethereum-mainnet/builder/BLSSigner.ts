@@ -1,13 +1,12 @@
 /**
  * BLSSigner — TheWarden AEV Block Builder
  *
- * GL-L47 FIX 17: @noble/bls12-381 (PopScheme DST)
- * GL-L47 FIX 18: bls.sign() not bls.signSync()
- * GL-L47 FIX 19: Uint8Array coercion — @noble/bls12-381 v1.x rejects raw Buffer
+ * GL-L47 FIX 20: Default import — @noble/bls12-381 is CJS, ESM namespace import
+ *   hides all methods under .default. Use: import bls from '@noble/bls12-381'
  */
 
 import { createHash } from 'crypto';
-import * as bls from '@noble/bls12-381';
+import bls from '@noble/bls12-381';   // default import — exposes signSync, sign, etc.
 import type { BidTrace } from './BlockBuilder';
 
 // ── Domain ───────────────────────────────────────────────────────────────────
@@ -22,19 +21,15 @@ const merkle2 = (a: Buffer, b: Buffer): Buffer =>
 const ZERO_HASH = Buffer.alloc(32);
 
 function uint64LE(n: number | bigint | string): Buffer {
-  const buf = Buffer.alloc(32);
-  const tmp = Buffer.alloc(8);
-  tmp.writeBigUInt64LE(BigInt(n));
-  tmp.copy(buf);
-  return buf;
+  const buf = Buffer.alloc(32); const tmp = Buffer.alloc(8);
+  tmp.writeBigUInt64LE(BigInt(n)); tmp.copy(buf); return buf;
 }
 function bytes32(hex: string): Buffer {
   return Buffer.from(hex.replace('0x', '').padStart(64, '0'), 'hex');
 }
 function bytes20(hex: string): Buffer {
   const b = Buffer.alloc(32);
-  Buffer.from(hex.replace('0x', '').padStart(40, '0'), 'hex').copy(b);
-  return b;
+  Buffer.from(hex.replace('0x', '').padStart(40, '0'), 'hex').copy(b); return b;
 }
 function bytes48HTR(hex: string): Buffer {
   const b = Buffer.from(hex.replace('0x', '').padStart(96, '0'), 'hex');
@@ -42,10 +37,8 @@ function bytes48HTR(hex: string): Buffer {
 }
 function uint256LE(val: string | bigint): Buffer {
   const hex = (typeof val === 'bigint' ? val.toString(16) : String(val).replace('0x', '')).padStart(64, '0');
-  const be = Buffer.from(hex, 'hex');
-  const le = Buffer.allocUnsafe(32);
-  for (let i = 0; i < 32; i++) le[i] = be[31 - i];
-  return le;
+  const be = Buffer.from(hex, 'hex'); const le = Buffer.allocUnsafe(32);
+  for (let i = 0; i < 32; i++) le[i] = be[31 - i]; return le;
 }
 function sszHashBidTrace(bid: BidTrace): Buffer {
   const leaves: Buffer[] = [
@@ -77,15 +70,14 @@ export class BLSSigner {
     const pubBytes = bls.getPublicKey(this.skBytes);
     this.pubkey = '0x' + Buffer.from(pubBytes).toString('hex');
     console.log('[BLSSigner] ✅ Initialised | pubkey=' + this.pubkey.slice(0, 22) + '...');
-    console.log('[BLSSigner] 🔑 Domain=' + BUILDER_DOMAIN.toString('hex').slice(0, 16) + '...');
-    console.log('[BLSSigner] 📚 @noble/bls12-381 v1.x | PopScheme DST | Uint8Array coerced');
+    console.log('[BLSSigner] 🔑 Domain=' + BUILDER_DOMAIN.toString('hex'));
+    console.log('[BLSSigner] 📚 @noble/bls12-381 default import | PopScheme | signSync');
   }
 
   signBid(bid: BidTrace): string {
     const bidRoot     = sszHashBidTrace(bid);
     const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
-    // v1.x requires Uint8Array, not Buffer (even though Buffer extends Uint8Array)
-    const sigBytes    = bls.sign(toU8(signingRoot), this.skBytes);
+    const sigBytes    = bls.signSync(toU8(signingRoot), this.skBytes);
     const sig = '0x' + Buffer.from(sigBytes).toString('hex');
     console.log('[BLSSigner] ✍️  sig=' + sig.slice(0, 24) + '...');
     return sig;
@@ -97,7 +89,7 @@ export class BLSSigner {
       const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
       const pubBytes    = bls.getPublicKey(this.skBytes);
       const sigBytes    = new Uint8Array(Buffer.from(signature.replace('0x', ''), 'hex'));
-      return bls.verify(sigBytes, toU8(signingRoot), pubBytes) as unknown as boolean;
+      return bls.verifySync(sigBytes, toU8(signingRoot), pubBytes);
     } catch { return false; }
   }
 
@@ -113,7 +105,7 @@ export class BLSSigner {
     msgBuffer.writeBigUInt64LE(BigInt(timestamp), 28);
     const msgRoot     = createHash('sha256').update(msgBuffer).digest();
     const signingRoot = createHash('sha256').update(msgRoot).update(BUILDER_DOMAIN).digest();
-    const sigBytes    = bls.sign(toU8(signingRoot), this.skBytes);
+    const sigBytes    = bls.signSync(toU8(signingRoot), this.skBytes);
     return {
       message: { fee_recipient: feeRecipient, gas_limit: String(gasLimit), timestamp: String(timestamp), pubkey: this.pubkey },
       signature: '0x' + Buffer.from(sigBytes).toString('hex'),
