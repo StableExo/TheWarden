@@ -344,10 +344,26 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     if (pb?.gasUsed !== undefined && pb.gasUsed !== null) parentGasUsed = pb.gasUsed;
     console.log("[ParentBlock] hash=" + parentHash.slice(0,14) + " number=" + blockNum + " baseFee=" + parentBaseFee);
   } catch (e: any) { console.warn("[ParentBlock] fetch failed:", (e as any).message?.slice(0,60)); }
-  // EIP-4844/7516: excessBlobGas[N] = max(0, excessBlobGas[N-1] + blobGasUsed[N-1] - TARGET)
-  const TARGET_BLOB_GAS = 1835008n; // GL-L51 FIX 50: 14 blobs * 131072 (BPO2, mainnet since Jan 7 2026, EIP-8135)
-  const ourExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed > TARGET_BLOB_GAS
-    ? parentExcessBlobGas + parentBlobGasUsed - TARGET_BLOB_GAS : 0n;
+  // GL-L51 FIX 51: EIP-7918 (Fusaka/Osaka) excessBlobGas formula
+  // BPO2: target=14, max=21, BLOB_BASE_COST=8192 (2^13), GAS_PER_BLOB=131072
+  // PATH1 (active on mainnet when baseFee*BLOB_BASE_COST >= GAS_PER_BLOB, i.e. always when baseFee>16wei):
+  //   ourExcess = parentExcess + blobUsed * (max - target) / max
+  const _GAS_PER_BLOB = 131072n;
+  const _TARGET_BLOBS = 14n;
+  const _MAX_BLOBS = 21n;
+  const _BLOB_BASE_COST = 8192n;
+  const _TARGET_BLOB_GAS = _TARGET_BLOBS * _GAS_PER_BLOB;
+  const _excessSum = parentExcessBlobGas + parentBlobGasUsed;
+  let ourExcessBlobGas: bigint;
+  if (_excessSum < _TARGET_BLOB_GAS) {
+    ourExcessBlobGas = 0n;
+  } else if (parentBaseFee * _BLOB_BASE_COST >= _GAS_PER_BLOB) {
+    // EIP-7918 PATH1: true on mainnet (baseFee always >> 16 wei)
+    ourExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed * (_MAX_BLOBS - _TARGET_BLOBS) / _MAX_BLOBS;
+  } else {
+    ourExcessBlobGas = _excessSum - _TARGET_BLOB_GAS;
+  }
+  console.log("[BlobGas] excess=" + ourExcessBlobGas + " parentExcess=" + parentExcessBlobGas + " blobUsed=" + parentBlobGasUsed);
   // GL-L51 FIX 46: EIP-1559 baseFee — exact go-ethereum CalcBaseFee() formula
   const _gasTarget = parentGasLimit / 2n;
   let ourBaseFee: bigint;
