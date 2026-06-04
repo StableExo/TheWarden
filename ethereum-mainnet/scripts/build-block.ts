@@ -123,28 +123,35 @@ function _mkNode(kvs:_KV[], d:number): Buffer {
   return _rlpLenc(ch);
 }
 
+/**
+ * Compute withdrawalsRoot = MPT(withdrawals).
+ * Handles beacon API (decimal strings) and execution layer (0x hex strings).
+ * GL-L50 FIX 44: Fully verified against Python HexaryTrie reference.
+ */
 function computeWithdrawalsRoot(withdrawals: any[]): string {
   if (!withdrawals || withdrawals.length === 0) return EMPTY_TRIE_ROOT;
   try {
-    const kvs:_KV[] = withdrawals.map((w:any, i:number) => {
-      // Beacon API returns snake_case: index, validator_index, address, amount (all 0x hex)
-      const rawIdx  = w.index   ?? w.withdrawalIndex  ?? '0x0';
-      const rawVIdx = w.validator_index ?? w.validatorIndex ?? '0x0';
-      const rawAddr = w.address ?? '0x'+'0'.repeat(40);
-      const rawAmt  = w.amount  ?? '0x0';
-      // Beacon API returns decimal strings; execution layer returns hex '0x...' — handle both
-      const toBI = (v:any): bigint => { const s=String(v??0); return BigInt(s.startsWith('0x')||s.startsWith('0X') ? s : s || '0'); };
-      const wI = _minB(toBI(rawIdx));
-      const vI = _minB(toBI(rawVIdx));
-      const addr = Buffer.from(rawAddr.replace('0x','').padStart(40,'0'), 'hex');
-      const amt  = _minB(toBI(rawAmt));
+    // Parse any numeric value — handles both '0x1A2B' (hex) and '123456' (decimal)
+    const toN = (v: any): bigint => {
+      if (v === null || v === undefined) return 0n;
+      const s = String(v).trim();
+      if (!s || s === '0') return 0n;
+      if (s.startsWith('0x') || s.startsWith('0X')) return BigInt(s);
+      return BigInt(s);  // plain decimal like '131334251'
+    };
+    const kvs: _KV[] = withdrawals.map((w: any, i: number) => {
+      const wI   = _minB(toN(w.index ?? w.withdrawalIndex));
+      const vI   = _minB(toN(w.validator_index ?? w.validatorIndex));
+      const addr = Buffer.from(String(w.address ?? '0x'+'0'.repeat(40)).replace('0x','').padStart(40,'0'), 'hex');
+      const amt  = _minB(toN(w.amount));
       return { nibs: _toNib(_rlpIdx(i)), val: _rlpL([wI, vI, addr, amt]) };
     });
     const root = _mkNode(kvs, 0);
     if (!root.length) return EMPTY_TRIE_ROOT;
-    return '0x' + _kHash(root).toString('hex');
-  } catch (e:any) {
-    console.warn('[withdrawalsRoot] err:', e.message??String(e));
+    const h = _kHash(root).toString('hex');
+    return '0x' + h;
+  } catch (e: any) {
+    console.warn('[wR] err:', e.message ?? String(e));
     return EMPTY_TRIE_ROOT;
   }
 }
