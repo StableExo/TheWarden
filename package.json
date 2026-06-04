@@ -250,7 +250,9 @@
     "tsx": "4.21.0",
     "permissionless": "^0.2.44",
     "axios": "^1.7.9",
-    "@noble/curves": "^1.6.0"
+    "@noble/curves": "^1.6.0",
+    "@ethereumjs/trie": "^6.2.1",
+    "@ethereumjs/rlp": "^5.0.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.3",
