@@ -90,13 +90,15 @@ async function getBeaconRandao(): Promise<string> {
 // ── Get expected withdrawals for next slot from beacon node ────────────────
 async function getExpectedWithdrawals(proposalSlot: number): Promise<any[]> {
   try {
+    // QuickNode does not support expected_withdrawals — use PublicNode beacon
+    const BEACON_PUBLIC = 'https://ethereum-beacon-api.publicnode.com';
     const resp = await axios.get(
-      `${BEACON_RPC}eth/v1/builder/states/head/expected_withdrawals`,
-      { params: { proposal_slot: proposalSlot }, timeout: 3000 }
+      `${BEACON_PUBLIC}/eth/v1/builder/states/head/expected_withdrawals`,
+      { params: { proposal_slot: proposalSlot }, timeout: 5000 }
     );
     return Array.isArray(resp.data?.data) ? resp.data.data : [];
   } catch {
-    return []; // graceful fallback
+    return []; // graceful fallback — relay will reject but won't crash
   }
 }
 
