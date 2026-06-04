@@ -295,7 +295,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
   // GL-L48 FIX 27: Compute real block_hash = keccak256(RLP(Prague header))
   const slotTs = 1606824023 + (slot+1)*12;
   // Compute real withdrawals root for block_hash
-  const withdrawalsRoot = await computeWithdrawalsRoot(withdrawals);
+  const withdrawalsRoot = computeWithdrawalsRoot(withdrawals);
   const realBlockHash = computeBlockHash(
     parentHash, proposerFeeRecipient, parentStateRoot,
     EMPTY_TRIE_ROOT, EMPTY_TRIE_ROOT,
