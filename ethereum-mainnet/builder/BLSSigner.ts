@@ -14,7 +14,7 @@
  */
 
 import { createHash } from 'crypto';
-import bls from '@chainsafe/bls/blst-native.js';
+import bls from '@chainsafe/bls/herumi.js'; // Pure WASM — works on all platforms
 import type { BidTrace } from './BlockBuilder';
 
 // ── Domain (SSZ ForkData HTR with empty Root{}) ───────────────────────────────
