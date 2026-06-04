@@ -356,7 +356,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     ourBaseFee = parentBaseFee > _delta ? parentBaseFee - _delta : 1n;
   }
   if (ourBaseFee < 1n) ourBaseFee = 1n;
-  console.log(\`[BaseFee] parentBaseFee=\${parentBaseFee} parentGasUsed=\${parentGasUsed} gasTarget=\${_gasTarget} ourBaseFee=\${ourBaseFee}\`);
+  console.log("[BaseFee] parentBaseFee=" + parentBaseFee + " parentGasUsed=" + parentGasUsed + " gasTarget=" + _gasTarget + " ourBaseFee=" + ourBaseFee);
 
   const validators = valSets.flat();
   console.log(`[Slot ${slot}] 👥 ${validators.length}v | ${opps.length} opps | ${bundles.length} bundles`);
@@ -427,7 +427,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
       gas_limit:         '60000000',
       gas_used:          '0',         // GL-L48: empty block
       timestamp:         String(slotTimestamp),         // ← exact slot start time
-      extra_data:        '0x' + Buffer.from('TheWarden-GL-L48').toString('hex'),
+      extra_data:        '0x' + Buffer.from('TheWarden-GL-L51').toString('hex'),
       base_fee_per_gas:  String(ourBaseFee),  // GL-L51 FIX 46: EIP-1559 CalcBaseFee
       block_hash:        realBlockHash,  // GL-L48: computed
       transactions:      [],         // GL-L48: empty block for valid simulation
