@@ -130,7 +130,8 @@ function computeWithdrawalsRoot(withdrawals: any[]): string {
       const rawVIdx = w.validator_index ?? w.validatorIndex ?? '0x0';
       const rawAddr = w.address ?? '0x'+'0'.repeat(40);
       const rawAmt  = w.amount  ?? '0x0';
-      const toBI = (v:any) => BigInt(typeof v==='string'&&v.startsWith('0x') ? v : ('0x'+Number(v).toString(16)));
+      // Beacon API returns decimal strings; execution layer returns hex '0x...' — handle both
+      const toBI = (v:any): bigint => { const s=String(v??0); return BigInt(s.startsWith('0x')||s.startsWith('0X') ? s : s || '0'); };
       const wI = _minB(toBI(rawIdx));
       const vI = _minB(toBI(rawVIdx));
       const addr = Buffer.from(rawAddr.replace('0x','').padStart(40,'0'), 'hex');
