@@ -401,7 +401,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     builder_pubkey:         signer.pubkey,
     proposer_pubkey:        proposer?.entry?.message?.pubkey ?? proposer?.entry?.registration?.message?.pubkey ?? '0x' + '0'.repeat(96),
     proposer_fee_recipient: proposerFeeRecipient,
-    gas_limit:              '60000000',  // GL-L50: match validator registration (60M)
+    gas_limit:              String(parentGasLimit),  // GL-L51 FIX 49: use parent gasLimit (not hardcoded 60M)
     gas_used:               '0',  // GL-L48: empty block
     value:                  String(estimatedProfit),
   };
@@ -413,7 +413,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     parentHash, proposerFeeRecipient, parentStateRoot,
     EMPTY_TRIE_ROOT, EMPTY_TRIE_ROOT,
     '0x'+'00'.repeat(256), prevRandao,
-    blockNum+1n, '60000000', '0', slotTs,
+    blockNum+1n, String(parentGasLimit), '0', slotTs,  // GL-L51 FIX 49
     '0x'+Buffer.from('TheWarden-GL-L51').toString('hex'),
     ourBaseFee, withdrawalsRoot, '0', String(ourExcessBlobGas), parentBeaconRoot
   );
@@ -431,7 +431,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
       logs_bloom:        '0x' + '0'.repeat(512),
       prev_randao:       prevRandao,                    // ← beacon chain head randao
       block_number:      String(blockNum + 1n),
-      gas_limit:         '60000000',
+      gas_limit:         String(parentGasLimit),  // GL-L51 FIX 49: from parent block
       gas_used:          '0',         // GL-L48: empty block
       timestamp:         String(slotTimestamp),         // ← exact slot start time
       extra_data:        '0x' + Buffer.from('TheWarden-GL-L51').toString('hex'),
