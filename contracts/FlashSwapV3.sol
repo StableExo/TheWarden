@@ -15,7 +15,7 @@ pragma abicoder v2;
  * 
  * Version: 6.0.0 (FlashSwapV3 — Contract #15)
  * Network: Base, Ethereum, Arbitrum, Optimism
- * Tithe System: 70% US debt reduction, 30% operator share
+ * Profit routing: 100% direct to owner (stableexo.base.eth) — GL-L52
  */
 
 // --- Core Imports ---
@@ -156,14 +156,11 @@ contract FlashSwapV3 is
     IPool public immutable aavePool;
     
     address payable public immutable owner;
-    address payable public immutable titheRecipient;
-    uint16 public immutable titheBps;
     
     address public immutable v3Factory;
     address public immutable aaveAddressesProvider;
     
     uint constant DEADLINE_OFFSET = 60;
-    uint16 constant MAX_TITHE_BPS = 9000;
     
     // Hybrid mode threshold ($50M)
     uint256 constant HYBRID_MODE_THRESHOLD = 50_000_000e6;
@@ -239,13 +236,6 @@ contract FlashSwapV3 is
         uint256 amountOut
     );
     
-    event TitheDistributed(
-        address indexed token,
-        address indexed titheRecipient,
-        uint256 titheAmount,
-        address indexed owner,
-        uint256 ownerAmount
-    );
     
     event HybridModeActivated(
         address indexed token,
@@ -276,8 +266,6 @@ contract FlashSwapV3 is
         address _aavePoolAddress,
         address _aaveAddressesProvider,
         address _v3Factory,
-        address payable _titheRecipient,
-        uint16 _titheBps,
         address payable _owner
     ) {
         require(_uniswapV3Router != address(0), "FSV3:IUR");
@@ -286,11 +274,6 @@ contract FlashSwapV3 is
         require(_aavePoolAddress != address(0), "FSV3:IAP");
         require(_aaveAddressesProvider != address(0), "FSV3:IAAP");
         require(_v3Factory != address(0), "FSV3:IVF");
-        require(_titheBps <= MAX_TITHE_BPS, "FSV3:TBT");
-        
-        if (_titheBps > 0) {
-            require(_titheRecipient != address(0), "FSV3:ITR");
-        }
 
         swapRouter = IV3SwapRouter02(_uniswapV3Router);
         sushiRouter = IUniswapV2Router02(_sushiRouter);
@@ -302,8 +285,6 @@ contract FlashSwapV3 is
         aaveAddressesProvider = _aaveAddressesProvider;
         require(_owner != address(0), "FSV3:IOW");
         owner = _owner;
-        titheRecipient = _titheRecipient;
-        titheBps = _titheBps;
     }
 
     // --- Aave Interface Implementations ---
@@ -747,19 +728,11 @@ contract FlashSwapV3 is
     // --- Profit Distribution ---
     function _distributeProfits(address token, uint256 netProfit) internal {
         if (netProfit == 0) return;
+        // GL-L52: 100% of arb profit → owner (stableexo.base.eth). No tithe.
+        IERC20(token).safeTransfer(owner, netProfit);
+    }
         
-        uint256 titheAmount = (netProfit * titheBps) / 10000;
-        uint256 ownerAmount = netProfit - titheAmount;
-        
-        if (titheAmount > 0 && titheRecipient != address(0)) {
-            IERC20(token).safeTransfer(titheRecipient, titheAmount);
         }
-        
-        if (ownerAmount > 0) {
-            IERC20(token).safeTransfer(owner, ownerAmount);
-        }
-        
-        emit TitheDistributed(token, titheRecipient, titheAmount, owner, ownerAmount);
     }
 
     // --- Emergency Functions ---
