@@ -76,6 +76,28 @@ function numRlp(n: string|number|bigint): `0x${string}` {
   const h=v.toString(16); return `0x${h.length%2===0?h:'0'+h}` as `0x${string}`;
 }
 /** Compute withdrawals MPT root using HexaryTrie (EIP-4895) */
+// ── Patricia-Merkle Trie helpers (for computeWithdrawalsRoot) ────────────────
+function _rlpIdx(i: number): Buffer { return _rlpB(_minB(i)); }
+function _toNib(b: Buffer): number[] { const n:number[]=[]; for(const x of b){n.push(x>>4);n.push(x&0xf);} return n; }
+function _compact(nibs: number[], isLeaf: boolean): Buffer {
+  const odd=nibs.length%2; const flag=(isLeaf?2:0)+odd;
+  const p=odd?[flag,...nibs]:[flag,0,...nibs]; const o:number[]=[];
+  for(let i=0;i<p.length;i+=2) o.push((p[i]<<4)|p[i+1]); return Buffer.from(o);
+}
+type _KV = {nibs:number[];val:Buffer};
+function _ref(b:Buffer):Buffer { return b.length<32?b:_kHash(b); }
+function _mkNode(kvs:_KV[], d:number): Buffer {
+  if(!kvs.length) return Buffer.alloc(0);
+  if(kvs.length===1) return _rlpL([_compact(kvs[0].nibs.slice(d),true),kvs[0].val]);
+  let c=d; const ml=Math.min(...kvs.map(k=>k.nibs.length));
+  while(c<ml && kvs.every(k=>k.nibs[c]===kvs[0].nibs[c])) c++;
+  if(c>d) { const shared=kvs[0].nibs.slice(d,c); return _rlpL([_compact(shared,false),_ref(_mkNode(kvs,c))]); }
+  const ch:Buffer[]=Array(17).fill(null).map(()=>Buffer.alloc(0));
+  for(let n=0;n<16;n++){const g=kvs.filter(k=>k.nibs.length>d&&k.nibs[d]===n);if(g.length) ch[n]=_rlpB(_ref(_mkNode(g,d+1)));}
+  const tv=kvs.filter(k=>k.nibs.length===d); ch[16]=tv.length?_rlpB(tv[0].val):Buffer.alloc(0);
+  return _rlpL(ch);
+}
+
 function computeWithdrawalsRoot(withdrawals: any[]): string {
   if (!withdrawals || withdrawals.length === 0) return EMPTY_TRIE_ROOT;
   try {
