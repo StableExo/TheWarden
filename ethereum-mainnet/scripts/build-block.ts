@@ -393,6 +393,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
   const targetSlot = String(slot + 1);
   const proposer = validators.find((v: any) => v.slot === targetSlot) ?? validators[0] ?? {};
   const proposerFeeRecipient = proposer?.entry?.message?.fee_recipient ?? FEE_RECIPIENT;
+  const proposerGasLimit = String(proposer?.entry?.message?.gas_limit ?? 60000000);  // GL-L51 FIX 52: registered gas_limit
 
   // Build arb tx
   const bestOpp = opps.find(o => o.estimatedProfitBps >= MIN_POOL_BPS);
@@ -405,7 +406,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
 
   // GL-L48: Submit empty blocks — valid empty payload wins slots
 
-  const estimatedProfit = 1_000_000_000n;  // GL-L48: 1 gwei minimum — passes relay zero-value checks
+  const estimatedProfit = 0n;  // GL-L51 FIX 53: 0 bid — empty block delivers 0 to proposer (Titan verifies payment)
   const _unusedGasCalc = 0; // GL-L48: gas_used=0 for empty block
   const targetSlotNum = slot + 1;
   const slotTimestamp = 1606824023 + targetSlotNum * 12;  // exact beacon slot start time
@@ -417,7 +418,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     builder_pubkey:         signer.pubkey,
     proposer_pubkey:        proposer?.entry?.message?.pubkey ?? proposer?.entry?.registration?.message?.pubkey ?? '0x' + '0'.repeat(96),
     proposer_fee_recipient: proposerFeeRecipient,
-    gas_limit:              String(parentGasLimit),  // GL-L51 FIX 49: use parent gasLimit (not hardcoded 60M)
+    gas_limit:              proposerGasLimit,  // GL-L51 FIX 52: validator-registered gas_limit
     gas_used:               '0',  // GL-L48: empty block
     value:                  String(estimatedProfit),
   };
@@ -429,7 +430,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
     parentHash, proposerFeeRecipient, parentStateRoot,
     EMPTY_TRIE_ROOT, EMPTY_TRIE_ROOT,
     '0x'+'00'.repeat(256), prevRandao,
-    blockNum+1n, String(parentGasLimit), '0', slotTs,  // GL-L51 FIX 49
+    blockNum+1n, proposerGasLimit, '0', slotTs,  // GL-L51 FIX 52
     '0x'+Buffer.from('TheWarden-GL-L51').toString('hex'),
     ourBaseFee, withdrawalsRoot, '0', String(ourExcessBlobGas), parentBeaconRoot
   );
@@ -447,7 +448,7 @@ async function processSlot(slot: number, parentHash: string): Promise<void> {
       logs_bloom:        '0x' + '0'.repeat(512),
       prev_randao:       prevRandao,                    // ← beacon chain head randao
       block_number:      String(blockNum + 1n),
-      gas_limit:         String(parentGasLimit),  // GL-L51 FIX 49: from parent block
+      gas_limit:         proposerGasLimit,  // GL-L51 FIX 52: validator-registered gas_limit
       gas_used:          '0',         // GL-L48: empty block
       timestamp:         String(slotTimestamp),         // ← exact slot start time
       extra_data:        '0x' + Buffer.from('TheWarden-GL-L51').toString('hex'),
