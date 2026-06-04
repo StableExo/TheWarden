@@ -8,7 +8,7 @@
  * GL-L45 FIX: require("crypto") → import { createHash } — was breaking all
  *             signatures in ESM/tsx context causing wins=0.
  * GL-L46 FIX 11: Correct SSZ HashTreeRoot for BidTrace + correct domain.
- * GL-L46 FIX 13: PopScheme DST — BLS_POP_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_
+ * GL-L46 FIX 13: PopScheme DST — BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_
  *   @noble/curves default is NUL_ (BasicScheme), relay uses POP_ (PopScheme).
  *   - Domain: sha256(fork_version_padded || genesis_validators_root)[:28]
  *   - BidTrace: SSZ Merkle tree (not flat SHA256)
@@ -127,7 +127,7 @@ export class BLSSigner {
   signBid(bid: BidTrace): string {
     const bidRoot     = sszHashBidTrace(bid);
     const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
-    const sig         = bls12_381.sign(signingRoot, this.sk, { DST: 'BLS_POP_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_' }); // GL-L46 FIX 13: PopScheme matches go-boost-utils
+    const sig         = bls12_381.sign(signingRoot, this.sk, { DST: 'BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_' }); // GL-L46 FIX 14: ETH signing DST (BLS_SIG_ prefix, POP_ suffix)
     return '0x' + Buffer.from(sig).toString('hex');
   }
 
@@ -156,7 +156,7 @@ export class BLSSigner {
     msgBuffer.writeBigUInt64LE(BigInt(timestamp),  28);
     const msgRoot     = createHash('sha256').update(msgBuffer).digest();
     const signingRoot = createHash('sha256').update(msgRoot).update(BUILDER_DOMAIN).digest();
-    const sig         = bls12_381.sign(signingRoot, this.sk, { DST: 'BLS_POP_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_' }); // GL-L46 FIX 13: PopScheme matches go-boost-utils
+    const sig         = bls12_381.sign(signingRoot, this.sk, { DST: 'BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_' }); // GL-L46 FIX 14: ETH signing DST (BLS_SIG_ prefix, POP_ suffix)
     return {
       message: { fee_recipient: feeRecipient, gas_limit: String(gasLimit), timestamp: String(timestamp), pubkey: this.pubkey },
       signature: '0x' + Buffer.from(sig).toString('hex'),
