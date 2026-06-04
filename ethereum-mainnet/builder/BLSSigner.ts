@@ -1,12 +1,11 @@
 /**
  * BLSSigner — TheWarden AEV Block Builder
  *
- * GL-L47 FIX 21: createRequire — load CJS @noble/bls12-381 from ESM "type":"module" project
+ * GL-L47 FIX 22: async signBid() + await bls.sign() via createRequire
  *
- * @noble/bls12-381 is CommonJS-only. In a "type":"module" package:
- *   import * as bls → .signSync undefined (namespace wraps default)
- *   import bls      → SyntaxError: no export named 'default'
- *   createRequire() → ✅ loads CJS module correctly, exposes all functions
+ * @noble/bls12-381 loaded via createRequire (CJS in ESM project).
+ * signSync does NOT exist in this package — sign() returns Promise<Uint8Array>.
+ * signBid() is now async; build-block.ts must await it.
  */
 
 import { createHash } from 'crypto';
@@ -14,13 +13,10 @@ import { createRequire } from 'module';
 import type { BidTrace } from './BlockBuilder';
 
 const require = createRequire(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const bls = require('@noble/bls12-381') as {
   getPublicKey: (sk: Uint8Array) => Uint8Array;
-  sign:     (msg: Uint8Array, sk: Uint8Array) => Promise<Uint8Array>;
-  signSync: (msg: Uint8Array, sk: Uint8Array) => Uint8Array;
-  verify:     (sig: Uint8Array, msg: Uint8Array, pk: Uint8Array) => Promise<boolean>;
-  verifySync: (sig: Uint8Array, msg: Uint8Array, pk: Uint8Array) => boolean;
+  sign: (msg: Uint8Array, sk: Uint8Array) => Promise<Uint8Array>;
+  verify: (sig: Uint8Array, msg: Uint8Array, pk: Uint8Array) => Promise<boolean>;
 };
 
 // ── Domain ───────────────────────────────────────────────────────────────────
@@ -85,44 +81,25 @@ export class BLSSigner {
     this.pubkey = '0x' + Buffer.from(pubBytes).toString('hex');
     console.log('[BLSSigner] ✅ Initialised | pubkey=' + this.pubkey.slice(0, 22) + '...');
     console.log('[BLSSigner] 🔑 Domain=' + BUILDER_DOMAIN.toString('hex'));
-    console.log('[BLSSigner] 📚 @noble/bls12-381 via createRequire | PopScheme | signSync');
+    console.log('[BLSSigner] 📚 @noble/bls12-381 | async sign() | PopScheme DST');
   }
 
-  signBid(bid: BidTrace): string {
+  async signBid(bid: BidTrace): Promise<string> {
     const bidRoot     = sszHashBidTrace(bid);
     const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
-    const sigBytes    = bls.signSync(toU8(signingRoot), this.skBytes);
+    const sigBytes    = await bls.sign(toU8(signingRoot), this.skBytes);
     const sig = '0x' + Buffer.from(sigBytes).toString('hex');
     console.log('[BLSSigner] ✍️  sig=' + sig.slice(0, 24) + '...');
     return sig;
   }
 
-  verifyBid(bid: BidTrace, signature: string): boolean {
+  async verifyBid(bid: BidTrace, signature: string): Promise<boolean> {
     try {
       const bidRoot     = sszHashBidTrace(bid);
       const signingRoot = createHash('sha256').update(bidRoot).update(BUILDER_DOMAIN).digest();
       const pubBytes    = bls.getPublicKey(this.skBytes);
       const sigBytes    = new Uint8Array(Buffer.from(signature.replace('0x', ''), 'hex'));
-      return bls.verifySync(sigBytes, toU8(signingRoot), pubBytes);
+      return await bls.verify(sigBytes, toU8(signingRoot), pubBytes);
     } catch { return false; }
-  }
-
-  signRegistration(feeRecipient: string, gasLimit: number, timestamp: number): {
-    message: object; signature: string;
-  } {
-    const msgBuffer = Buffer.concat([
-      Buffer.from(feeRecipient.replace('0x', ''), 'hex'),
-      Buffer.alloc(8), Buffer.alloc(8),
-      Buffer.from(this.pubkey.replace('0x', ''), 'hex'),
-    ]);
-    msgBuffer.writeBigUInt64LE(BigInt(gasLimit), 20);
-    msgBuffer.writeBigUInt64LE(BigInt(timestamp), 28);
-    const msgRoot     = createHash('sha256').update(msgBuffer).digest();
-    const signingRoot = createHash('sha256').update(msgRoot).update(BUILDER_DOMAIN).digest();
-    const sigBytes    = bls.signSync(toU8(signingRoot), this.skBytes);
-    return {
-      message: { fee_recipient: feeRecipient, gas_limit: String(gasLimit), timestamp: String(timestamp), pubkey: this.pubkey },
-      signature: '0x' + Buffer.from(sigBytes).toString('hex'),
-    };
   }
 }
