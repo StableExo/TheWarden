@@ -250,7 +250,9 @@
     "tsx": "4.21.0",
     "permissionless": "^0.2.44",
     "axios": "^1.7.9",
-    "@noble/curves": "^1.6.0"
+    "@noble/curves": "^1.6.0",
+    "@chainsafe/bls": "^7.1.3",
+    "@chainsafe/blst": "^0.2.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.3",
