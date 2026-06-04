@@ -731,9 +731,6 @@ contract FlashSwapV3 is
         // GL-L52: 100% of arb profit → owner (stableexo.base.eth). No tithe.
         IERC20(token).safeTransfer(owner, netProfit);
     }
-        
-        }
-    }
 
     // --- Emergency Functions ---
     function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
