@@ -153,7 +153,10 @@ async function submitToRelay(name: string, url: string, bid: SignedBuilderBid) {
       { headers: { 'Content-Type': 'application/json' }, timeout: 4000 });
     return { name, ok: r.status === 200 || r.status === 202, status: r.status };
   } catch (e: any) {
-    return { name, ok: false, status: e?.response?.data?.message ?? e?.message?.slice(0, 60) };
+    // Capture both JSON and plain-text error bodies
+    const errBody = e?.response?.data;
+    const errMsg = (typeof errBody === 'string' ? errBody : errBody?.message) ?? e?.message?.slice(0, 80);
+    return { name, ok: false, status: errMsg };
   }
 }
 
