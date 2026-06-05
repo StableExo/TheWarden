@@ -57,6 +57,6 @@ export const ADDRESSES = {
     // ★ GL-L45
     SUSHI: '0x6B3595068778DD592e39A122f4f5a5cF09C90fE2',
   },
-  // ★ FlashSwapV3 on ETH mainnet — deployed GL-L41 | $0.00 gas | block 25,203,689
-  flashSwapV3ETH: '0x1F27BA663dC5233DCf2635AD295Bd42197d854A9',
+  // ★ FlashSwapV3 on ETH mainnet — deployed GL-L53 | $0.00 gas | 100% profit stableexo.base.eth | tithe removed
+  flashSwapV3ETH: '0x1bfe5c031569e346c428cd600e6cd611670a946e',
 } as const;
