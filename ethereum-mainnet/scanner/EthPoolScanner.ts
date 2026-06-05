@@ -133,13 +133,40 @@ export class EthPoolScanner {
           const crossProto = lo.pool.protocol !== hi.pool.protocol;
           if (crossProto && bps > this.MAX_CROSS_BPS) continue;
 
-          opps.push({
-            label:             `${pair.label} [${lo.pool.protocol}→${hi.pool.protocol}]`,
-            buyPool:           lo.pool, sellPool: hi.pool,
-            buyPrice:          lo.price, sellPrice: hi.price, spread,
-            profitable:        bps >= 15,
-            estimatedProfitBps: bps,
-          });
+
+          // GL-L53: QuoterV2 pre-flight — only push opps that will actually execute
+          try {
+            const QUOTER_ADDR = '0x61fFE014bA17989E743c5F6cB21bF9697530B21e';
+            const QUOTER_ABI  = [{
+              name: 'quoteExactInputSingle', type: 'function',
+              inputs: [{ name: 'tokenIn', type: 'address' }, { name: 'tokenOut', type: 'address' },
+                       { name: 'amountIn', type: 'uint256' }, { name: 'fee', type: 'uint24' },
+                       { name: 'sqrtPriceLimitX96', type: 'uint160' }],
+              outputs: [{ name: 'amountOut', type: 'uint256' }],
+              stateMutability: 'view',
+            }] as const;
+            const BORROW = 100_000_000_000n;
+            const step1Out = await this.client.readContract({
+              address: QUOTER_ADDR as `0x${string}`,
+              abi: QUOTER_ABI, functionName: 'quoteExactInputSingle',
+              args: [lo.pool.token0 as `0x${string}`, lo.pool.token1 as `0x${string}`, BORROW, lo.pool.fee ?? 500, 0n],
+            }) as bigint;
+            if (!step1Out || step1Out === 0n) continue;
+            const step2Out = await this.client.readContract({
+              address: QUOTER_ADDR as `0x${string}`,
+              abi: QUOTER_ABI, functionName: 'quoteExactInputSingle',
+              args: [hi.pool.token1 as `0x${string}`, hi.pool.token0 as `0x${string}`, step1Out, hi.pool.fee ?? 3000, 0n],
+            }) as bigint;
+            if (!step2Out || step2Out <= BORROW) continue;
+            const cbps = Math.round(Number(step2Out - BORROW) / Number(BORROW) * 10_000);
+            console.log(`   ✅ Q2 confirmed: ${cbps}bps | out=${(Number(step2Out)/1e6).toFixed(4)} USDC`);
+            opps.push({
+              label: `${pair.label} [${lo.pool.protocol}→${hi.pool.protocol}] Q2:${cbps}bps`,
+              buyPool: lo.pool, sellPool: hi.pool,
+              buyPrice: lo.price, sellPrice: hi.price, spread,
+              profitable: true, estimatedProfitBps: cbps,
+            });
+          } catch { continue; }
         }
       }
     }
