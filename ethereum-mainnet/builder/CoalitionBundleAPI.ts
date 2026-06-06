@@ -21,8 +21,21 @@
 import express, { type Request, type Response } from 'express';
 import { createHash, randomUUID } from 'node:crypto';
 
+
+// ── GL-L53 Debug Logger ─────────────────────────────────────────────────────
+const DEBUG = process.env.DEBUG === 'true' || process.env.DEBUG === '1' || true;
+const dbg = (...args: any[]) => console.log('[DBG]', new Date().toISOString(), ...args);
+const err = (...args: any[]) => console.error('[ERR]', new Date().toISOString(), ...args);
+const inf = (...args: any[]) => console.log('[INF]', new Date().toISOString(), ...args);
+
 const app = express();
 app.use(express.json({ limit: '10mb' }));
+// GL-L53: Log every request
+app.use((req: Request, _res: Response, next: Function) => {
+  inf(`→ ${req.method} ${req.path} | body_keys=${Object.keys(req.body||{}).join(',') || 'none'} | ip=${req.ip}`);
+  next();
+});
+
 
 // ── Config ───────────────────────────────────────────────────────────────────
 const PORT             = parseInt(process.env.PORT ?? '3000');
@@ -217,6 +230,7 @@ setInterval(() => {
 }, 12_000);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
+inf('🚀 CoalitionBundleAPI starting...', { port: PORT, pubkey: BUILDER_PUBKEY.slice(0,20)+'...', refundBps: REFUND_BPS, time: new Date().toISOString() });
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════════════════════╗
