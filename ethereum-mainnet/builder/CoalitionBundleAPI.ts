@@ -274,7 +274,7 @@ app.get('/relay/v1/bundle/list', (_req: Request, res: Response) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   log(`🚀 TheWarden AEV GL-L54 on port ${PORT}`);
   log(`   Contract:  ${FLASH_SWAP}`);
   log(`   ProfDest:  ${PROFIT_DEST}`);
