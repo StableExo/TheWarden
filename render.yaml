@@ -1,8 +1,8 @@
 services:
   # ── CoalitionBundleAPI ──────────────────────────────────────────────────────
-  # TheWarden AEV Block Builder — Path B searcher endpoint
-  # eth_sendBundle compatible | 95% refund | beats Quasar 90%
-  # GL-L43 | Taylor Marlow (@StableExo)
+  # TheWarden AEV Pure Arb Engine — arb-loop.ts daemon
+  # GL-L43 | GL-L53: arb-loop | GL-L54: ETH_PRIVATE_KEY added
+  # Taylor Marlow (@StableExo)
   - type: web
     name: thewarden-coalition-api
     runtime: node
@@ -22,5 +22,7 @@ services:
         sync: false
       - key: BUILDER_FEE_RECIPIENT
         value: "0x92d1d44C37Eb5a6996968FE4F2907f403757E611"
+      - key: ETH_PRIVATE_KEY
+        sync: false
     healthCheckPath: /health
     autoDeploy: true
