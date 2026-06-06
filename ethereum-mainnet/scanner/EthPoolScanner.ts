@@ -114,7 +114,10 @@ export class EthPoolScanner {
   }
 
   async findOpportunities(): Promise<ArbOpportunity[]> {
+    const t0 = Date.now();
+    console.log('[SCAN] Starting pool scan...');
     const prices = await this.scanAll();
+    console.log(`[SCAN] Got ${prices.length} pool prices in ${Date.now()-t0}ms`);
     const opps: ArbOpportunity[] = [];
 
     for (const pair of ARB_PAIRS) {
@@ -151,22 +154,22 @@ export class EthPoolScanner {
               abi: QUOTER_ABI, functionName: 'quoteExactInputSingle',
               args: [lo.pool.token0 as `0x${string}`, lo.pool.token1 as `0x${string}`, BORROW, lo.pool.fee ?? 500, 0n],
             }) as bigint;
-            if (!step1Out || step1Out === 0n) continue;
+            if (!step1Out || step1Out === 0n) { console.log(`[Q2 ❌] ${lo.pool.protocol} ${pair.label} step1=0 no liquidity`); continue; }
             const step2Out = await this.client.readContract({
               address: QUOTER_ADDR as `0x${string}`,
               abi: QUOTER_ABI, functionName: 'quoteExactInputSingle',
               args: [hi.pool.token1 as `0x${string}`, hi.pool.token0 as `0x${string}`, step1Out, hi.pool.fee ?? 3000, 0n],
             }) as bigint;
-            if (!step2Out || step2Out <= BORROW) continue;
+            if (!step2Out || step2Out <= BORROW) { console.log(`[Q2 ❌] step2 unprofitable: back=${Number(step2Out||0n)/1e6:.4f} < borrow=100000`); continue; }
             const cbps = Math.round(Number(step2Out - BORROW) / Number(BORROW) * 10_000);
-            console.log(`   ✅ Q2 confirmed: ${cbps}bps | out=${(Number(step2Out)/1e6).toFixed(4)} USDC`);
+            console.log(`[Q2 ✅] ${pair.label} | step1=${Number(step1Out)/1e18:.6f} WETH | back=${Number(step2Out)/1e6:.4f} USDC | profit=${cbps}bps`);
             opps.push({
               label: `${pair.label} [${lo.pool.protocol}→${hi.pool.protocol}] Q2:${cbps}bps`,
               buyPool: lo.pool, sellPool: hi.pool,
               buyPrice: lo.price, sellPrice: hi.price, spread,
               profitable: true, estimatedProfitBps: cbps,
             });
-          } catch { continue; }
+          } catch (e: any) { console.error('[Q2 ERR]', e?.message || e); continue; }
         }
       }
     }
@@ -218,7 +221,7 @@ export class EthPoolScanner {
         this.cache.set(p.address, r);
         return r;
       }
-    } catch { return null; }
+    } catch (e: any) { console.error('[SCANNER ERR]', e?.message || e); return null; }
     return null;
   }
 
