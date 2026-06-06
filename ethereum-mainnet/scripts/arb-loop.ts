@@ -30,6 +30,16 @@ const DEST         = '0x1Aa04F01106Aa53bc7A112C502A934a6d72062d4' as Address;
 const BORROW       = parseUnits('100000', 6);
 const INTERVAL_MS  = 15_000;
 
+// ── Process-level error shields (GL-L54) ───────────────────────────────────
+// Node 22: unhandled rejections crash the process by default — prevent that.
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[SHIELD] unhandledRejection', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (e) => {
+  console.error('[SHIELD] uncaughtException', e?.message || e);
+});
+
+
 // ── Logger ───────────────────────────────────────────────────────────────────
 const ts  = () => new Date().toISOString();
 const log = (...a: any[]) => console.log('[INF]', ts(), ...a);
