@@ -1,7 +1,7 @@
 /**
  * CoalitionBundleAPI — TheWarden AEV Pure Arbitrage Engine
  *
- * GL-L54: process shields + pools/scanner fixes
+ * GL-L54: process shields + pools/scanner fixes | esbuild+node deploy (no tsx runtime)
  * GL-L53: Integrated arb scanner loop — pure arbitrage, no block builder needed.
  *   - EthPoolScanner + QuoterV2 validation every 15s (one ETH slot)
  *   - ThirdWeb ERC-4337 execution — $0.00 gas
