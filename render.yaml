@@ -10,7 +10,7 @@ services:
     plan: free
     branch: main
     buildCommand: npm install
-    startCommand: node --import tsx ethereum-mainnet/builder/CoalitionBundleAPI.ts
+    startCommand: node --import tsx ethereum-mainnet/scripts/arb-loop.ts
     envVars:
       - key: NODE_ENV
         value: production
