@@ -1,7 +1,7 @@
 services:
   # ── CoalitionBundleAPI ──────────────────────────────────────────────────────
   # TheWarden AEV Pure Arb Engine — arb-loop.ts daemon
-  # GL-L43 | GL-L53: arb-loop | GL-L54: ETH_PRIVATE_KEY added
+  # GL-L43 | GL-L53: arb-loop | GL-L54: npx tsx startCommand fix
   # Taylor Marlow (@StableExo)
   - type: web
     name: thewarden-coalition-api
@@ -10,7 +10,7 @@ services:
     plan: free
     branch: main
     buildCommand: npm install
-    startCommand: node --import tsx ethereum-mainnet/scripts/arb-loop.ts
+    startCommand: npx tsx ethereum-mainnet/scripts/arb-loop.ts
     envVars:
       - key: NODE_ENV
         value: production
