@@ -162,15 +162,15 @@ export class EthPoolScanner {
               address: QUOTER_ADDR as Address,
               abi: QUOTER_ABI, functionName: 'quoteExactInputSingle',
               args: [{ tokenIn: lo.pool.token0 as Address, tokenOut: lo.pool.token1 as Address, amountIn: BORROW, fee: lo.pool.fee ?? 500, sqrtPriceLimitX96: 0n }],
-            ]) as readonly [bigint,bigint,number,bigint];
-                        const step1Out = (step1Result as readonly [bigint,bigint,number,bigint])[0];
+            }) as readonly [bigint,bigint,number,bigint];
+            const step1Out = (step1Result as readonly [bigint,bigint,number,bigint])[0];
             if (!step1Out || step1Out === 0n) { console.log(`[Q2 ❌] ${lo.pool.protocol} ${pair.label} step1=0 no liquidity`); continue; }
             const step2Result = await this.client.readContract({
               address: QUOTER_ADDR as Address,
               abi: QUOTER_ABI, functionName: 'quoteExactInputSingle',
               args: [{ tokenIn: hi.pool.token1 as Address, tokenOut: hi.pool.token0 as Address, amountIn: step1Out, fee: hi.pool.fee ?? 3000, sqrtPriceLimitX96: 0n }],
-            ]) as readonly [bigint,bigint,number,bigint];
-                        const step2Out = (step2Result as readonly [bigint,bigint,number,bigint])[0];
+            }) as readonly [bigint,bigint,number,bigint];
+            const step2Out = (step2Result as readonly [bigint,bigint,number,bigint])[0];
             if (!step2Out || step2Out <= BORROW) { console.log(`[Q2 ❌] step2 unprofitable: back=${(Number(step2Out||0n)/1e6).toFixed(4)} < borrow=100000`); continue; }
             const cbps = Math.round(Number(step2Out - BORROW) / Number(BORROW) * 10_000);
             console.log(`[Q2 ✅] ${pair.label} | step1=${(Number(step1Out)/1e18).toFixed(6)} WETH | back=${(Number(step2Out)/1e6).toFixed(4)} USDC | profit=${cbps}bps`);
