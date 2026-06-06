@@ -158,7 +158,7 @@ async function runArbCycle() {
     const nonce    = await client.readContract({ address: ENTRY_POINT, abi: NONCE_ABI, functionName: 'getNonce', args: [SMART_ACCOUNT, 0n] });
     const gasPrice = await client.getGasPrice();
     const account  = privateKeyToAccount(EOA_PK);
-    dbg(`[ARB #${cycleId}] nonce=${nonce} gas=${Number(gasPrice)/1e9:.2f}gwei`);
+    dbg(`[ARB #${cycleId}] nonce=${nonce} gas=${(Number(gasPrice)/1e9).toFixed(2)}gwei`);
     
     const hdrs: Record<string,string> = { 'Content-Type': 'application/json', 'x-client-id': TW_CLIENT_ID };
     const STUB_SIG = ('0x' + 'ff'.repeat(64) + '1c') as Hex;
@@ -258,7 +258,7 @@ interface Bundle {
 }
 
 // ── Request logger ────────────────────────────────────────────────────────────
-app.use((req: Request, _res: Response, next: Function) => {
+app.use((req: Request, _res: Response, next: import("express").NextFunction) => {
   dbg(`→ ${req.method} ${req.path} | ip=${req.ip}`);
   next();
 });
