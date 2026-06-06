@@ -1,6 +1,7 @@
 /**
  * CoalitionBundleAPI — TheWarden AEV Pure Arbitrage Engine
  *
+ * GL-L54: process shields + pools/scanner fixes
  * GL-L53: Integrated arb scanner loop — pure arbitrage, no block builder needed.
  *   - EthPoolScanner + QuoterV2 validation every 15s (one ETH slot)
  *   - ThirdWeb ERC-4337 execution — $0.00 gas
@@ -27,6 +28,16 @@ import { EthPoolScanner } from '../scanner/EthPoolScanner';
 import { FLASH_ABI, buildArbPath }  from '../config/arb';
 import { ADDRESSES } from '../config/addresses';
 import { ETH_MAINNET } from '../config/network';
+
+// ── Process-level error shields (GL-L54) ──────────────────────────────────
+// Node 22: unhandled rejections crash by default — intercept them.
+process.on('unhandledRejection', (reason: unknown) => {
+  console.error('[SHIELD]', new Date().toISOString(), 'unhandledRejection:', reason);
+});
+process.on('uncaughtException', (e: Error) => {
+  console.error('[SHIELD]', new Date().toISOString(), 'uncaughtException:', e?.message || e);
+});
+
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
