@@ -23,7 +23,7 @@ import {
 } from 'viem';
 import { mainnet } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
-import { EthPoolScanner } from '../scanner/EthPoolScanner';
+// EthPoolScanner loaded dynamically inside app.listen (shields-first pattern)
 import { FLASH_ABI, buildArbPath }  from '../config/arb';
 import { ADDRESSES } from '../config/addresses';
 import { ETH_MAINNET } from '../config/network';
@@ -111,7 +111,7 @@ const ERC20_ABI = [{
 
 // ── Public client + scanner ───────────────────────────────────────────────
 const client  = createPublicClient({ chain: mainnet, transport: viemHttp(QN_HTTP) });
-const scanner = new EthPoolScanner(QN_HTTP);
+let scanner: any = null; // populated dynamically in app.listen
 
 // ── Arb Cycle ─────────────────────────────────────────────────────────────
 async function runArbCycle() {
@@ -280,8 +280,19 @@ app.listen(PORT, () => {
   log(`   ProfDest:  ${PROFIT_DEST}`);
   log(`   EOA_PK:    ${EOA_PK ? 'SET' : 'NOT SET'}`);
 
+  // Dynamic scanner import — shields already registered, any parse error is caught
+  try {
+    const { EthPoolScanner } = await import('../scanner/EthPoolScanner');
+    scanner = new EthPoolScanner(QN_HTTP);
+    log('✅ EthPoolScanner loaded');
+  } catch (e: any) {
+    err('Scanner load failed:', e?.message || e);
+  }
+
   if (!EOA_PK) {
     warn('⚠️  ETH_PRIVATE_KEY not set — arb loop disabled');
+  } else if (!scanner) {
+    err('Arb loop disabled — scanner failed to load');
   } else {
     log('✅ Starting arb scan loop...');
     runArbCycle().catch(e => err('Boot cycle:', e?.message));
