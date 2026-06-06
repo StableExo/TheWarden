@@ -21,8 +21,8 @@ import { ADDRESSES } from '../config/addresses';
 import { ALL_POOLS, ARB_PAIRS, type PoolConfig } from '../config/pools';
 
 const MULTICALL3  = '0xcA11bde05977b3631167028862bE2a173976CA11' as Address;
-const SLOT0_DATA  = '0x3850c7bd' as `0x${string}`;
-const LIQ_DATA    = '0x1a686502' as `0x${string}`;
+const SLOT0_DATA  = '0x3850c7bd' as Address;
+const LIQ_DATA    = '0x1a686502' as Address;
 
 const BAL_ABI   = parseAbi(['function getPoolTokens(bytes32) view returns (address[],uint256[],uint256)']);
 const CURVE_ABI = parseAbi(['function get_dy(int128,int128,uint256) view returns (uint256)']);
@@ -159,16 +159,16 @@ export class EthPoolScanner {
             }] as const;
             const BORROW = 100_000_000_000n;
             const step1Result = await this.client.readContract({
-              address: QUOTER_ADDR as `0x${string}`,
+              address: QUOTER_ADDR as Address,
               abi: QUOTER_ABI, functionName: 'quoteExactInputSingle',
-              args: [{ tokenIn: lo.pool.token0 as `0x${string}`, tokenOut: lo.pool.token1 as `0x${string}`, amountIn: BORROW, fee: lo.pool.fee ?? 500, sqrtPriceLimitX96: 0n }],
+              args: [{ tokenIn: lo.pool.token0 as Address, tokenOut: lo.pool.token1 as Address, amountIn: BORROW, fee: lo.pool.fee ?? 500, sqrtPriceLimitX96: 0n }],
             ]) as readonly [bigint,bigint,number,bigint];
                         const step1Out = (step1Result as readonly [bigint,bigint,number,bigint])[0];
             if (!step1Out || step1Out === 0n) { console.log(`[Q2 ❌] ${lo.pool.protocol} ${pair.label} step1=0 no liquidity`); continue; }
             const step2Result = await this.client.readContract({
-              address: QUOTER_ADDR as `0x${string}`,
+              address: QUOTER_ADDR as Address,
               abi: QUOTER_ABI, functionName: 'quoteExactInputSingle',
-              args: [{ tokenIn: hi.pool.token1 as `0x${string}`, tokenOut: hi.pool.token0 as `0x${string}`, amountIn: step1Out, fee: hi.pool.fee ?? 3000, sqrtPriceLimitX96: 0n }],
+              args: [{ tokenIn: hi.pool.token1 as Address, tokenOut: hi.pool.token0 as Address, amountIn: step1Out, fee: hi.pool.fee ?? 3000, sqrtPriceLimitX96: 0n }],
             ]) as readonly [bigint,bigint,number,bigint];
                         const step2Out = (step2Result as readonly [bigint,bigint,number,bigint])[0];
             if (!step2Out || step2Out <= BORROW) { console.log(`[Q2 ❌] step2 unprofitable: back=${(Number(step2Out||0n)/1e6).toFixed(4)} < borrow=100000`); continue; }
@@ -211,7 +211,7 @@ export class EthPoolScanner {
         const VAULT = ADDRESSES.balancer.vault as Address;
         const [, balances] = await this.client.readContract({
           address: VAULT, abi: BAL_ABI,
-          functionName: 'getPoolTokens', args: [p.poolId as `0x${string}`],
+          functionName: 'getPoolTokens', args: [p.poolId as Address],
         }) as [readonly Address[], readonly bigint[], bigint];
         if (!balances[0] || balances[0] === 0n) return null;
         const price = Number(balances[1]) / Number(balances[0]);
