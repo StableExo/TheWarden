@@ -62,44 +62,4 @@ export const SUSHIV3_POOLS: PoolConfig[] = [
 ];
 
 export const BALANCER_POOLS: PoolConfig[] = [
-  { address: '0x32296969Ef14EB0c6d29669C550D4a0449130230', protocol: 'balancer', token0: ADDRESSES.tokens.WETH, token1: ADDRESSES.tokens.stETH, poolId: '0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080', label: 'wstETH/WETH Balancer' },
-  // GL-L53: BAL#500 disabled — pool ID stale
-  //   { address: '0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56', protocol: 'balancer', token0: ADDRESSES.tokens.WETH, token1: ADDRESSES.tokens.USDC,  poolId: '0x5c6ee304399dbdb9c8ef030ab642b10820db8f5600020000000000000000014a', label: 'WETH/USDC Balancer 80/20' },
-  //   { address: '0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56', protocol: 'balancer', token0: ADDRESSES.tokens.WETH, token1: ADDRESSES.tokens.USDC,  poolId: '0x5c6ee304399dbdb9c8ef030ab642b10820db8f5600020000000000000000014a', label: 'WETH/USDC Balancer 80/20' },  // BAL#500 stale
-  // ];
-  // 
-  // export const CURVE_POOLS: PoolConfig[] = [
-  //   { address: '0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7', protocol: 'curve', token0: ADDRESSES.tokens.DAI,  token1: ADDRESSES.tokens.USDC,  label: '3pool (DAI/USDC/USDT)' },
-  //   // stETH/ETH Curve pool removed GL-L45: get_dy(0,1,1e6) wrong scale for ETH (18dec) → phantom 2399bps arb vs Balancer
-  // ];
-  // 
-  // export const ALL_POOLS: PoolConfig[] = [
-  //   ...UNISWAP_V3_POOLS,
-  //   // SushiV3 pools excluded from arb until router address verified — GL-L45
-  //   // ...SUSHIV3_POOLS,
-  //   ...BALANCER_POOLS,
-  //   ...CURVE_POOLS,
-  // ];
-  // 
-  // export const ARB_PAIRS = [
-  //   { tokenA: ADDRESSES.tokens.USDC,  tokenB: ADDRESSES.tokens.WETH,  label: 'USDC/WETH' },
-  //   { tokenA: ADDRESSES.tokens.WBTC,  tokenB: ADDRESSES.tokens.WETH,  label: 'WBTC/WETH' },
-  //   { tokenA: ADDRESSES.tokens.LINK,  tokenB: ADDRESSES.tokens.WETH,  label: 'LINK/WETH' },
-  //   { tokenA: ADDRESSES.tokens.AAVE,  tokenB: ADDRESSES.tokens.WETH,  label: 'AAVE/WETH' },
-  //   { tokenA: ADDRESSES.tokens.LDO,   tokenB: ADDRESSES.tokens.WETH,  label: 'LDO/WETH' },
-  //   { tokenA: ADDRESSES.tokens.cbETH, tokenB: ADDRESSES.tokens.WETH,  label: 'cbETH/WETH' },
-  //   { tokenA: ADDRESSES.tokens.DAI,   tokenB: ADDRESSES.tokens.USDC,  label: 'DAI/USDC' },
-  //   { tokenA: ADDRESSES.tokens.USDC,  tokenB: ADDRESSES.tokens.USDT,  label: 'USDC/USDT' },
-  //   { tokenA: ADDRESSES.tokens.DAI,   tokenB: ADDRESSES.tokens.USDT,  label: 'DAI/USDT' },
-  //   { tokenA: ADDRESSES.tokens.USDT,  tokenB: ADDRESSES.tokens.WETH,  label: 'USDT/WETH' },
-  //   { tokenA: ADDRESSES.tokens.DAI,   tokenB: ADDRESSES.tokens.WETH,  label: 'DAI/WETH' },
-  //   { tokenA: ADDRESSES.tokens.stETH, tokenB: ADDRESSES.tokens.WETH,  label: 'stETH/ETH' },
-  //   { tokenA: ADDRESSES.tokens.MKR,   tokenB: ADDRESSES.tokens.WETH,  label: 'MKR/WETH' },
-  //   { tokenA: ADDRESSES.tokens.UNI,   tokenB: ADDRESSES.tokens.WETH,  label: 'UNI/WETH' },
-  //   { tokenA: ADDRESSES.tokens.RPL,   tokenB: ADDRESSES.tokens.WETH,  label: 'RPL/WETH' },
-  //   { tokenA: ADDRESSES.tokens.CRV,   tokenB: ADDRESSES.tokens.WETH,  label: 'CRV/WETH' },
-  //   { tokenA: ADDRESSES.tokens.SNX,   tokenB: ADDRESSES.tokens.WETH,  label: 'SNX/WETH' },
-  //   { tokenA: ADDRESSES.tokens.FRAX,  tokenB: ADDRESSES.tokens.USDC,  label: 'FRAX/USDC' },
-  //   { tokenA: ADDRESSES.tokens.WBTC,  tokenB: ADDRESSES.tokens.USDC,  label: 'WBTC/USDC' },
-  // ];
-  // 
+  // GL-L53: Balancer pool 0x5c6ee304399dbdb9c8... removed — BAL#500 (stale pool ID)
