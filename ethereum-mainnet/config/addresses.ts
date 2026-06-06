@@ -58,5 +58,5 @@ export const ADDRESSES = {
     SUSHI: '0x6B3595068778DD592e39A122f4f5a5cF09C90fE2',
   },
   // ★ FlashSwapV3 on ETH mainnet — deployed GL-L53 | $0.00 gas | 100% profit stableexo.base.eth | tithe removed
-  flashSwapV3ETH: '0x1bfe5c031569e346c428cd600e6cd611670a946e',
+  flashSwapV3ETH: '0xa0709f1ccf85dc1ff2ed89ed38884e28394ddaed',
 } as const;
