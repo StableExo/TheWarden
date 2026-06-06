@@ -74,7 +74,7 @@ export class EthPoolScanner {
       { target: getAddress(p.address) as Address, allowFailure: true, callData: LIQ_DATA   },
     ]);
 
-    let results: readonly { success: boolean; returnData: `0x${string}` }[] = [];
+    let results: readonly { success: boolean; returnData: string }[] = [];
     try {
       results = await this.client.readContract({
         address: MULTICALL3, abi: MULTICALL3_ABI,
