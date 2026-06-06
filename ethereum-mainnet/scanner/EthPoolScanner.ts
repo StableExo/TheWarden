@@ -160,9 +160,9 @@ export class EthPoolScanner {
               abi: QUOTER_ABI, functionName: 'quoteExactInputSingle',
               args: [hi.pool.token1 as `0x${string}`, hi.pool.token0 as `0x${string}`, step1Out, hi.pool.fee ?? 3000, 0n],
             }) as bigint;
-            if (!step2Out || step2Out <= BORROW) { console.log(`[Q2 ❌] step2 unprofitable: back=${Number(step2Out||0n)/1e6:.4f} < borrow=100000`); continue; }
+            if (!step2Out || step2Out <= BORROW) { console.log(`[Q2 ❌] step2 unprofitable: back=${(Number(step2Out||0n)/1e6).toFixed(4)} < borrow=100000`); continue; }
             const cbps = Math.round(Number(step2Out - BORROW) / Number(BORROW) * 10_000);
-            console.log(`[Q2 ✅] ${pair.label} | step1=${Number(step1Out)/1e18:.6f} WETH | back=${Number(step2Out)/1e6:.4f} USDC | profit=${cbps}bps`);
+            console.log(`[Q2 ✅] ${pair.label} | step1=${(Number(step1Out)/1e18).toFixed(6)} WETH | back=${(Number(step2Out)/1e6).toFixed(4)} USDC | profit=${cbps}bps`);
             opps.push({
               label: `${pair.label} [${lo.pool.protocol}→${hi.pool.protocol}] Q2:${cbps}bps`,
               buyPool: lo.pool, sellPool: hi.pool,
