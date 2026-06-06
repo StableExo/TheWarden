@@ -1,7 +1,7 @@
 /**
  * CoalitionBundleAPI — TheWarden AEV Pure Arbitrage Engine
  *
- * GL-L54: ALL crashes fixed. Process shields. as Address fix in EthPoolScanner.
+ * GL-L54: ALL crashes fixed — ]) bracket bug resolved. Process shields. as Address fix in EthPoolScanner.
  * GL-L53: Integrated arb scanner loop — pure arbitrage, no block builder needed.
  *   - EthPoolScanner + QuoterV2 validation every 15s (one ETH slot)
  *   - ThirdWeb ERC-4337 execution — $0.00 gas
