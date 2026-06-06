@@ -1,6 +1,7 @@
 /**
  * ETH Mainnet Pool Configuration
  * GL-L45 FIX: SushiV3 pool addresses factory-verified on-chain
+ * GL-L53 FIX: BALANCER_POOLS closed, CURVE_POOLS/ALL_POOLS/ARB_PAIRS restored
  * 36 pools total | GL-L42 | TheWarden
  */
 
@@ -16,7 +17,7 @@ export interface PoolConfig {
   label:    string;
 }
 
-// ── UniV3 pools — factory-verified GL-L42
+// ── UniV3 pools ── factory-verified GL-L42
 export const UNISWAP_V3_POOLS: PoolConfig[] = [
   { address: '0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640', protocol: 'uniswap-v3', token0: ADDRESSES.tokens.USDC,  token1: ADDRESSES.tokens.WETH,  fee: 500,   label: 'USDC/WETH 0.05%' },
   { address: '0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8', protocol: 'uniswap-v3', token0: ADDRESSES.tokens.USDC,  token1: ADDRESSES.tokens.WETH,  fee: 3000,  label: 'USDC/WETH 0.30%' },
@@ -47,8 +48,7 @@ export const UNISWAP_V3_POOLS: PoolConfig[] = [
   { address: '0xede8DD046586d22625Ae7fF2708F879eF7bdb8cF', protocol: 'uniswap-v3', token0: ADDRESSES.tokens.SNX,   token1: ADDRESSES.tokens.WETH,  fee: 3000,  label: 'SNX/WETH 0.30%' },
 ];
 
-// ── SushiSwap V3 pools — GL-L45 FIX | factory-verified on-chain
-// Factory: 0xbACEB8eC6b9355Dfc0269C18bac9d6E2Bdc29C4f | same slot0+liquidity ABI as UniV3
+// ── SushiSwap V3 pools ── GL-L45 FIX | factory-verified on-chain
 export const SUSHIV3_POOLS: PoolConfig[] = [
   { address: '0x35644Fb61afbc458Bf92B15Add6ABc1996Be5014', protocol: 'sushi-v3', token0: ADDRESSES.tokens.USDC, token1: ADDRESSES.tokens.WETH, fee: 500,  label: '[S3] USDC/WETH 0.05%' },
   { address: '0x763D3b7296E7C9718aD5b058Ac2692A19E5b3638', protocol: 'sushi-v3', token0: ADDRESSES.tokens.USDC, token1: ADDRESSES.tokens.WETH, fee: 3000, label: '[S3] USDC/WETH 0.30%' },
@@ -61,47 +61,41 @@ export const SUSHIV3_POOLS: PoolConfig[] = [
   { address: '0x769Db46F39c42Ee7AD5f71f4167c47EDd281E767', protocol: 'sushi-v3', token0: ADDRESSES.tokens.DAI,  token1: ADDRESSES.tokens.WETH, fee: 3000, label: '[S3] DAI/WETH 0.30%' },
 ];
 
+// ── Balancer pools ── GL-L53: BAL#500 pool removed (stale ID)
 export const BALANCER_POOLS: PoolConfig[] = [
   { address: '0x32296969Ef14EB0c6d29669C550D4a0449130230', protocol: 'balancer', token0: ADDRESSES.tokens.WETH, token1: ADDRESSES.tokens.stETH, poolId: '0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080', label: 'wstETH/WETH Balancer' },
-  // GL-L53: BAL#500 disabled — pool ID stale
-  //
-  // GL-L53: Balancer pool 0x5c6ee304... removed (BAL#500 stale)
-  //
-  // GL-L53: Balancer pool 0x5c6ee304... removed (BAL#500 stale)  // BAL#500 stale
-  // ];
-  // 
-  // export const CURVE_POOLS: PoolConfig[] = [
-  //   { address: '0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7', protocol: 'curve', token0: ADDRESSES.tokens.DAI,  token1: ADDRESSES.tokens.USDC,  label: '3pool (DAI/USDC/USDT)' },
-  //   // stETH/ETH Curve pool removed GL-L45: get_dy(0,1,1e6) wrong scale for ETH (18dec) → phantom 2399bps arb vs Balancer
-  // ];
-  // 
-  // export const ALL_POOLS: PoolConfig[] = [
-  //   ...UNISWAP_V3_POOLS,
-  //   // SushiV3 pools excluded from arb until router address verified — GL-L45
-  //   // ...SUSHIV3_POOLS,
-  //   ...BALANCER_POOLS,
-  //   ...CURVE_POOLS,
-  // ];
-  // 
-  // export const ARB_PAIRS = [
-  //   { tokenA: ADDRESSES.tokens.USDC,  tokenB: ADDRESSES.tokens.WETH,  label: 'USDC/WETH' },
-  //   { tokenA: ADDRESSES.tokens.WBTC,  tokenB: ADDRESSES.tokens.WETH,  label: 'WBTC/WETH' },
-  //   { tokenA: ADDRESSES.tokens.LINK,  tokenB: ADDRESSES.tokens.WETH,  label: 'LINK/WETH' },
-  //   { tokenA: ADDRESSES.tokens.AAVE,  tokenB: ADDRESSES.tokens.WETH,  label: 'AAVE/WETH' },
-  //   { tokenA: ADDRESSES.tokens.LDO,   tokenB: ADDRESSES.tokens.WETH,  label: 'LDO/WETH' },
-  //   { tokenA: ADDRESSES.tokens.cbETH, tokenB: ADDRESSES.tokens.WETH,  label: 'cbETH/WETH' },
-  //   { tokenA: ADDRESSES.tokens.DAI,   tokenB: ADDRESSES.tokens.USDC,  label: 'DAI/USDC' },
-  //   { tokenA: ADDRESSES.tokens.USDC,  tokenB: ADDRESSES.tokens.USDT,  label: 'USDC/USDT' },
-  //   { tokenA: ADDRESSES.tokens.DAI,   tokenB: ADDRESSES.tokens.USDT,  label: 'DAI/USDT' },
-  //   { tokenA: ADDRESSES.tokens.USDT,  tokenB: ADDRESSES.tokens.WETH,  label: 'USDT/WETH' },
-  //   { tokenA: ADDRESSES.tokens.DAI,   tokenB: ADDRESSES.tokens.WETH,  label: 'DAI/WETH' },
-  //   { tokenA: ADDRESSES.tokens.stETH, tokenB: ADDRESSES.tokens.WETH,  label: 'stETH/ETH' },
-  //   { tokenA: ADDRESSES.tokens.MKR,   tokenB: ADDRESSES.tokens.WETH,  label: 'MKR/WETH' },
-  //   { tokenA: ADDRESSES.tokens.UNI,   tokenB: ADDRESSES.tokens.WETH,  label: 'UNI/WETH' },
-  //   { tokenA: ADDRESSES.tokens.RPL,   tokenB: ADDRESSES.tokens.WETH,  label: 'RPL/WETH' },
-  //   { tokenA: ADDRESSES.tokens.CRV,   tokenB: ADDRESSES.tokens.WETH,  label: 'CRV/WETH' },
-  //   { tokenA: ADDRESSES.tokens.SNX,   tokenB: ADDRESSES.tokens.WETH,  label: 'SNX/WETH' },
-  //   { tokenA: ADDRESSES.tokens.FRAX,  tokenB: ADDRESSES.tokens.USDC,  label: 'FRAX/USDC' },
-  //   { tokenA: ADDRESSES.tokens.WBTC,  tokenB: ADDRESSES.tokens.USDC,  label: 'WBTC/USDC' },
-  // ];
-  // 
+];
+
+// ── Curve pools ── stETH pool removed GL-L45 (wrong scale)
+export const CURVE_POOLS: PoolConfig[] = [
+  { address: '0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7', protocol: 'curve', token0: ADDRESSES.tokens.DAI, token1: ADDRESSES.tokens.USDC, label: '3pool (DAI/USDC/USDT)' },
+];
+
+export const ALL_POOLS: PoolConfig[] = [
+  ...UNISWAP_V3_POOLS,
+  ...SUSHIV3_POOLS,
+  ...BALANCER_POOLS,
+  ...CURVE_POOLS,
+];
+
+export const ARB_PAIRS = [
+  { tokenA: ADDRESSES.tokens.USDC,  tokenB: ADDRESSES.tokens.WETH,  label: 'USDC/WETH' },
+  { tokenA: ADDRESSES.tokens.WBTC,  tokenB: ADDRESSES.tokens.WETH,  label: 'WBTC/WETH' },
+  { tokenA: ADDRESSES.tokens.LINK,  tokenB: ADDRESSES.tokens.WETH,  label: 'LINK/WETH' },
+  { tokenA: ADDRESSES.tokens.AAVE,  tokenB: ADDRESSES.tokens.WETH,  label: 'AAVE/WETH' },
+  { tokenA: ADDRESSES.tokens.LDO,   tokenB: ADDRESSES.tokens.WETH,  label: 'LDO/WETH' },
+  { tokenA: ADDRESSES.tokens.cbETH, tokenB: ADDRESSES.tokens.WETH,  label: 'cbETH/WETH' },
+  { tokenA: ADDRESSES.tokens.DAI,   tokenB: ADDRESSES.tokens.USDC,  label: 'DAI/USDC' },
+  { tokenA: ADDRESSES.tokens.USDC,  tokenB: ADDRESSES.tokens.USDT,  label: 'USDC/USDT' },
+  { tokenA: ADDRESSES.tokens.DAI,   tokenB: ADDRESSES.tokens.USDT,  label: 'DAI/USDT' },
+  { tokenA: ADDRESSES.tokens.USDT,  tokenB: ADDRESSES.tokens.WETH,  label: 'USDT/WETH' },
+  { tokenA: ADDRESSES.tokens.DAI,   tokenB: ADDRESSES.tokens.WETH,  label: 'DAI/WETH' },
+  { tokenA: ADDRESSES.tokens.stETH, tokenB: ADDRESSES.tokens.WETH,  label: 'stETH/ETH' },
+  { tokenA: ADDRESSES.tokens.MKR,   tokenB: ADDRESSES.tokens.WETH,  label: 'MKR/WETH' },
+  { tokenA: ADDRESSES.tokens.UNI,   tokenB: ADDRESSES.tokens.WETH,  label: 'UNI/WETH' },
+  { tokenA: ADDRESSES.tokens.RPL,   tokenB: ADDRESSES.tokens.WETH,  label: 'RPL/WETH' },
+  { tokenA: ADDRESSES.tokens.CRV,   tokenB: ADDRESSES.tokens.WETH,  label: 'CRV/WETH' },
+  { tokenA: ADDRESSES.tokens.SNX,   tokenB: ADDRESSES.tokens.WETH,  label: 'SNX/WETH' },
+  { tokenA: ADDRESSES.tokens.FRAX,  tokenB: ADDRESSES.tokens.USDC,  label: 'FRAX/USDC' },
+  { tokenA: ADDRESSES.tokens.WBTC,  tokenB: ADDRESSES.tokens.USDC,  label: 'WBTC/USDC' },
+];
