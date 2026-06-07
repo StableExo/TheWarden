@@ -5,19 +5,21 @@
  * GL-L55: Triangular arb support — buildTriPath hooked in. Handles hopCount=3 from EthPoolScanner.
  * GL-L55: CEX-DEX per-block trigger — Kraken REST price + QuoterV2 spread check every new block via WSS.
  * GL-L55: Multi-builder fan-out — Titan + bloXroute + Quasar (eth_sendBundle) alongside ThirdWeb UserOp.
- * GL-L55: eth_callBundle simulation pre-flight — simulate before submitting UserOp, skip if revert.
+ * GL-L56: Tenderly removed from mainnet hot path — was 8s latency (67% of 12s block window).
+ *         Tenderly VNet = staging/test only. Use POST /simulate for pre-deploy calldata testing.
  * GL-L55: Surface-rate pre-filter — fast no-RPC spread check before QuoterV2 in EthPoolScanner.
  *
  * Dual trigger model:
  *   A) WSS watchBlockNumber → onBlock() → Kraken + QuoterV2 CEX-DEX spread check per block
  *   B) setInterval 15s → runArbCycle() → full pool scan (triangular + 2-hop)
- *   Both routes converge on executeArb() → simulate → UserOp + builder fan-out
+ *   Both routes converge on executeArb() → UserOp + builder fan-out (no simulation delay)
  *
  * Endpoints:
  *   GET  /health  — liveness + uptime
  *   GET  /stats   — bundle stats
- *   GET  /arb     — arb loop status
- *   POST /        — eth_sendBundle compatible
+ *   GET  /arb       — arb loop status
+ *   POST /simulate  — Tenderly VNet test: {calldata} → simulate without submitting to mainnet
+ *   POST /          — eth_sendBundle compatible
  */
 
 import express, { type Request, type Response } from 'express';
@@ -367,16 +369,9 @@ async function executeArb(opp: any, cycleId: number): Promise<void> {
     ],
   });
 
-  // ── Step 1: eth_callBundle simulation pre-flight ──────────────────────────
-  log(`[ARB #${cycleId}] Simulating bundle via eth_callBundle...`);
-  const simOk = await simulateBundle(arbCalldata);
-  if (!simOk) {
-    warn(`[ARB #${cycleId}] Simulation failed — skipping submission. (${lastSimResult})`);
-    arbFailed++;
-    return;
-  }
-
-  // ── Step 2: ThirdWeb UserOp (free gas via ERC-4337 paymaster) ────────────
+  // ── Step 1: ThirdWeb UserOp (free gas via ERC-4337 paymaster) ─────────────────────
+  // GL-L56: Tenderly pre-flight removed — adds up to 8s latency on a 12s block window.
+  // Tenderly is now VNET-only (staging). Use POST /simulate to test calldata before deploying.
   const executeCalldata = encodeFunctionData({
     abi: SIMPLE_ACCOUNT_ABI, functionName: 'execute',
     args: [FLASH_SWAP, 0n, arbCalldata],
@@ -438,11 +433,11 @@ async function executeArb(opp: any, cycleId: number): Promise<void> {
   arbFired++;
   log(`[ARB #${cycleId}] 🚀 UserOp SUBMITTED! Hash: ${lastUserOpHash}`);
 
-  // ── Step 3: Multi-builder fan-out (GL-L55) ──────────────────────────────
+  // ── Step 2: Multi-builder fan-out (GL-L55) ──────────────────────────────
   log(`[ARB #${cycleId}] Fanning out to ${ETH_MAINNET.builders.length} builders...`);
   fanOutBundle(arbCalldata, currentBlock + 1n).catch(e => warn('[FAN-OUT] error:', e?.message));
 
-  // ── Step 4: Profit check 35s later ──────────────────────────────────────
+  // ── Step 3: Profit check 35s later ──────────────────────────────────────
   setTimeout(async () => {
     try {
       const usdcAfter = await client.readContract({
@@ -532,6 +527,17 @@ app.post('/', async (req: Request, res: Response) => {
     return;
   }
   res.json({ jsonrpc:'2.0', id, error:{ code:-32601, message:`Method not found: ${method}` } });
+});
+
+app.post('/simulate', async (req: Request, res: Response) => {
+  const { calldata } = req.body ?? {};
+  if (!calldata) return res.status(400).json({ error: 'calldata required' });
+  try {
+    const ok = await simulateBundle(calldata as Hex);
+    res.json({ ok, result: lastSimResult });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message });
+  }
 });
 
 app.get('/relay/v1/bundle/list', (_req: Request, res: Response) => {
