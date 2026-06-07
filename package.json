@@ -244,7 +244,7 @@
     "qrcode": "1.5.4",
     "speakeasy": "2.0.0",
     "uuid": "13.0.0",
-    "viem": "2.40.3",
+    "viem": "2.52.2",
     "ws": "8.18.0",
     "zod": "3.25.76",
     "tsx": "4.21.0",
@@ -286,7 +286,7 @@
     "prettier-plugin-solidity": "2.2.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
-    "vitest": "4.0.14"
+    "vitest": "4.1.8"
   },
   "engines": {
     "node": ">=22.12.0"
