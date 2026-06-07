@@ -53,7 +53,7 @@ const QUOTER_ADDR = ADDRESSES.uniswapV3.quoterV2 as Address;
 const MIN_BORROW  = 1_000_000_000n;    //   1K USDC (6 decimals)
 const MAX_BORROW  = 500_000_000_000n;  // 500K USDC (6 decimals)
 const BORROW      = 100_000_000_000n;  // 100K USDC — fast-path / fallback
-const MIN_SPREAD_BPS = 5;              // GL-L56: Gate at 5bps — below fee cost (10bps), avoids noise
+const MIN_SPREAD_BPS = 35;            // patch#9: break-even = 5+30bps fees              // GL-L56: Gate at 5bps — below fee cost (10bps), avoids noise
 
 // ── ABIs ──────────────────────────────────────────────────────────────────────
 const MULTICALL3_ABI = [{
@@ -194,11 +194,11 @@ export class EthPoolScanner {
     // Buy WETH at cheap pool (pA), sell WETH at expensive pool (pB)
     const profitFn = async (amt: bigint): Promise<bigint> => {
       try {
-        // Step 1: USDC → WETH at lower-priced pool (buy cheap)
-        const wethOut = await this.q2Quote(pA.pool.token0, pA.pool.token1, amt, pA.pool.fee);
+        // GL-L56 patch#9: CORRECT direction — buy at pB (0.05%, more WETH per USDC = cheaper ETH)
+        const wethOut = await this.q2Quote(pB.pool.token0, pB.pool.token1, amt, pB.pool.fee);
         if (!wethOut || wethOut === 0n) return -amt;
-        // Step 2: WETH → USDC at higher-priced pool (sell expensive)
-        const usdcOut = await this.q2Quote(pB.pool.token1, pB.pool.token0, wethOut, pB.pool.fee);
+        // Sell at pA (0.30%, more USDC per WETH = expensive ETH side)
+        const usdcOut = await this.q2Quote(pA.pool.token1, pA.pool.token0, wethOut, pA.pool.fee);
         if (!usdcOut || usdcOut === 0n) return -amt;
         return usdcOut - amt; // positive = profitable
       } catch { return -amt; }
@@ -213,19 +213,19 @@ export class EthPoolScanner {
     }
 
     // GL-L56: Gate on real profit — nonce collisions (AA25) cost us even with free gas
-    console.log(`[Q2 DBG] optAmt=${(Number(optAmt)/1e6).toFixed(2)}K USDC | profit=${(Number(optProfit)/1e6).toFixed(4)} USDC | back=${(Number(optAmt+optProfit)/1e6).toFixed(4)} USDC`);
+    console.log(`[Q2 DBG] optAmt=${(Number(optAmt)/1e9).toFixed(2)}K USDC | profit=${(Number(optProfit)/1e6).toFixed(4)} USDC | back=${(Number(optAmt+optProfit)/1e6).toFixed(4)} USDC`);
     if (optProfit <= 0n) {
-      console.log(`[Q2 ❌] ${pA.pool.label}→${pB.pool.label} | spread=${spreadBps}bps | best back=${(Number(optAmt+optProfit)/1e6).toFixed(4)} USDC — NOT profitable, skipping`);
+      console.log(`[Q2 ❌] ${pB.pool.label}→${pA.pool.label} | spread=${spreadBps}bps | best back=${(Number(optAmt+optProfit)/1e6).toFixed(4)} USDC — NOT profitable, skipping`);
       return [];
     }
 
     const cbps = Math.round(Number(optProfit) / Number(optAmt) * 10_000);
-    console.log(`[Q2 ✅] ${pA.pool.label}→${pB.pool.label} | borrow=${(Number(optAmt)/1e6).toFixed(0)} USDC | profit=${(Number(optProfit)/1e6).toFixed(4)} USDC | ${cbps}bps 🔥`);
+    console.log(`[Q2 ✅] ${pB.pool.label}→${pA.pool.label} | borrow=${(Number(optAmt)/1e9).toFixed(2)}K USDC | profit=${(Number(optProfit)/1e6).toFixed(4)} USDC | ${cbps}bps 🔥`);
 
     return [{
-      label:             `${pA.pool.label}→${pB.pool.label} Q2:${cbps}bps`,
-      buyPool:           pA.pool as any,
-      sellPool:          pB.pool as any,
+      label:             `${pB.pool.label}→${pA.pool.label} Q2:${cbps}bps`,
+      buyPool:           pB.pool as any,
+      sellPool:          pA.pool as any,
       buyPrice:          pA.price,
       sellPrice:         pB.price,
       spread,
