@@ -55,6 +55,23 @@ const QUOTER_ABI = [{
   stateMutability: 'nonpayable',
 }] as const;
 
+// ── Surface-rate pre-filter (GL-L55) ──────────────────────────────────────────
+// Fast no-RPC check. Uses cached slot0 sqrtPriceX96 prices from scanAll().
+// Avoids spending QuoterV2 RPC calls on clearly unprofitable paths.
+// formula: product of (1 / fee_i - adjusted rates) > 1 means a surface spread exists
+function surfaceRate2Hop(loPriceInv: number, hiPrice: number, loFee: number, hiFee: number): number {
+  // Net rate buying at lo pool then selling at hi pool (approx, fee-adjusted)
+  const buyRate  = loPriceInv * (1 - loFee / 1_000_000);
+  const sellRate = hiPrice    * (1 - hiFee / 1_000_000);
+  return buyRate * sellRate; // >1 means profitable before slippage
+}
+
+function surfaceRate3Hop(p1: number, p2: number, p3: number, f1: number, f2: number, f3: number): number {
+  // Product of rates through all 3 hops, fee-adjusted
+  // If >1, a ring profit exists at infinitesimal size
+  return p1 * (1 - f1/1_000_000) * p2 * (1 - f2/1_000_000) * p3 * (1 - f3/1_000_000);
+}
+
 const MULTICALL3_ABI = [{
   name: 'aggregate3',
   type: 'function',
@@ -185,6 +202,18 @@ export class EthPoolScanner {
           // FIX: filter phantom cross-protocol arbs (denomination mismatch noise)
           const crossProto = lo.pool.protocol !== hi.pool.protocol;
           if (crossProto && bps > this.MAX_CROSS_BPS) continue;
+
+          // GL-L55: Surface-rate pre-filter — fast no-RPC check before QuoterV2
+          // Avoid wasting RPC quota on pairs where spread can't exceed fees
+          const loFeeN = lo.pool.fee ?? 500;
+          const hiFeeN = hi.pool.fee ?? 3000;
+          // Approximate: if hi.price / lo.price - 1 < fee_sum, surface spread is negative
+          const approxSpread = hi.price > 0 && lo.price > 0 ? (hi.price - lo.price) / lo.price : 0;
+          const feeSum = (loFeeN + hiFeeN) / 1_000_000;
+          if (approxSpread < feeSum * 0.5) {
+            // Surface rate clearly too low — skip QuoterV2 call entirely
+            continue;
+          }
 
           // GL-L53: QuoterV2 pre-flight — only push opps that will actually execute
           try {
