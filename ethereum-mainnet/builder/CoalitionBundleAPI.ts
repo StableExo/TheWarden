@@ -84,6 +84,7 @@ let arbScans = 0, arbFired = 0, arbSucceeded = 0, arbFailed = 0;
 let lastScanTime = 0, lastOpp = '', lastUserOpHash = '', lastError = '';
 let totalProfitUSDC = 0, lastProfitCheck = 0;
 let krakenPrice = 0, krakenTs = 0;
+let arbInFlight = false; // GL-L56: nonce lock — prevents AA25 collisions
 let cexDexChecks = 0, cexDexFired = 0;
 let fanoutResults: any[] = [];
 let lastSimResult = '';
@@ -339,6 +340,13 @@ async function onBlock(blockNumber: bigint): Promise<void> {
 
 // ── Core arb execution (shared by timer + CEX-DEX trigger) ───────────────────
 async function executeArb(opp: any, cycleId: number): Promise<void> {
+  // GL-L56: Nonce lock — skip if a UserOp is already in-flight (prevents AA25)
+  if (arbInFlight) {
+    warn(`[ARB #${cycleId}] Skipping — UserOp already in-flight (nonce lock)`);
+    return;
+  }
+  arbInFlight = true;
+
   lastOpp = `${opp.label} | ${opp.estimatedProfitBps}bps`;
   log(`[ARB #${cycleId}] ✅ OPPORTUNITY: ${opp.label} | ${opp.estimatedProfitBps}bps`);
 
@@ -449,6 +457,7 @@ async function executeArb(opp: any, cycleId: number): Promise<void> {
       if (profit > 0) { totalProfitUSDC += profit; arbSucceeded++; log(`[ARB #${cycleId}] 💰 +${profit.toFixed(4)} USDC`); }
       else { arbFailed++; warn(`[ARB #${cycleId}] No profit detected — inner op may have failed`); }
     } catch (e: any) { err(`[ARB #${cycleId}] profit check: ${e?.message}`); }
+    finally { arbInFlight = false; } // GL-L56: release nonce lock
   }, 35_000);
 }
 
@@ -469,6 +478,7 @@ async function runArbCycle() {
   } catch (e: any) {
     lastError = e?.message || String(e);
     err(`[ARB #${cycleId}] CYCLE FAILED: ${lastError}`);
+    arbInFlight = false; // GL-L56: release nonce lock on cycle error
   }
 }
 
@@ -481,7 +491,7 @@ app.use((req: Request, _res: Response, next: any) => {
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.get('/health', (_req: Request, res: Response) => {
   res.json({
-    status: 'ok', builder: 'TheWarden AEV GL-L55',
+    status: 'ok', builder: 'TheWarden AEV GL-L56',
     refundBps: REFUND_BPS, refundPct: '95%',
     pendingBundles: bundles.size,
     uptime: (Date.now() - START_TIME) / 1000,
@@ -546,7 +556,7 @@ app.get('/relay/v1/bundle/list', (_req: Request, res: Response) => {
 
 // ── Start ──────────────────────────────────────────────────────────────────────
 app.listen(PORT, async () => {
-  log(`🚀 TheWarden AEV GL-L55 on port ${PORT}`);
+  log(`🚀 TheWarden AEV GL-L56 on port ${PORT}`);
   log(`   Contract:  ${FLASH_SWAP}`);
   log(`   ProfDest:  ${PROFIT_DEST}`);
   log(`   EOA_PK:    ${EOA_PK ? 'SET' : 'NOT SET'}`);
