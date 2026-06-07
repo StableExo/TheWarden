@@ -213,7 +213,11 @@ async function fanOutBundle(arbCalldata: Hex, targetBlock: bigint): Promise<void
         try {
           const res = await fetch(builder.rpc, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(builder.name === 'bloXroute' && process.env.BLXR_AUTH_HEADER
+                ? { 'Authorization': process.env.BLXR_AUTH_HEADER } : {}),
+            },
             body: JSON.stringify({ jsonrpc:'2.0', id:1, method:'eth_sendBundle', params:[payload] }),
             signal: AbortSignal.timeout(4000),
           });
