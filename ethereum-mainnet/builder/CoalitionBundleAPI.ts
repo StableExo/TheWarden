@@ -4,7 +4,8 @@
  * GL-L54: ALL crashes fixed — ]) bracket bug resolved. Process shields. as Address fix in EthPoolScanner.
  * GL-L55: Triangular arb support — buildTriPath hooked in. Handles hopCount=3 from EthPoolScanner.
  * GL-L55: CEX-DEX per-block trigger — Kraken REST price + QuoterV2 spread check every new block via WSS.
- * GL-L55: Multi-builder fan-out — Titan + bloXroute + Quasar (eth_sendBundle) alongside ThirdWeb UserOp.
+ * GL-L55: Multi-builder fan-out — Titan + Quasar (eth_sendBundle) alongside ThirdWeb UserOp.
+ * GL-L56: bloXroute removed — persistent auth failures. Now: Quasar + Titan only.
  * GL-L56: Tenderly removed from mainnet hot path — was 8s latency (67% of 12s block window).
  *         Tenderly VNet = staging/test only. Use POST /simulate for pre-deploy calldata testing.
  * GL-L55: Surface-rate pre-filter — fast no-RPC spread check before QuoterV2 in EthPoolScanner.
@@ -213,11 +214,7 @@ async function fanOutBundle(arbCalldata: Hex, targetBlock: bigint): Promise<void
         try {
           const res = await fetch(builder.rpc, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(builder.name === 'bloXroute' && process.env.BLXR_AUTH_HEADER
-                ? { 'Authorization': process.env.BLXR_AUTH_HEADER } : {}),
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jsonrpc:'2.0', id:1, method:'eth_sendBundle', params:[payload] }),
             signal: AbortSignal.timeout(4000),
           });
