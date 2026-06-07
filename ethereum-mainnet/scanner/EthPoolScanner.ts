@@ -18,7 +18,7 @@
  *   3. If spread >= 10bps: ternary search (8 iters = 16 Q2 calls) for optimal borrow
  *   4. Return opportunity with optimalBorrow if profitable
  *
- * GL-L55 | TheWarden | @StableExo
+ * GL-L56 | TheWarden | @StableExo — Gated on real profit (no more fire-regardless)
  */
 
 import { createPublicClient, http, getAddress, type Address, parseAbi } from 'viem';
@@ -53,7 +53,7 @@ const QUOTER_ADDR = ADDRESSES.uniswapV3.quoterV2 as Address;
 const MIN_BORROW  = 1_000_000_000n;    //   1K USDC (6 decimals)
 const MAX_BORROW  = 500_000_000_000n;  // 500K USDC (6 decimals)
 const BORROW      = 100_000_000_000n;  // 100K USDC — fast-path / fallback
-const MIN_SPREAD_BPS = 0;              // GL-L55: No gate — let it fire, gas is free
+const MIN_SPREAD_BPS = 5;              // GL-L56: Gate at 5bps — below fee cost (10bps), avoids noise
 
 // ── ABIs ──────────────────────────────────────────────────────────────────────
 const MULTICALL3_ABI = [{
@@ -210,12 +210,10 @@ export class EthPoolScanner {
       optAmt = res.amount; optProfit = res.profit;
     }
 
-    // GL-L55: Fire regardless — contract reverts on-chain if unprofitable, gas=$0
+    // GL-L56: Gate on real profit — nonce collisions (AA25) cost us even with free gas
     if (optProfit <= 0n) {
-      console.log(`[Q2 ⚡] ${pA.pool.label}→${pB.pool.label} | spread=${spreadBps}bps | best back=${(Number(optAmt+optProfit)/1e6).toFixed(2)} USDC — FIRING ANYWAY (gas free)`);
-      // Use best size found, or 10K as safe minimum
-      optAmt  = optAmt > MIN_BORROW ? optAmt : 10_000_000_000n;
-      optProfit = 0n;
+      console.log(`[Q2 ❌] ${pA.pool.label}→${pB.pool.label} | spread=${spreadBps}bps | best back=${(Number(optAmt+optProfit)/1e6).toFixed(4)} USDC — NOT profitable, skipping`);
+      return [];
     }
 
     const cbps = Math.round(Number(optProfit) / Number(optAmt) * 10_000);
