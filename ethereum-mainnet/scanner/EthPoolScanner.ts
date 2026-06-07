@@ -3,7 +3,7 @@
  *
  * GL-L55 SIMPLIFIED: Watch only the 2 best pools.
  *   Pool A: UniswapV3 USDC/WETH 0.05%   — deepest liquidity, price reference
- *   Pool B: SushiSwap V3 USDC/WETH 0.05% — same pair/fee, diverges on large Sushi flows
+ *   Pool B: UniV3 USDC/WETH 0.30%         — deep liquidity, fee-tier spread fires on volatile blocks
  *
  * Why these two:
  *   - Same token pair (no decimal mismatch)
@@ -37,12 +37,12 @@ const POOL_A = {
 };
 
 const POOL_B = {
-  address:  '0x35644Fb61aFBc458bf92B15AdD6ABc1996Be5014' as Address, // SushiV3 USDC/WETH 0.05%
-  protocol: 'sushi-v3' as const,
+  address:  '0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8' as Address, // UniV3 USDC/WETH 0.30% — deep liquidity, fee-tier divergence
+  protocol: 'uniswap-v3' as const,
   token0:   ADDRESSES.tokens.USDC,
   token1:   ADDRESSES.tokens.WETH,
-  fee:      500,
-  label:    'SushiV3 USDC/WETH 0.05%',
+  fee:      3000,
+  label:    'UniV3 USDC/WETH 0.30%',
 };
 
 const POOLS = [POOL_A, POOL_B];
@@ -127,7 +127,9 @@ export class EthPoolScanner {
         const sqrtP = BigInt('0x' + s0.returnData.slice(2, 66));
         const liq   = BigInt('0x' + lq.returnData.slice(2, 66));
         if (sqrtP === 0n || liq === 0n) continue;
-        const price = Number((sqrtP * sqrtP) / (1n << 192n));
+        // GL-L56 patch#8: normalize USDC(6dec)/WETH(18dec) — raw value needs ×1e12
+        const rawPrice = Number((sqrtP * sqrtP) / (1n << 192n));
+        const price    = rawPrice * 1e12;
         if (price === 0) continue;
         prices.push({ pool: POOLS[i] as any, price, priceInv: 1/price, liquidity: liq, timestamp: Date.now() });
       }
@@ -211,6 +213,7 @@ export class EthPoolScanner {
     }
 
     // GL-L56: Gate on real profit — nonce collisions (AA25) cost us even with free gas
+    console.log(`[Q2 DBG] optAmt=${(Number(optAmt)/1e6).toFixed(2)}K USDC | profit=${(Number(optProfit)/1e6).toFixed(4)} USDC | back=${(Number(optAmt+optProfit)/1e6).toFixed(4)} USDC`);
     if (optProfit <= 0n) {
       console.log(`[Q2 ❌] ${pA.pool.label}→${pB.pool.label} | spread=${spreadBps}bps | best back=${(Number(optAmt+optProfit)/1e6).toFixed(4)} USDC — NOT profitable, skipping`);
       return [];
