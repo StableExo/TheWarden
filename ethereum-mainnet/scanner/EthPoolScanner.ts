@@ -166,8 +166,17 @@ export class EthPoolScanner {
   }
 
   // Main scan: Multicall3 prices → spread check → ternary search → opportunity
-  async findOpportunities(): Promise<ArbOpportunity[]> {
+  async findOpportunities(hint?: { weth5: bigint; weth30: bigint; poolDeltaBps: number }): Promise<ArbOpportunity[]> {
     const t0 = Date.now();
+    // GL-L56 patch#11: CEX-DEX watcher already ran Q2 — skip slot0, use real spread directly
+    if (hint && hint.poolDeltaBps >= MIN_SPREAD_BPS && hint.weth5 > 0n && hint.weth30 > 0n) {
+      const spreadBps = Math.round(hint.poolDeltaBps);
+      // weth5 >= weth30 = 0.05% gives MORE WETH per USDC = cheaper ETH = buy there
+      const buyPool  = hint.weth5 >= hint.weth30 ? POOL_A : POOL_B;
+      const sellPool = hint.weth5 >= hint.weth30 ? POOL_B : POOL_A;
+      console.log(`[SCAN] Q2 hint: ${spreadBps}bps (buy ${buyPool.label} → sell ${sellPool.label}) — skipping slot0`);
+      return this._runTernaryAndReturn(buyPool, sellPool, spreadBps);
+    }
     console.log('[SCAN] Starting pool scan...');
     const prices = await this.scanAll();
     console.log(`[SCAN] Got ${prices.length} pool prices in ${Date.now()-t0}ms`);
@@ -189,18 +198,17 @@ export class EthPoolScanner {
     // GL-L55: No spread gate — ternary search runs every cycle
     // FlashSwapV3 contract reverts on-chain if unprofitable — gas is $0 (ThirdWeb paymaster)
     console.log(`[Q2] Running ternary search on ${spreadBps}bps spread...`);
+    return this._runTernaryAndReturn(pB.pool as any, pA.pool as any, spreadBps); // buy pB(0.05%), sell pA(0.30%)
+  }
 
-    // Spread exceeds fee cost — run ternary search for optimal borrow
-    // Buy WETH at cheap pool (pA), sell WETH at expensive pool (pB)
+  private async _runTernaryAndReturn(buyPool: typeof POOL_A, sellPool: typeof POOL_B, spreadBps: number): Promise<ArbOpportunity[]> {
     const profitFn = async (amt: bigint): Promise<bigint> => {
       try {
-        // GL-L56 patch#9: CORRECT direction — buy at pB (0.05%, more WETH per USDC = cheaper ETH)
-        const wethOut = await this.q2Quote(pB.pool.token0, pB.pool.token1, amt, pB.pool.fee);
+        const wethOut = await this.q2Quote(buyPool.token0, buyPool.token1, amt, buyPool.fee);
         if (!wethOut || wethOut === 0n) return -amt;
-        // Sell at pA (0.30%, more USDC per WETH = expensive ETH side)
-        const usdcOut = await this.q2Quote(pA.pool.token1, pA.pool.token0, wethOut, pA.pool.fee);
+        const usdcOut = await this.q2Quote(sellPool.token1, sellPool.token0, wethOut, sellPool.fee);
         if (!usdcOut || usdcOut === 0n) return -amt;
-        return usdcOut - amt; // positive = profitable
+        return usdcOut - amt;
       } catch { return -amt; }
     };
 
@@ -215,17 +223,17 @@ export class EthPoolScanner {
     // GL-L56: Gate on real profit — nonce collisions (AA25) cost us even with free gas
     console.log(`[Q2 DBG] optAmt=${(Number(optAmt)/1e9).toFixed(2)}K USDC | profit=${(Number(optProfit)/1e6).toFixed(4)} USDC | back=${(Number(optAmt+optProfit)/1e6).toFixed(4)} USDC`);
     if (optProfit <= 0n) {
-      console.log(`[Q2 ❌] ${pB.pool.label}→${pA.pool.label} | spread=${spreadBps}bps | best back=${(Number(optAmt+optProfit)/1e6).toFixed(4)} USDC — NOT profitable, skipping`);
+      console.log(`[Q2 ❌] ${buyPool.label}→${sellPool.label} | spread=${spreadBps}bps | best back=${(Number(optAmt+optProfit)/1e6).toFixed(4)} USDC — NOT profitable, skipping`);
       return [];
     }
 
     const cbps = Math.round(Number(optProfit) / Number(optAmt) * 10_000);
-    console.log(`[Q2 ✅] ${pB.pool.label}→${pA.pool.label} | borrow=${(Number(optAmt)/1e9).toFixed(2)}K USDC | profit=${(Number(optProfit)/1e6).toFixed(4)} USDC | ${cbps}bps 🔥`);
+    console.log(`[Q2 ✅] ${buyPool.label}→${sellPool.label} | borrow=${(Number(optAmt)/1e9).toFixed(2)}K USDC | profit=${(Number(optProfit)/1e6).toFixed(4)} USDC | ${cbps}bps 🔥`);
 
     return [{
-      label:             `${pB.pool.label}→${pA.pool.label} Q2:${cbps}bps`,
-      buyPool:           pB.pool as any,
-      sellPool:          pA.pool as any,
+      label:             `${buyPool.label}→${sellPool.label} Q2:${cbps}bps`,
+      buyPool:           buyPool as any,
+      sellPool:          sellPool as any,
       buyPrice:          pA.price,
       sellPrice:         pB.price,
       spread,
