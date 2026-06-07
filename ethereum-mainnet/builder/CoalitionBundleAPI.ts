@@ -331,8 +331,8 @@ async function onBlock(blockNumber: bigint): Promise<void> {
     if (absBps >= CEX_DEX_FIRE_BPS || poolDelta >= ETH_MAINNET.monitor.poolFireBps) {
       cexDexFired++;
       log(`[CEX-DEX] 🚀 THRESHOLD HIT block=${blockNumber} | spread=${absBps.toFixed(1)}bps | pool-Δ=${poolDelta.toFixed(1)}bps`);
-      // Trigger a full arb cycle immediately (scanner will find the opportunity)
-      runArbCycle().catch(e => err('[CEX-DEX trigger] cycle failed:', e?.message));
+      // GL-L56 patch#11: pass Q2 hint so scanner skips slot0 and uses real spread
+      runArbCycle({ weth5, weth30, poolDeltaBps: poolDelta }).catch(e => err('[CEX-DEX trigger] cycle failed:', e?.message));
     }
   } catch (e: any) {
     err('[onBlock]', e?.message?.slice(0,60));
@@ -463,7 +463,7 @@ async function executeArb(opp: any, cycleId: number): Promise<void> {
 }
 
 // ── Arb Cycle (timer-based, full pool scan) ───────────────────────────────────
-async function runArbCycle() {
+async function runArbCycle(hint?: { weth5: bigint; weth30: bigint; poolDeltaBps: number }) {
   if (!EOA_PK) { warn('ETH_PRIVATE_KEY not set — arb loop disabled'); return; }
   if (!scanner) { warn('Scanner not loaded'); return; }
 
@@ -472,7 +472,7 @@ async function runArbCycle() {
 
   try {
     dbg(`[ARB #${cycleId}] Scanning pools...`);
-    const opps = await scanner.findOpportunities();
+    const opps = await scanner.findOpportunities(hint);
     if (!opps.length) { dbg(`[ARB #${cycleId}] No Q2-confirmed opportunities`); return; }
 
     await executeArb(opps[0], cycleId);
