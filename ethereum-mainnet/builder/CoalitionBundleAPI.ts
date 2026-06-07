@@ -330,7 +330,9 @@ async function executeArb(opp: any, cycleId: number): Promise<void> {
   lastOpp = `${opp.label} | ${opp.estimatedProfitBps}bps`;
   log(`[ARB #${cycleId}] ✅ OPPORTUNITY: ${opp.label} | ${opp.estimatedProfitBps}bps`);
 
-  const minFinal = BORROW_AMOUNT * 1001n / 1000n;
+  // GL-L55: Use dynamically found optimal borrow from ternary search in scanner
+  const actualBorrow = (opp as any).optimalBorrow ?? BORROW_AMOUNT;
+  const minFinal     = actualBorrow * 1001n / 1000n;
 
   // Build path — 2-hop or 3-hop triangular
   const path = (opp as any).hopCount === 3 && (opp as any).midPool
@@ -338,18 +340,18 @@ async function executeArb(opp: any, cycleId: number): Promise<void> {
         getAddress(opp.buyPool.address),              opp.buyPool.token0  as Address, opp.buyPool.token1  as Address, opp.buyPool.fee  ?? 500,  0,
         getAddress((opp as any).midPool.address),     (opp as any).midPool.token0 as Address, (opp as any).midPool.token1 as Address, (opp as any).midPool.fee ?? 3000, 0,
         getAddress(opp.sellPool.address),             opp.sellPool.token0 as Address, opp.sellPool.token1 as Address, opp.sellPool.fee ?? 3000, 0,
-        BORROW_AMOUNT, minFinal,
+        actualBorrow, minFinal,
       )
     : buildArbPath(
         getAddress(opp.buyPool.address),  opp.buyPool.token0 as Address,  opp.buyPool.token1 as Address,  opp.buyPool.fee  ?? 500,  0n, 0,
         getAddress(opp.sellPool.address), opp.sellPool.token0 as Address, opp.sellPool.token1 as Address, opp.sellPool.fee ?? 3000, 0n, 0,
-        BORROW_AMOUNT, minFinal,
+        actualBorrow, minFinal,
       );
 
   const arbCalldata = encodeFunctionData({
     abi: FLASH_ABI, functionName: 'executeArbitrage',
     args: [
-      ADDRESSES.tokens.USDC as Address, BORROW_AMOUNT,
+      ADDRESSES.tokens.USDC as Address, actualBorrow,
       path,
       0, '0x0000000000000000000000000000000000000000' as Address, // source=0 → Balancer (0% fee!)
     ],
