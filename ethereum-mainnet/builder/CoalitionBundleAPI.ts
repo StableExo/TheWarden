@@ -2,6 +2,7 @@
  * CoalitionBundleAPI — TheWarden AEV Pure Arbitrage Engine
  *
  * GL-L54: ALL crashes fixed — ]) bracket bug resolved. Process shields. as Address fix in EthPoolScanner.
+ * GL-L55: Triangular arb support — buildTriPath hooked in. Handles hopCount=3 from EthPoolScanner.
  * GL-L53: Integrated arb scanner loop — pure arbitrage, no block builder needed.
  *   - EthPoolScanner + QuoterV2 validation every 15s (one ETH slot)
  *   - ThirdWeb ERC-4337 execution — $0.00 gas
@@ -24,7 +25,7 @@ import {
 import { mainnet } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 // EthPoolScanner loaded dynamically inside app.listen (shields-first pattern)
-import { FLASH_ABI, buildArbPath }  from '../config/arb';
+import { FLASH_ABI, buildArbPath, buildTriPath } from '../config/arb';
 import { ADDRESSES } from '../config/addresses';
 import { ETH_MAINNET } from '../config/network';
 
@@ -128,15 +129,26 @@ async function runArbCycle() {
     lastOpp = `${opp.label} | ${opp.estimatedProfitBps}bps`;
     log(`[ARB #${cycleId}] ✅ OPPORTUNITY: ${opp.label} | ${opp.estimatedProfitBps}bps`);
 
+    // Build path — 2-hop or 3-hop triangular
+    const minFinal = BORROW_AMOUNT * 1001n / 1000n;
+    const path = (opp as any).hopCount === 3 && (opp as any).midPool
+      ? buildTriPath(
+          getAddress(opp.buyPool.address),              opp.buyPool.token0  as Address, opp.buyPool.token1  as Address, opp.buyPool.fee  ?? 500,  0,
+          getAddress((opp as any).midPool.address),     (opp as any).midPool.token0 as Address, (opp as any).midPool.token1 as Address, (opp as any).midPool.fee ?? 3000, 0,
+          getAddress(opp.sellPool.address),             opp.sellPool.token0 as Address, opp.sellPool.token1 as Address, opp.sellPool.fee ?? 3000, 0,
+          BORROW_AMOUNT, minFinal,
+        )
+      : buildArbPath(
+          getAddress(opp.buyPool.address),  opp.buyPool.token0 as Address,  opp.buyPool.token1 as Address,  opp.buyPool.fee  ?? 500,  0n, 0,
+          getAddress(opp.sellPool.address), opp.sellPool.token0 as Address, opp.sellPool.token1 as Address, opp.sellPool.fee ?? 3000, 0n, 0,
+          BORROW_AMOUNT, minFinal,
+        );
+
     const arbCalldata = encodeFunctionData({
       abi: FLASH_ABI, functionName: 'executeArbitrage',
       args: [
         ADDRESSES.tokens.USDC as Address, BORROW_AMOUNT,
-        buildArbPath(
-          getAddress(opp.buyPool.address),  opp.buyPool.token0 as Address,  opp.buyPool.token1 as Address,  opp.buyPool.fee  ?? 500,  0n, 0,
-          getAddress(opp.sellPool.address), opp.sellPool.token0 as Address, opp.sellPool.token1 as Address, opp.sellPool.fee ?? 3000, 0n, 0,
-          BORROW_AMOUNT, BORROW_AMOUNT * 1001n / 1000n,
-        ),
+        path,
         0, '0x0000000000000000000000000000000000000000' as Address,
       ],
     });
