@@ -1,6 +1,6 @@
 /**
  * ETH Mainnet Network Configuration
- * GL-L42 | TheWarden
+ * GL-L56 | TheWarden — bloXroute removed (persistent auth failures)
  */
 
 export const ETH_MAINNET = {
@@ -25,8 +25,7 @@ export const ETH_MAINNET = {
    *
    * Quasar:  ~16% ETH market share | refundPercent=90 | confirmed GL-L36
    * Titan:   sponsored bundles (fronts gas like Quasar) | confirmed GL-L42
-   * bloXroute: eth_sendBundle compatible | GL-L42
-   */
+     */
   builders: [
     {
       name:          'Quasar',
@@ -46,15 +45,6 @@ export const ETH_MAINNET = {
       sponsorsGas:   true,
       confirmed:     'GL-L42',
       note:          'Titan fronts gas from bundle profit — same model as Quasar',
-    },
-    {
-      name:          'bloXroute',
-      rpc:           'https://mev.api.blxrbdn.com',
-      coinbase:      '0x199D5ED7F45F4eE35960cF22EAde2076e95B253F',
-      refundPercent: 80,
-      method:        'eth_sendBundle',
-      sponsorsGas:   false,
-      confirmed:     'GL-L42',
     },
   ],
 
