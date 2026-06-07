@@ -8,8 +8,8 @@ export const ETH_MAINNET = {
   name: 'Ethereum Mainnet',
 
   rpc: {
-    http: 'https://dry-delicate-hill.ethereum-mainnet.quiknode.pro/bf439b3d22b12a2626fb538b3f942f4d3f86c169/',
-    wss:  'wss://dry-delicate-hill.ethereum-mainnet.quiknode.pro/bf439b3d22b12a2626fb538b3f942f4d3f86c169/',
+    http: 'https://purple-hidden-general.ethereum-mainnet.quiknode.pro/8d8e8ffb350c39346213f1e647de678338c31644/',
+    wss:  'wss://purple-hidden-general.ethereum-mainnet.quiknode.pro/8d8e8ffb350c39346213f1e647de678338c31644/',
   },
 
   blockTime: 12,
