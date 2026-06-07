@@ -62,9 +62,9 @@ export const SUSHIV3_POOLS: PoolConfig[] = [
 ];
 
 // ── Balancer pools ── GL-L53: BAL#500 pool removed (stale ID)
-export const BALANCER_POOLS: PoolConfig[] = [
-  { address: '0x32296969Ef14EB0c6d29669C550D4a0449130230', protocol: 'balancer', token0: ADDRESSES.tokens.WETH, token1: ADDRESSES.tokens.stETH, poolId: '0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080', label: 'wstETH/WETH Balancer' },
-];
+// GL-L55: Balancer wstETH/WETH removed — constantly 429ing on free QuickNode tier
+// Pool had stale/dead liquidity and was not contributing arb opportunities
+export const BALANCER_POOLS: PoolConfig[] = [];
 
 // ── Curve pools ── stETH pool removed GL-L45 (wrong scale)
 export const CURVE_POOLS: PoolConfig[] = [
