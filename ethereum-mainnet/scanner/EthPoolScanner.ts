@@ -189,7 +189,7 @@ export class EthPoolScanner {
   // Profit = back-borrow is concave → ternary search finds the peak in 18 iters.
   private async ternarySearchBorrow(
     fn: (amt: bigint) => Promise<bigint>,
-    lo: bigint = MIN_BORROW, hi: bigint = MAX_BORROW, iters = 18
+    lo: bigint = MIN_BORROW, hi: bigint = MAX_BORROW, iters = 8
   ): Promise<{ amount: bigint; profit: bigint }> {
     for (let i = 0; i < iters; i++) {
       const t = (hi - lo) / 3n; if (t === 0n) break;
