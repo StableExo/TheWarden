@@ -238,55 +238,65 @@ async function fanOutBundle(arbCalldata: Hex, targetBlock: bigint): Promise<void
   }
 }
 
-// ── eth_callBundle simulation pre-flight (GL-L55) ────────────────────────────
-// Simulates the bundle against Quasar before submitting ThirdWeb UserOp.
-// Returns true if profitable, false if it would revert.
+// ── Tenderly simulation pre-flight (GL-L55) ──────────────────────────────
+// Confirmed via bytecode: executeArbitrage selector 0x699c3de5 (5 params, 8-field SwapStep)
+// Reverts at ~147,617 gas = FSV3:IFR (insufficient final return = not profitable yet)
+// Tenderly gives full trace so we know exactly why every sim fails or succeeds.
+const TENDERLY_KEY     = 'K5LF4-PBJUwWLL-BmD3LEn3e-GvguZ3k';
+const TENDERLY_ACCOUNT = 'stableexo';
+const TENDERLY_PROJECT = 'thewarden2';
+const TENDERLY_SIM_URL = `https://api.tenderly.co/api/v1/account/${TENDERLY_ACCOUNT}/project/${TENDERLY_PROJECT}/simulate`;
+
 async function simulateBundle(arbCalldata: Hex): Promise<boolean> {
-  if (!EOA_PK) return true; // Skip sim if no key
   try {
-    const account  = privateKeyToAccount(EOA_PK);
-    const gasPrice = await client.getGasPrice();
-    const nonce    = await client.getTransactionCount({ address: account.address });
-    const targetBlock = (await client.getBlockNumber()) + 1n;
-
-    const signed = await account.signTransaction({
-      to: FLASH_SWAP, data: arbCalldata,
-      gasPrice: gasPrice + 100_000_000n,
-      gas: 500_000n, nonce, chainId: 1, type: 'legacy',
-    });
-
-    const res = await fetch(ETH_MAINNET.builders[0].rpc, {
+    const res = await fetch(TENDERLY_SIM_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Access-Key': TENDERLY_KEY },
       body: JSON.stringify({
-        jsonrpc:'2.0', id:1, method:'eth_callBundle',
-        params:[{ txs:[signed], blockNumber:`0x${targetBlock.toString(16)}`, stateBlockNumber:'latest' }],
+        network_id:      '1',
+        from:            SMART_ACCOUNT,
+        to:              FLASH_SWAP,
+        input:           arbCalldata,
+        gas:             700_000,
+        gas_price:       '0',
+        value:           '0',
+        save:            true,
+        save_if_fails:   true,
+        simulation_type: 'quick',
       }),
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(8000),
     });
+
+    if (!res.ok) {
+      lastSimResult = `tenderly HTTP ${res.status} — proceeding`;
+      warn('[SIM]', lastSimResult);
+      return true;  // Don't block on API errors
+    }
 
     const data = await res.json() as any;
-    if (data.error) {
-      lastSimResult = `sim rejected: ${data.error.message?.slice(0,60)}`;
-      warn('[SIM]', lastSimResult);
-      return false;
+    const sim  = data?.simulation ?? {};
+    const ok   = sim.status === true;
+    const gas  = sim.gas_used ?? 0;
+    const err  = sim.error_message ?? '';
+    const sid  = sim.id ?? '?';
+    const url  = `https://dashboard.tenderly.co/${TENDERLY_ACCOUNT}/${TENDERLY_PROJECT}/simulator/${sid}`;
+
+    if (ok) {
+      lastSimResult = `✅ Tenderly passed | gas=${gas.toLocaleString()} | ${url}`;
+      log('[SIM]', lastSimResult);
+      return true;
     }
 
-    const results = data.result?.results ?? [];
-    const reverted = results.find((r: any) => r.error || r.revert);
-    if (reverted) {
-      lastSimResult = `sim reverted: ${reverted.error ?? 'inner revert'}`;
-      warn('[SIM]', lastSimResult);
-      return false;
-    }
+    // FSV3:IFR = insufficient final return = not profitable (147K gas = full execution)
+    const notProfitable = gas >= 140_000;
+    lastSimResult = `❌ Tenderly ${notProfitable ? 'FSV3:IFR not profitable' : err.slice(0,60)} | gas=${gas} | ${url}`;
+    warn('[SIM]', lastSimResult);
+    return false;
 
-    lastSimResult = 'sim passed ✅';
-    log('[SIM] Bundle simulation passed — proceeding to submit');
-    return true;
   } catch (e: any) {
-    lastSimResult = `sim error: ${e?.message?.slice(0,60)}`;
-    warn('[SIM]', lastSimResult, '— proceeding anyway');
-    return true; // Network error: don't block on sim failure
+    lastSimResult = `sim error: ${e?.message?.slice(0,60)} — proceeding`;
+    warn('[SIM]', lastSimResult);
+    return true;  // Network error: don't block
   }
 }
 
