@@ -4,16 +4,16 @@
  * GL-L45: SushiV3 router address was 39 hex chars (invalid). Removed.
  *         UNIV3_ROUTER used for all dexTypes until correct SushiV3 router verified on-chain.
  * GL-L55: buildTriPath added — 3-hop triangular arbitrage path builder.
- * GL-L55: ABI confirmed via bytecode selector scan. Contract has 5 params, 8-field SwapStep.
- *         Includes router + useDeadline fields. sourceOverride + flashPool ARE real params.
- *         Reverts at 147,617 gas = FSV3:IFR profitability check, not wrong ABI.
+ * GL-L55: FLASH_ABI verified via Tenderly bytecode analysis:
+ *         Correct selector = 0x699c3de5
+ *         = executeArbitrage(address,uint256,((addr,addr,addr,uint24,uint256,uint8,addr,bool)[],uint256,uint256),uint8,address)
+ *         5 params: borrowToken, borrowAmount, path, sourceOverride, flashPool
+ *         8-field SwapStep: pool,tokenIn,tokenOut,fee,minOut,dexType,router,useDeadline
  */
 
 import { type Address } from 'viem';
 
-// ── FlashSwapV3 ABI (CONFIRMED VIA BYTECODE — selector 0x699c3de5) ─────────────
-// Function: executeArbitrage(address,uint256,path,uint8,address)
-// SwapStep: {pool,tokenIn,tokenOut,fee,minOut,dexType,router,useDeadline} — 8 fields
+// ── FlashSwapV3 ABI — verified selector 0x699c3de5 ────────────────────────────
 export const FLASH_ABI = [{
   name: 'executeArbitrage',
   type: 'function',
@@ -50,7 +50,7 @@ export const FLASH_ABI = [{
 // ── UniV3 Router (verified EIP-55 checksum) ────────────────────────────────────
 export const UNIV3_ROUTER = '0xE592427A0AEce92De3Edee1F18E0157C05861564' as Address;
 
-/** Always returns UniV3 router — safe for all dexTypes until SushiV3 router verified */
+/** Always returns UniV3 router */
 export function routerForDex(_dexType: 0 | 1): Address {
   return UNIV3_ROUTER;
 }
@@ -63,26 +63,12 @@ export function buildArbPath(
 ) {
   return {
     steps: [
-      {
-        pool:        step1Pool as Address,
-        tokenIn:     step1In   as Address,
-        tokenOut:    step1Out  as Address,
-        fee:         step1Fee,
-        minOut:      step1MinOut,
-        dexType:     step1DexType,
-        router:      routerForDex(step1DexType),
-        useDeadline: false,
-      },
-      {
-        pool:        step2Pool as Address,
-        tokenIn:     step2In   as Address,
-        tokenOut:    step2Out  as Address,
-        fee:         step2Fee,
-        minOut:      step2MinOut,
-        dexType:     step2DexType,
-        router:      routerForDex(step2DexType),
-        useDeadline: false,
-      },
+      { pool: step1Pool as Address, tokenIn: step1In as Address, tokenOut: step1Out as Address,
+        fee: step1Fee, minOut: step1MinOut, dexType: step1DexType,
+        router: routerForDex(step1DexType), useDeadline: false },
+      { pool: step2Pool as Address, tokenIn: step2In as Address, tokenOut: step2Out as Address,
+        fee: step2Fee, minOut: step2MinOut, dexType: step2DexType,
+        router: routerForDex(step2DexType), useDeadline: false },
     ],
     borrowAmount,
     minFinalAmount,
@@ -98,36 +84,15 @@ export function buildTriPath(
 ) {
   return {
     steps: [
-      {
-        pool:        step1Pool as Address,
-        tokenIn:     step1In   as Address,
-        tokenOut:    step1Out  as Address,
-        fee:         step1Fee,
-        minOut:      0n,
-        dexType:     step1DexType,
-        router:      routerForDex(step1DexType),
-        useDeadline: false,
-      },
-      {
-        pool:        step2Pool as Address,
-        tokenIn:     step2In   as Address,
-        tokenOut:    step2Out  as Address,
-        fee:         step2Fee,
-        minOut:      0n,
-        dexType:     step2DexType,
-        router:      routerForDex(step2DexType),
-        useDeadline: false,
-      },
-      {
-        pool:        step3Pool as Address,
-        tokenIn:     step3In   as Address,
-        tokenOut:    step3Out  as Address,
-        fee:         step3Fee,
-        minOut:      minFinalAmount,
-        dexType:     step3DexType,
-        router:      routerForDex(step3DexType),
-        useDeadline: false,
-      },
+      { pool: step1Pool as Address, tokenIn: step1In as Address, tokenOut: step1Out as Address,
+        fee: step1Fee, minOut: 0n, dexType: step1DexType,
+        router: routerForDex(step1DexType), useDeadline: false },
+      { pool: step2Pool as Address, tokenIn: step2In as Address, tokenOut: step2Out as Address,
+        fee: step2Fee, minOut: 0n, dexType: step2DexType,
+        router: routerForDex(step2DexType), useDeadline: false },
+      { pool: step3Pool as Address, tokenIn: step3In as Address, tokenOut: step3Out as Address,
+        fee: step3Fee, minOut: minFinalAmount, dexType: step3DexType,
+        router: routerForDex(step3DexType), useDeadline: false },
     ],
     borrowAmount,
     minFinalAmount,
