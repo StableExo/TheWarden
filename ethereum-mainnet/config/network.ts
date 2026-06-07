@@ -99,7 +99,7 @@ export const ETH_MAINNET = {
   // CEX-DEX monitor thresholds (GL-L42)
   monitor: {
     cexDexFireBps:   15,   // Trigger bundle when DEX diverges >15 bps from CEX
-    poolFireBps:     10,   // Trigger on inter-pool spread >10 bps (after-fee)
+    poolFireBps:     20,   // GL-L55: raised 10→20 to filter persistent 13-14bps fee-tier noise
     quoteAmountUsdc: 10_000_000_000,  // 10K USDC for low-slippage QuoterV2 price
     blockInterval:   1,    // Check every block via WSS newHeads
   },
