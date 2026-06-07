@@ -53,7 +53,7 @@ const QUOTER_ADDR = ADDRESSES.uniswapV3.quoterV2 as Address;
 const MIN_BORROW  = 1_000_000_000n;    //   1K USDC (6 decimals)
 const MAX_BORROW  = 500_000_000_000n;  // 500K USDC (6 decimals)
 const BORROW      = 100_000_000_000n;  // 100K USDC — fast-path / fallback
-const MIN_SPREAD_BPS = 10;             // Both pools are 0.05% — total fee = 10bps
+const MIN_SPREAD_BPS = 0;              // GL-L55: No gate — let it fire, gas is free
 
 // ── ABIs ──────────────────────────────────────────────────────────────────────
 const MULTICALL3_ABI = [{
@@ -184,10 +184,9 @@ export class EthPoolScanner {
 
     console.log(`[SCAN] ${pA.pool.label} vs ${pB.pool.label} | spread=${spreadBps}bps | min=${MIN_SPREAD_BPS}bps`);
 
-    if (spreadBps < MIN_SPREAD_BPS) {
-      console.log(`[Q2 ❌] spread ${spreadBps}bps < ${MIN_SPREAD_BPS}bps threshold — skipping Q2`);
-      return [];
-    }
+    // GL-L55: No spread gate — ternary search runs every cycle
+    // FlashSwapV3 contract reverts on-chain if unprofitable — gas is $0 (ThirdWeb paymaster)
+    console.log(`[Q2] Running ternary search on ${spreadBps}bps spread...`);
 
     // Spread exceeds fee cost — run ternary search for optimal borrow
     // Buy WETH at cheap pool (pA), sell WETH at expensive pool (pB)
@@ -211,9 +210,12 @@ export class EthPoolScanner {
       optAmt = res.amount; optProfit = res.profit;
     }
 
+    // GL-L55: Fire regardless — contract reverts on-chain if unprofitable, gas=$0
     if (optProfit <= 0n) {
-      console.log(`[Q2 ❌] ${pA.pool.label}→${pB.pool.label} | spread=${spreadBps}bps but no profitable size (best back=${(Number(optAmt+optProfit)/1e6).toFixed(2)} USDC)`);
-      return [];
+      console.log(`[Q2 ⚡] ${pA.pool.label}→${pB.pool.label} | spread=${spreadBps}bps | best back=${(Number(optAmt+optProfit)/1e6).toFixed(2)} USDC — FIRING ANYWAY (gas free)`);
+      // Use best size found, or 10K as safe minimum
+      optAmt  = optAmt > MIN_BORROW ? optAmt : 10_000_000_000n;
+      optProfit = 0n;
     }
 
     const cbps = Math.round(Number(optProfit) / Number(optAmt) * 10_000);
