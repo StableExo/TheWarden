@@ -53,7 +53,7 @@ const QUOTER_ADDR = ADDRESSES.uniswapV3.quoterV2 as Address;
 const MIN_BORROW  = 1_000_000_000n;    //   1K USDC (6 decimals)
 const MAX_BORROW  = 500_000_000_000n;  // 500K USDC (6 decimals)
 const BORROW      = 100_000_000_000n;  // 100K USDC — fast-path / fallback
-const MIN_SPREAD_BPS = 35;            // patch#9: break-even = 5+30bps fees              // GL-L56: Gate at 5bps — below fee cost (10bps), avoids noise
+const MIN_SPREAD_BPS = 10;            // patch#10: fire at 10bps to observe engine behavior              // GL-L56: Gate at 5bps — below fee cost (10bps), avoids noise
 
 // ── ABIs ──────────────────────────────────────────────────────────────────────
 const MULTICALL3_ABI = [{
