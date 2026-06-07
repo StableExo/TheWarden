@@ -1,44 +1,74 @@
 /**
- * EthPoolScanner — ETH Mainnet Pool Price Scanner
- * GL-L42 BATCH FIX | GL-L45 | TheWarden
+ * EthPoolScanner — Focused 2-Pool Arb Scanner
  *
- * GL-L45 FIX 2: getAddress() normalises all pool addresses before Multicall3 call.
- *   Fixes "Address 0x7bea..." viem checksum error → scanner stays in Multicall3 fast path.
+ * GL-L55 SIMPLIFIED: Watch only the 2 best pools.
+ *   Pool A: UniswapV3 USDC/WETH 0.05%   — deepest liquidity, price reference
+ *   Pool B: SushiSwap V3 USDC/WETH 0.05% — same pair/fee, diverges on large Sushi flows
  *
- * GL-L45 FIX 3: Cross-protocol phantom arb filter.
- *   stETH/ETH Curve pool removed — get_dy(0,1,1e6) is wrong scale for ETH (18dec).
- *   Curve 3pool kept — get_dy(0,1,1e6) valid for stablecoin scale.
- *   Also added max 500bps cross-protocol spread cap to filter any future noise.
+ * Why these two:
+ *   - Same token pair (no decimal mismatch)
+ *   - Same fee tier (total 2-hop cost = 10bps, not 35bps)
+ *   - Different DEXes — price diverges when a large swap hits one side
+ *   - 4 RPC calls per scan (slot0+liquidity×2 via Multicall3) instead of 70+
+ *   - No Balancer/Curve/multi-pair overhead — no more 429s
  *
- * GL-L55: findTriangularOpportunities() added.
- *   Generates all valid USDC→A→B→USDC and USDC→A→WETH→USDC 3-hop paths
- *   from ALL_POOLS. Same QuoterV2 Q2 pre-flight — only push if back > borrow.
- *   Logs every attempt: [TRI ❌] / [TRI ✅]
+ * Arb logic:
+ *   1. Multicall3: get both pool prices in one batch (4 calls)
+ *   2. If spread < 10bps: skip (fees would eat it)
+ *   3. If spread >= 10bps: ternary search (8 iters = 16 Q2 calls) for optimal borrow
+ *   4. Return opportunity with optimalBorrow if profitable
  *
- * Total pools: 35 (27 UniV3 + 8 SushiV3 + 2 Balancer + 1 Curve 3pool)
- * Multicall3 batch: 70 calls (35 slot0 + 35 liquidity) in one round-trip
+ * GL-L55 | TheWarden | @StableExo
  */
 
 import { createPublicClient, http, getAddress, type Address, parseAbi } from 'viem';
 import { mainnet } from 'viem/chains';
 import { ETH_MAINNET } from '../config/network';
 import { ADDRESSES } from '../config/addresses';
-import { ALL_POOLS, ARB_PAIRS, type PoolConfig } from '../config/pools';
 
+// ── The 2 pools ───────────────────────────────────────────────────────────────
+const POOL_A = {
+  address:  '0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640' as Address, // UniV3 USDC/WETH 0.05%
+  protocol: 'uniswap-v3' as const,
+  token0:   ADDRESSES.tokens.USDC,
+  token1:   ADDRESSES.tokens.WETH,
+  fee:      500,
+  label:    'UniV3 USDC/WETH 0.05%',
+};
+
+const POOL_B = {
+  address:  '0x35644Fb61aFBc458bf92B15AdD6ABc1996Be5014' as Address, // SushiV3 USDC/WETH 0.05%
+  protocol: 'sushi-v3' as const,
+  token0:   ADDRESSES.tokens.USDC,
+  token1:   ADDRESSES.tokens.WETH,
+  fee:      500,
+  label:    'SushiV3 USDC/WETH 0.05%',
+};
+
+const POOLS = [POOL_A, POOL_B];
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 const MULTICALL3  = '0xcA11bde05977b3631167028862bE2a173976CA11' as Address;
-const SLOT0_DATA  = '0x3850c7bd' as Address;
-const LIQ_DATA    = '0x1a686502' as Address;
-const QUOTER_ADDR = '0x61fFE014bA17989E743c5F6cB21bF9697530B21e' as Address;
-const MIN_BORROW = 1_000_000_000n;    //   1K USDC
-const MAX_BORROW = 500_000_000_000n;  // 500K USDC
-const BORROW     = 100_000_000_000n;  // 100K fast-path / fallback
+const QUOTER_ADDR = ADDRESSES.uniswapV3.quoterV2 as Address;
+const MIN_BORROW  = 1_000_000_000n;    //   1K USDC (6 decimals)
+const MAX_BORROW  = 500_000_000_000n;  // 500K USDC (6 decimals)
+const BORROW      = 100_000_000_000n;  // 100K USDC — fast-path / fallback
+const MIN_SPREAD_BPS = 10;             // Both pools are 0.05% — total fee = 10bps
 
-const BAL_ABI   = parseAbi(['function getPoolTokens(bytes32) view returns (address[],uint256[],uint256)']);
-const CURVE_ABI = parseAbi(['function get_dy(int128,int128,uint256) view returns (uint256)']);
-const UNIV3_ABI = parseAbi([
-  'function slot0() view returns (uint160,int24,uint16,uint16,uint16,uint8,bool)',
-  'function liquidity() view returns (uint128)',
-]);
+// ── ABIs ──────────────────────────────────────────────────────────────────────
+const MULTICALL3_ABI = [{
+  name: 'aggregate3', type: 'function', stateMutability: 'payable',
+  inputs: [{ name: 'calls', type: 'tuple[]', components: [
+    { name: 'target',       type: 'address' },
+    { name: 'allowFailure', type: 'bool'    },
+    { name: 'callData',     type: 'bytes'   },
+  ]}],
+  outputs: [{ name: 'returnData', type: 'tuple[]', components: [
+    { name: 'success',    type: 'bool'  },
+    { name: 'returnData', type: 'bytes' },
+  ]}],
+}] as const;
+
 const QUOTER_ABI = [{
   name: 'quoteExactInputSingle', type: 'function',
   inputs: [{ name: 'params', type: 'tuple', components: [
@@ -57,412 +87,150 @@ const QUOTER_ABI = [{
   stateMutability: 'nonpayable',
 }] as const;
 
-// ── Surface-rate pre-filter (GL-L55) ──────────────────────────────────────────
-// Fast no-RPC check. Uses cached slot0 sqrtPriceX96 prices from scanAll().
-// Avoids spending QuoterV2 RPC calls on clearly unprofitable paths.
-// formula: product of (1 / fee_i - adjusted rates) > 1 means a surface spread exists
-function surfaceRate2Hop(loPriceInv: number, hiPrice: number, loFee: number, hiFee: number): number {
-  // Net rate buying at lo pool then selling at hi pool (approx, fee-adjusted)
-  const buyRate  = loPriceInv * (1 - loFee / 1_000_000);
-  const sellRate = hiPrice    * (1 - hiFee / 1_000_000);
-  return buyRate * sellRate; // >1 means profitable before slippage
-}
-
-function surfaceRate3Hop(p1: number, p2: number, p3: number, f1: number, f2: number, f3: number): number {
-  // Product of rates through all 3 hops, fee-adjusted
-  // If >1, a ring profit exists at infinitesimal size
-  return p1 * (1 - f1/1_000_000) * p2 * (1 - f2/1_000_000) * p3 * (1 - f3/1_000_000);
-}
-
-const MULTICALL3_ABI = [{
-  name: 'aggregate3',
-  type: 'function',
-  stateMutability: 'payable',
-  inputs: [{ name: 'calls', type: 'tuple[]', components: [
-    { name: 'target',       type: 'address' },
-    { name: 'allowFailure', type: 'bool'    },
-    { name: 'callData',     type: 'bytes'   },
-  ]}],
-  outputs: [{ name: 'returnData', type: 'tuple[]', components: [
-    { name: 'success',    type: 'bool'  },
-    { name: 'returnData', type: 'bytes' },
-  ]}],
-}] as const;
-
+// ── Types ─────────────────────────────────────────────────────────────────────
 export interface PoolPrice {
-  pool: PoolConfig; price: number; priceInv: number;
-  liquidity: bigint; timestamp: number;
+  pool: typeof POOL_A; price: number; priceInv: number; liquidity: bigint; timestamp: number;
 }
 export interface ArbOpportunity {
-  label: string; buyPool: PoolConfig; sellPool: PoolConfig;
+  label: string; buyPool: typeof POOL_A; sellPool: typeof POOL_A;
   buyPrice: number; sellPrice: number; spread: number;
   profitable: boolean; estimatedProfitBps: number;
-  // tri-arb extras (undefined for 2-hop)
-  midPool?: PoolConfig;
-  hopCount?: 2 | 3;
+  optimalBorrow?: bigint; hopCount: 2;
+  midPool?: undefined;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-function eqAddr(a: string, b: string): boolean {
-  return a.toLowerCase() === b.toLowerCase();
-}
-
-function poolsForToken(prices: PoolPrice[], token: string): PoolPrice[] {
-  return prices.filter(p =>
-    eqAddr(p.pool.token0, token) || eqAddr(p.pool.token1, token)
-  );
-}
-
-function otherToken(pool: PoolConfig, known: string): string {
-  return eqAddr(pool.token0, known) ? pool.token1 : pool.token0;
-}
-
+// ── Scanner ───────────────────────────────────────────────────────────────────
 export class EthPoolScanner {
-  private client  = createPublicClient({ chain: mainnet, transport: http(ETH_MAINNET.rpc.http) });
-  private cache   = new Map<string, PoolPrice>();
-  private CACHE   = 12_000;
-  private MIN_BPS = 10;
-  // Max spread for CROSS-protocol comparisons — >500bps almost always means denomination mismatch
-  private MAX_CROSS_BPS = 500;
+  private client = createPublicClient({ chain: mainnet, transport: http(ETH_MAINNET.rpc.http) });
 
+  // Get both pool prices in one Multicall3 batch (4 calls: slot0+liquidity × 2 pools)
   async scanAll(): Promise<PoolPrice[]> {
-    const v3Pools    = ALL_POOLS.filter(p => p.protocol === 'uniswap-v3' || p.protocol === 'sushi-v3');
-    const otherPools = ALL_POOLS.filter(p => p.protocol !== 'uniswap-v3' && p.protocol !== 'sushi-v3');
+    const SLOT0 = '0x3850c7bd' as Address;
+    const LIQ   = '0x1a686502' as Address;
 
-    // FIX: getAddress() normalises EIP-55 checksum — prevents viem address errors in Multicall3
-    const calls = v3Pools.flatMap(p => [
-      { target: getAddress(p.address) as Address, allowFailure: true, callData: SLOT0_DATA },
-      { target: getAddress(p.address) as Address, allowFailure: true, callData: LIQ_DATA   },
+    const calls = POOLS.flatMap(p => [
+      { target: getAddress(p.address), allowFailure: true, callData: SLOT0 },
+      { target: getAddress(p.address), allowFailure: true, callData: LIQ   },
     ]);
 
-    let results: readonly { success: boolean; returnData: string }[] = [];
     try {
-      results = await this.client.readContract({
+      const results = await this.client.readContract({
         address: MULTICALL3, abi: MULTICALL3_ABI,
         functionName: 'aggregate3', args: [calls],
-      }) as any;
-    } catch (e) {
-      console.warn('[Scanner] Multicall3 failed, falling back:', (e as Error).message?.slice(0, 60));
-      return this._fallback(v3Pools, otherPools);
-    }
+      }) as readonly { success: boolean; returnData: string }[];
 
-    const out: PoolPrice[] = [];
-
-    for (let i = 0; i < v3Pools.length; i++) {
-      const s0 = results[i * 2];
-      const lq = results[i * 2 + 1];
-      if (!s0?.success || !lq?.success) continue;
-
-      const sqrtP = s0.returnData?.length >= 66 ? BigInt('0x' + s0.returnData.slice(2, 66)) : 0n;
-      const liq   = lq.returnData?.length >= 66  ? BigInt('0x' + lq.returnData.slice(2, 66)) : 0n;
-      if (sqrtP === 0n || liq === 0n) continue;
-
-      const price = Number((sqrtP * sqrtP) / (1n << 192n));
-      if (price === 0) continue;
-
-      const r: PoolPrice = { pool: v3Pools[i], price, priceInv: 1/price, liquidity: liq, timestamp: Date.now() };
-      this.cache.set(v3Pools[i].address, r);
-      out.push(r);
-    }
-
-    // Curve + Balancer: sequential (different ABIs per protocol)
-    await Promise.allSettled(otherPools.map(async p => {
-      const r = await this.getPrice(p);
-      if (r) out.push(r);
-    }));
-
-    return out;
-  }
-
-  // ── Q2 quote helper ──────────────────────────────────────────────────────────
-  private async q2Quote(tokenIn: string, tokenOut: string, amountIn: bigint, fee: number): Promise<bigint> {
-    const result = await this.client.readContract({
-      address: QUOTER_ADDR,
-      abi: QUOTER_ABI,
-      functionName: 'quoteExactInputSingle',
-      args: [{ tokenIn: tokenIn as Address, tokenOut: tokenOut as Address, amountIn, fee, sqrtPriceLimitX96: 0n }],
-    }) as readonly [bigint, bigint, number, bigint];
-    return result[0];
-  }
-
-  // ── Ternary search for optimal borrow (GL-L55) ──────────────────────────────
-  // Profit = back-borrow is concave → ternary search finds the peak in 18 iters.
-  private async ternarySearchBorrow(
-    fn: (amt: bigint) => Promise<bigint>,
-    lo: bigint = MIN_BORROW, hi: bigint = MAX_BORROW, iters = 8
-  ): Promise<{ amount: bigint; profit: bigint }> {
-    for (let i = 0; i < iters; i++) {
-      const t = (hi - lo) / 3n; if (t === 0n) break;
-      const [p1, p2] = await Promise.all([fn(lo+t), fn(hi-t)]);
-      if (p1 < p2) { lo = lo+t; } else { hi = hi-t; }
-    }
-    const opt = (lo + hi) / 2n; return { amount: opt, profit: await fn(opt) };
-  }
-
-  // ── 2-hop opportunities (original logic, untouched) ──────────────────────────
-  async find2HopOpportunities(prices: PoolPrice[]): Promise<ArbOpportunity[]> {
-    const opps: ArbOpportunity[] = [];
-
-    for (const pair of ARB_PAIRS) {
-      const pp = prices.filter(p =>
-        (eqAddr(p.pool.token0, pair.tokenA) && eqAddr(p.pool.token1, pair.tokenB)) ||
-        (eqAddr(p.pool.token0, pair.tokenB) && eqAddr(p.pool.token1, pair.tokenA)));
-
-      for (let a = 0; a < pp.length; a++) {
-        for (let b = a + 1; b < pp.length; b++) {
-          const [lo, hi] = pp[a].price < pp[b].price ? [pp[a], pp[b]] : [pp[b], pp[a]];
-          const spread   = (hi.price - lo.price) / lo.price;
-          const bps      = Math.round(spread * 10_000);
-          if (bps < this.MIN_BPS) continue;
-
-          // FIX: filter phantom cross-protocol arbs (denomination mismatch noise)
-          const crossProto = lo.pool.protocol !== hi.pool.protocol;
-          if (crossProto && bps > this.MAX_CROSS_BPS) continue;
-
-          // GL-L55: Dynamic borrow — ternary search, no hardcoded 100K
-          try {
-            const lf = lo.pool.fee ?? 500, hf = hi.pool.fee ?? 3000;
-            const sp = hi.price > 0 && lo.price > 0 ? (hi.price-lo.price)/lo.price : 0;
-            if (sp < (lf+hf)/1_000_000*0.5) continue; // surface pre-filter
-            const fn = async (amt: bigint) => {
-              try {
-                const o1 = await this.q2Quote(lo.pool.token0, lo.pool.token1, amt, lf);
-                if (!o1||o1===0n) return -amt;
-                const o2 = await this.q2Quote(hi.pool.token1, hi.pool.token0, o1, hf);
-                return o2 ? o2-amt : -amt;
-              } catch { return -amt; }
-            };
-            let oa=BORROW, op=await fn(BORROW);
-            if (op<=0n) { const r=await this.ternarySearchBorrow(fn); oa=r.amount; op=r.profit; }
-            if (op<=0n) { console.log(`[Q2 ❌] ${pair.label} no profitable size`); continue; }
-            const cbps=Math.round(Number(op)/Number(oa)*10_000);
-            console.log(`[Q2 ✅] ${pair.label} | borrow=${(Number(oa)/1e6).toFixed(0)} USDC | profit=${(Number(op)/1e6).toFixed(4)} USDC | ${cbps}bps`);
-            opps.push({ label:`${pair.label} [${lo.pool.protocol}→${hi.pool.protocol}] Q2:${cbps}bps`,
-              buyPool:lo.pool, sellPool:hi.pool, buyPrice:lo.price, sellPrice:hi.price, spread,
-              profitable:true, estimatedProfitBps:cbps, hopCount:2, optimalBorrow:oa });
-          } catch (e: any) { console.error('[Q2 ERR]', e?.message || e); continue; }
-        }
+      const prices: PoolPrice[] = [];
+      for (let i = 0; i < POOLS.length; i++) {
+        const s0 = results[i * 2];
+        const lq = results[i * 2 + 1];
+        if (!s0?.success || !lq?.success) continue;
+        const sqrtP = BigInt('0x' + s0.returnData.slice(2, 66));
+        const liq   = BigInt('0x' + lq.returnData.slice(2, 66));
+        if (sqrtP === 0n || liq === 0n) continue;
+        const price = Number((sqrtP * sqrtP) / (1n << 192n));
+        if (price === 0) continue;
+        prices.push({ pool: POOLS[i] as any, price, priceInv: 1/price, liquidity: liq, timestamp: Date.now() });
       }
+      return prices;
+    } catch (e: any) {
+      console.error('[SCANNER ERR] Multicall3:', e?.message?.slice(0, 60));
+      return [];
     }
-    return opps;
   }
 
-  // ── Triangular arb opportunities (GL-L55) ───────────────────────────────────
-  // Strategy: USDC → A (pool1) → B (pool2) → USDC (pool3)
-  // For every intermediate token A that has a USDC pool AND a WETH pool,
-  // and every intermediate token B reachable from A, try the full 3-hop chain.
-  // Focus tokens: WETH, WBTC, DAI, USDT (high-liquidity, low slippage)
-  async findTriangularOpportunities(prices: PoolPrice[]): Promise<ArbOpportunity[]> {
-    const opps: ArbOpportunity[] = [];
-    const USDC = ADDRESSES.tokens.USDC;
-    const WETH = ADDRESSES.tokens.WETH;
-
-    // Candidate mid tokens — must have at least one pool with USDC and one with WETH
-    // These are the tokens where profitable tri-arb rings are most likely to form
-    const midTokens = [
-      ADDRESSES.tokens.WETH,
-      ADDRESSES.tokens.WBTC,
-      ADDRESSES.tokens.DAI,
-      ADDRESSES.tokens.USDT,
-      ADDRESSES.tokens.LINK,
-      ADDRESSES.tokens.AAVE,
-      ADDRESSES.tokens.LDO,
-      ADDRESSES.tokens.cbETH,
-      ADDRESSES.tokens.UNI,
-      ADDRESSES.tokens.MKR,
-    ];
-
-    // Get all UniV3/SushiV3 pools from prices (can quote these)
-    const v3Prices = prices.filter(p => p.pool.protocol === 'uniswap-v3' || p.pool.protocol === 'sushi-v3');
-
-    // Build 3-hop rings: USDC → mid1 → mid2 → USDC
-    // Ring types:
-    //   Type 1: USDC→WETH (pool A) → X (pool B) → USDC (pool C)   [buy WETH, buy X with WETH, sell X for USDC]
-    //   Type 2: USDC→X (pool A) → WETH (pool B) → USDC (pool C)   [buy X, sell X for WETH, sell WETH for USDC]
-    for (const midToken of midTokens) {
-      if (eqAddr(midToken, USDC)) continue;
-
-      // Pools: USDC ↔ midToken
-      const leg1Pools = v3Prices.filter(p =>
-        (eqAddr(p.pool.token0, USDC) && eqAddr(p.pool.token1, midToken)) ||
-        (eqAddr(p.pool.token0, midToken) && eqAddr(p.pool.token1, USDC))
-      );
-      if (!leg1Pools.length) continue;
-
-      // If midToken is WETH, look for USDC→WETH→X→USDC rings
-      if (eqAddr(midToken, WETH)) {
-        for (const midToken2 of midTokens) {
-          if (eqAddr(midToken2, USDC) || eqAddr(midToken2, WETH)) continue;
-
-          // Leg 2: WETH → midToken2
-          const leg2Pools = v3Prices.filter(p =>
-            (eqAddr(p.pool.token0, WETH) && eqAddr(p.pool.token1, midToken2)) ||
-            (eqAddr(p.pool.token0, midToken2) && eqAddr(p.pool.token1, WETH))
-          );
-          if (!leg2Pools.length) continue;
-
-          // Leg 3: midToken2 → USDC
-          const leg3Pools = v3Prices.filter(p =>
-            (eqAddr(p.pool.token0, midToken2) && eqAddr(p.pool.token1, USDC)) ||
-            (eqAddr(p.pool.token0, USDC)      && eqAddr(p.pool.token1, midToken2))
-          );
-          if (!leg3Pools.length) continue;
-
-          // Try each combination of pools across all 3 legs
-          for (const p1 of leg1Pools) {
-            for (const p2 of leg2Pools) {
-              for (const p3 of leg3Pools) {
-                const label = `USDC→WETH→${p2.pool.label.split('/')[0]}→USDC [${p1.pool.protocol}+${p2.pool.protocol}+${p3.pool.protocol}]`;
-                try {
-                  // GL-L55: dynamic borrow ternary search USDC→WETH→X→USDC
-                  const _fn=async(amt:bigint)=>{
-                    try{
-                      const o1=await this.q2Quote(USDC,WETH,amt,p1.pool.fee??500);if(!o1||o1===0n)return -amt;
-                      const o2=await this.q2Quote(WETH,midToken2,o1,p2.pool.fee??3000);if(!o2||o2===0n)return -amt;
-                      const o3=await this.q2Quote(midToken2,USDC,o2,p3.pool.fee??3000);return o3?o3-amt:-amt;
-                    }catch{return -amt;}
-                  };
-                  let _oa=BORROW,_op=await _fn(BORROW);
-                  if(_op<=0n){const r=await this.ternarySearchBorrow(_fn);_oa=r.amount;_op=r.profit;}
-                  if(_op<=0n){console.log(`[TRI ❌] ${label} no profitable size`);continue;}
-                  const cbps=Math.round(Number(_op)/Number(_oa)*10_000);
-                  console.log(`[TRI ✅] ${label} | borrow=${(Number(_oa)/1e6).toFixed(0)} USDC | profit=${(Number(_op)/1e6).toFixed(4)} USDC | ${cbps}bps`);
-                  opps.push({label:`[TRI] ${label} Q2:${cbps}bps`,buyPool:p1.pool,midPool:p2.pool,sellPool:p3.pool,
-                    buyPrice:p1.price,sellPrice:p3.price,spread:Number(_op)/Number(_oa),
-                    profitable:true,estimatedProfitBps:cbps,hopCount:3,optimalBorrow:_oa});
-                } catch (e: any) { console.error('[TRI ERR]', e?.message?.slice(0,80) || e); continue; }
-              }
-            }
-          }
-        }
-      } else {
-        // Type 2: USDC → midToken (non-WETH) → WETH → USDC
-        // Leg 2: midToken → WETH
-        const leg2Pools = v3Prices.filter(p =>
-          (eqAddr(p.pool.token0, midToken) && eqAddr(p.pool.token1, WETH)) ||
-          (eqAddr(p.pool.token0, WETH)     && eqAddr(p.pool.token1, midToken))
-        );
-        if (!leg2Pools.length) continue;
-
-        // Leg 3: WETH → USDC
-        const leg3Pools = v3Prices.filter(p =>
-          (eqAddr(p.pool.token0, WETH) && eqAddr(p.pool.token1, USDC)) ||
-          (eqAddr(p.pool.token0, USDC) && eqAddr(p.pool.token1, WETH))
-        );
-        if (!leg3Pools.length) continue;
-
-        for (const p1 of leg1Pools) {
-          for (const p2 of leg2Pools) {
-            for (const p3 of leg3Pools) {
-              const midLabel = p1.pool.label.split('/')[0];
-              const label = `USDC→${midLabel}→WETH→USDC [${p1.pool.protocol}+${p2.pool.protocol}+${p3.pool.protocol}]`;
-              try {
-                const out1 = await this.q2Quote(USDC,      midToken,  BORROW, p1.pool.fee ?? 3000);
-                if (!out1 || out1 === 0n) { console.log(`[TRI ❌] ${label} leg1=0`); continue; }
-                const out2 = await this.q2Quote(midToken,  WETH,      out1,   p2.pool.fee ?? 3000);
-                if (!out2 || out2 === 0n) { console.log(`[TRI ❌] ${label} leg2=0`); continue; }
-                const out3 = await this.q2Quote(WETH,      USDC,      out2,   p3.pool.fee ?? 500);
-                if (!out3 || out3 === 0n) { console.log(`[TRI ❌] ${label} leg3=0`); continue; }
-
-                if (out3 <= BORROW) {
-                  console.log(`[TRI ❌] ${label} back=${(Number(out3)/1e6).toFixed(4)} < 100000`);
-                  continue;
-                }
-                const cbps = Math.round(Number(out3 - BORROW) / Number(BORROW) * 10_000);
-                console.log(`[TRI ✅] ${label} | out1=${(Number(out1)/1e8).toFixed(6)} | out2=${(Number(out2)/1e18).toFixed(6)} WETH | back=${(Number(out3)/1e6).toFixed(4)} USDC | profit=${cbps}bps`);
-                opps.push({
-                  label:   `[TRI] ${label} Q2:${cbps}bps`,
-                  buyPool: p1.pool, midPool: p2.pool, sellPool: p3.pool,
-                  buyPrice: p1.price, sellPrice: p3.price,
-                  spread: Number(out3 - BORROW) / Number(BORROW),
-                  profitable: true, estimatedProfitBps: cbps, hopCount: 3,
-                });
-              } catch (e: any) { console.error('[TRI ERR]', e?.message?.slice(0,80) || e); continue; }
-            }
-          }
-        }
-      }
-    }
-    return opps;
+  // QuoterV2 single-hop quote
+  private async q2Quote(tokenIn: string, tokenOut: string, amt: bigint, fee: number): Promise<bigint> {
+    try {
+      const result = await this.client.readContract({
+        address: QUOTER_ADDR, abi: QUOTER_ABI, functionName: 'quoteExactInputSingle',
+        args: [{ tokenIn: tokenIn as Address, tokenOut: tokenOut as Address, amountIn: amt, fee, sqrtPriceLimitX96: 0n }],
+      }) as readonly [bigint, bigint, number, bigint];
+      return result[0];
+    } catch { return 0n; }
   }
 
-  // ── findOpportunities — runs both 2-hop AND triangular ────────────────────────
+  // Ternary search: finds borrow size that maximises profit (concave profit curve)
+  // 8 iterations = (500K-1K)/3^8 ≈ $800 precision — fast, accurate, 16 Q2 calls max
+  private async ternarySearch(fn: (amt: bigint) => Promise<bigint>): Promise<{ amount: bigint; profit: bigint }> {
+    let lo = MIN_BORROW, hi = MAX_BORROW;
+    for (let i = 0; i < 8; i++) {
+      const t = (hi - lo) / 3n;
+      if (t === 0n) break;
+      const [p1, p2] = await Promise.all([fn(lo + t), fn(hi - t)]);
+      if (p1 < p2) { lo = lo + t; } else { hi = hi - t; }
+    }
+    const opt = (lo + hi) / 2n;
+    return { amount: opt, profit: await fn(opt) };
+  }
+
+  // Main scan: Multicall3 prices → spread check → ternary search → opportunity
   async findOpportunities(): Promise<ArbOpportunity[]> {
     const t0 = Date.now();
     console.log('[SCAN] Starting pool scan...');
     const prices = await this.scanAll();
     console.log(`[SCAN] Got ${prices.length} pool prices in ${Date.now()-t0}ms`);
 
-    // Run 2-hop and triangular in parallel
-    const [twoHop, triHop] = await Promise.all([
-      this.find2HopOpportunities(prices),
-      this.findTriangularOpportunities(prices),
-    ]);
-
-    const allOpps = [...twoHop, ...triHop];
-    if (twoHop.length === 0 && triHop.length === 0) {
-      console.log(`[SCAN] No Q2-confirmed opportunities (2-hop: 0, tri: 0)`);
-    } else {
-      console.log(`[SCAN] Found ${allOpps.length} opp(s): ${twoHop.length} 2-hop, ${triHop.length} triangular`);
+    if (prices.length < 2) {
+      console.log('[SCAN] Not enough pool prices — skipping');
+      return [];
     }
-    return allOpps.sort((a, b) => b.estimatedProfitBps - a.estimatedProfitBps);
-  }
 
-  async getPrice(p: PoolConfig): Promise<PoolPrice | null> {
-    const cached = this.cache.get(p.address);
-    if (cached && Date.now() - cached.timestamp < this.CACHE) return cached;
+    const [pA, pB] = prices[0].price < prices[1].price
+      ? [prices[0], prices[1]]
+      : [prices[1], prices[0]];
 
-    try {
-      if (p.protocol === 'uniswap-v3' || p.protocol === 'sushi-v3') {
-        const addr = getAddress(p.address) as Address;
-        const [slot0, liq] = await Promise.all([
-          this.client.readContract({ address: addr, abi: UNIV3_ABI, functionName: 'slot0' }),
-          this.client.readContract({ address: addr, abi: UNIV3_ABI, functionName: 'liquidity' }),
-        ]);
-        const sqrtP = (slot0 as bigint[])[0] as bigint;
-        if (sqrtP === 0n || (liq as bigint) === 0n) return null;
-        const price = Number((sqrtP * sqrtP) / (1n << 192n));
-        const r: PoolPrice = { pool: p, price, priceInv: 1/price, liquidity: liq as bigint, timestamp: Date.now() };
-        this.cache.set(p.address, r);
-        return r;
-      }
+    const spread    = (pB.price - pA.price) / pA.price;
+    const spreadBps = Math.round(spread * 10_000);
 
-      if (p.protocol === 'balancer') {
-        const VAULT = ADDRESSES.balancer.vault as Address;
-        const [, balances] = await this.client.readContract({
-          address: VAULT, abi: BAL_ABI,
-          functionName: 'getPoolTokens', args: [p.poolId as Address],
-        }) as [readonly Address[], readonly bigint[], bigint];
-        if (!balances[0] || balances[0] === 0n) return null;
-        const price = Number(balances[1]) / Number(balances[0]);
-        const r: PoolPrice = { pool: p, price, priceInv: 1/price, liquidity: balances[0], timestamp: Date.now() };
-        this.cache.set(p.address, r);
-        return r;
-      }
+    console.log(`[SCAN] ${pA.pool.label} vs ${pB.pool.label} | spread=${spreadBps}bps | min=${MIN_SPREAD_BPS}bps`);
 
-      if (p.protocol === 'curve') {
-        // Only 3pool (stablecoin scale: 1e6 = 1 USDC) — stETH pool removed (wrong scale)
-        const amtOut = await this.client.readContract({
-          address: getAddress(p.address) as Address, abi: CURVE_ABI,
-          functionName: 'get_dy', args: [0n, 1n, BigInt(1e6)],
-        }) as bigint;
-        if (amtOut === 0n) return null;
-        const price = Number(amtOut) / 1e6;
-        const r: PoolPrice = { pool: p, price, priceInv: 1/price, liquidity: amtOut, timestamp: Date.now() };
-        this.cache.set(p.address, r);
-        return r;
-      }
-    } catch (e: any) { console.error('[SCANNER ERR]', e?.message || e); return null; }
-    return null;
-  }
+    if (spreadBps < MIN_SPREAD_BPS) {
+      console.log(`[Q2 ❌] spread ${spreadBps}bps < ${MIN_SPREAD_BPS}bps threshold — skipping Q2`);
+      return [];
+    }
 
-  private async _fallback(v3: PoolConfig[], other: PoolConfig[]): Promise<PoolPrice[]> {
-    const out: PoolPrice[] = [];
-    await Promise.allSettled([
-      ...v3.map(async p => { const r = await this.getPrice(p); if (r) out.push(r); }),
-      ...other.map(async p => { const r = await this.getPrice(p); if (r) out.push(r); }),
-    ]);
-    return out;
+    // Spread exceeds fee cost — run ternary search for optimal borrow
+    // Buy WETH at cheap pool (pA), sell WETH at expensive pool (pB)
+    const profitFn = async (amt: bigint): Promise<bigint> => {
+      try {
+        // Step 1: USDC → WETH at lower-priced pool (buy cheap)
+        const wethOut = await this.q2Quote(pA.pool.token0, pA.pool.token1, amt, pA.pool.fee);
+        if (!wethOut || wethOut === 0n) return -amt;
+        // Step 2: WETH → USDC at higher-priced pool (sell expensive)
+        const usdcOut = await this.q2Quote(pB.pool.token1, pB.pool.token0, wethOut, pB.pool.fee);
+        if (!usdcOut || usdcOut === 0n) return -amt;
+        return usdcOut - amt; // positive = profitable
+      } catch { return -amt; }
+    };
+
+    // Fast-path: try 100K first
+    let optAmt = BORROW; let optProfit = await profitFn(BORROW);
+    if (optProfit <= 0n) {
+      console.log(`[Q2] 100K unprofitable (${(Number(optAmt+optProfit)/1e6).toFixed(2)}) — ternary searching 1K→500K...`);
+      const res = await this.ternarySearch(profitFn);
+      optAmt = res.amount; optProfit = res.profit;
+    }
+
+    if (optProfit <= 0n) {
+      console.log(`[Q2 ❌] ${pA.pool.label}→${pB.pool.label} | spread=${spreadBps}bps but no profitable size (best back=${(Number(optAmt+optProfit)/1e6).toFixed(2)} USDC)`);
+      return [];
+    }
+
+    const cbps = Math.round(Number(optProfit) / Number(optAmt) * 10_000);
+    console.log(`[Q2 ✅] ${pA.pool.label}→${pB.pool.label} | borrow=${(Number(optAmt)/1e6).toFixed(0)} USDC | profit=${(Number(optProfit)/1e6).toFixed(4)} USDC | ${cbps}bps 🔥`);
+
+    return [{
+      label:             `${pA.pool.label}→${pB.pool.label} Q2:${cbps}bps`,
+      buyPool:           pA.pool as any,
+      sellPool:          pB.pool as any,
+      buyPrice:          pA.price,
+      sellPrice:         pB.price,
+      spread,
+      profitable:        true,
+      estimatedProfitBps: cbps,
+      hopCount:          2,
+      optimalBorrow:     optAmt,
+    }];
   }
 
   async getCurrentBlock(): Promise<number> {
