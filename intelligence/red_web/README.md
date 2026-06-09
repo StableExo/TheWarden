@@ -1,108 +1,120 @@
 # 🕸️ RED WEB — Intelligence Repository
 
-> **TheWarden Active Case File**  
-> Updated: GL-L29 | 2026-05-26 | 25 known addresses
+> **TheWarden Active Case File**
+> Updated: **GL-L59 | 2026-06-09** | 27 known addresses | 18 confirmed victims
 
 ---
 
-## Network Map — GL-L24
-![Red Web Network Map GL-L24](diagrams/red_web_diagram_gl_l24.png)
-
-*GL-L24 | 11 KYC walls | 9 kill chains | $35+ proceeds identified*
+## ⚡ CURRENT STATUS (GL-L59)
+- **Primary scan target:** `0x70a3df699512f39C682F94fad498454C90B8C219` — $922 ETH, 42,347 txs, **NOT YET FULLY SCANNED**
+- **Forensic scanner:** `intelligence/red_web/warden_forensic_scan.py` — 7/8 APIs active (Bitquery quota exhausted)
+- **Keys needed before scan:** arkham, chainbase, moralis, nansen (see TheWardenKeys_13.pdf)
 
 ---
 
-## Kill Chain Summary
+## Kill Chain
+
 ```
-GENESIS  0xaf880fc7  (ETH 2015, $41 presale)
-    ↓
-APEX PIVOT  0xc333e80e  ← 🔑 Kraken KYC Wall #1 (800 ETH Jan 2021)
-    ↓
-5 FEEDERS → AGGREGATOR  0xcffad320  (ETH+USDT+PAXG+ONDO+EIGEN+LPT)
-    ↓
-CASH-OUT  0x6F1cDbBb  ← 🎯 PRIMARY TARGET GL-L29
-    ↓
-BSC → USDT → Solana  (final exit from EVM)
+GENESIS (0xaf880fc7) — ETH
+  ↓ [800 ETH from Kraken Jan 2021]
+APEX_PIVOT (0xc333e80e) — ETH
+  ↓
+AGGREGATOR (0xcffad320) — ETH [$151M vault = Crypto.com 5]
+  ↓
+EIP7702_DEST (0x70a3df69) — BASE [$922 ETH | 42,347 txs | setupForwarding]
+  ↓
+BSC BRIDGE → USDT → SOLANA CASHOUT
 ```
 
 ---
 
-## Scan Status
-| Status | Count |
-|---|---|
-| ✅ Full GL-L29 stack scanned | 0 |
-| ⏳ Pending scan | 25 |
-| 🔴 Priority | CASHOUT · AGGREGATOR · APEX_PIVOT |
+## 🔴 8 Exchanges Identified (GL-L22 — MAJOR DISCOVERY)
 
----
-
-## Address Index
-
-### OPERATOR (4)
-| | Label | Address | Chain | Sessions |
-|---|---|---|---|---|
-| 🔴 | [GENESIS](addresses/GENESIS_0xaf880fc7.md) | `0xaf880fc7...` | ETH | GL-L20 |
-| 🔴 | [APEX_PIVOT](addresses/APEX_PIVOT_0xc333e80e.md) | `0xc333e80e...` | ETH | GL-L19, GL-L23 |
-| 🔴 | [PHISHING_CONTROLLER](addresses/PHISHING_CONTROLLER_0x247596ce.md) | `0x247596ce...` | ETH | GL-L19 |
-| 🟠 | [CONTROLLER](addresses/CONTROLLER_0xdfd5293d.md) | `0xdfd5293d...` | ETH | GL-L24 |
-
-### AGGREGATOR (1)
-| | Label | Address | Chain | Sessions |
-|---|---|---|---|---|
-| 🟠 | [AGGREGATOR](addresses/AGGREGATOR_0xcffad320.md) | `0xcffad320...` | ETH | GL-L24 |
-
-### CASHOUT (1)
-| | Label | Address | Chain | Sessions |
-|---|---|---|---|---|
-| 🔴 | [CASHOUT](addresses/CASHOUT_0x6F1cDbBb.md) | `0x6F1cDbBb...` | BASE | GL-L12, GL-L29 |
-
-### INFRASTRUCTURE (1)
-| | Label | Address | Chain | Sessions |
-|---|---|---|---|---|
-| 🟡 | [GAS_FEEDER](addresses/GAS_FEEDER_0xaa50ce2b.md) | `0xaa50ce2b...` | BASE | GL-L12 |
-
-### VICTIM (18)
-| | Label | Address | Chain | Sessions |
-|---|---|---|---|---|
-| ⚪ | [VICTIM_09FD81](addresses/VICTIM_09FD81_0x09FD81f3.md) | `0x09FD81f3...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_0D21ac](addresses/VICTIM_0D21ac_0x0D21ac9C.md) | `0x0D21ac9C...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_3b51aD](addresses/VICTIM_3b51aD_0x3b51aD17.md) | `0x3b51aD17...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_5e5C00](addresses/VICTIM_5e5C00_0x5e5C0051.md) | `0x5e5C0051...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_757c9B](addresses/VICTIM_757c9B_0x757c9B82.md) | `0x757c9B82...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_7C1954](addresses/VICTIM_7C1954_0x7C1954eb.md) | `0x7C1954eb...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_8d138A](addresses/VICTIM_8d138A_0x8d138Abe.md) | `0x8d138Abe...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_A910DA](addresses/VICTIM_A910DA_0xA910DA4c.md) | `0xA910DA4c...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_A917D3](addresses/VICTIM_A917D3_0xA917D38E.md) | `0xA917D38E...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_A9e638](addresses/VICTIM_A9e638_0xA9e63807.md) | `0xA9e63807...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_CF5089](addresses/VICTIM_CF5089_0xCF5089cF.md) | `0xCF5089cF...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_E9A57b](addresses/VICTIM_E9A57b_0xE9A57b75.md) | `0xE9A57b75...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_FF3B39](addresses/VICTIM_FF3B39_0xFF3B3957.md) | `0xFF3B3957...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_a03297](addresses/VICTIM_a03297_0xa032977B.md) | `0xa032977B...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_9358D6](addresses/VICTIM_9358D6_0x9358D671.md) | `0x9358D671...` | BASE | GL-L12 |
-| ⚪ | [VICTIM_ETH_4b26d6](addresses/VICTIM_ETH_4b26d6_0x4b26d620.md) | `0x4b26d620...` | ETH | GL-L12 |
-| ⚪ | [VICTIM_ETH_48b06d](addresses/VICTIM_ETH_48b06d_0x48b06d50.md) | `0x48b06d50...` | ETH | GL-L12 |
-| ⚪ | [VICTIM_ETH_70cd43](addresses/VICTIM_ETH_70cd43_0x70cd43ff.md) | `0x70cd43ff...` | ETH | GL-L12 |
-
-
----
-
-## KYC Walls
-1. 🔑 **Kraken** — `0xc333e80e` received 800 ETH from Kraken Jan 13 2021
-2. 🔑 **Poloniex** — Jun 14 2017 withdrawal
-3. 🔑 **BitGo Inc SF** — Sep 1 2017
-4. + 8 additional chains identified GL-L23
-
----
-
-## Diagrams Archive
-| Version | File | Size |
+| Exchange | Role | Key Address |
 |---|---|---|
-| GL-L24 (latest) | [red_web_diagram_gl_l24.png](diagrams/red_web_diagram_gl_l24.png) | 1.1MB |
-| GL-L23 | [red_web_diagram_gl_l23.png](diagrams/red_web_diagram_gl_l23.png) | 739KB |
-| GL-L21 | [red_web_diagram_gl_l21.png](diagrams/red_web_diagram_gl_l21.png) | 833KB |
-| GL-L20 | [red_web_diagram_gl_l20.png](diagrams/red_web_diagram_gl_l20.png) | 648KB |
-| GL-L18 | [red_web_diagram_gl_l18.png](diagrams/red_web_diagram_gl_l18.png) | 1.1MB |
-| GL-L16 | [red_web_diagram_gl_l16.png](diagrams/red_web_diagram_gl_l16.png) | 487KB |
+| **Crypto.com** | VAULT + Controller + Aggregator + 3 feeders | `0xcffad320` = Crypto.com 5 VAULT |
+| **Binance** | Root seeder (HW7, HW14, 4, 15-20) | Multiple nodes |
+| **Gate.io** | Mega mixer (9.7M txs, $7.5M live) | `0x0d070796` |
+| **Kraken** | Largest single feeder: ~664K ETH ($1.41B) | `0x267be1c1` |
+| **OKX** | Multiple feeder nodes | Various |
+| **Coinbase** | x402 relay protocol node | Relay chain |
+| **Bybit** | Supporting feeder | Various |
+| **Huobi** | Historical feeder | Various |
+
+> **Kraken DOJ angle:** Subpoena to Kraken for block 10,884,459 withdrawal event
+> would reveal operator identity. 517,692 ETH traced from Kraken to master feeder alone.
 
 ---
-*Maintained by TheWarden | Files auto-populate after each forensic scan*
+
+## Address Files (27 nodes)
+
+### Infrastructure
+- `GENESIS_0xaf880fc7.md` — Origin/seeder node
+- `APEX_PIVOT_0xc333e80e.md` — Pivot point (800 ETH Kraken withdrawal)
+- `AGGREGATOR_0xcffad320.md` — ETH vault ($151M | Crypto.com 5)
+- `EIP7702_DEST_0x70a3df69.md` — **PRIMARY TARGET** ($922 ETH Base, 42,347 txs) ⬅️
+- `CASHOUT_0x6F1cDbBb.md` — Multi-chain cashout (Base primary)
+- `CONTROLLER_0xdfd5293d.md` — Infrastructure controller
+- `GAS_FEEDER_0xaa50ce2b.md` — Gas operations
+- `PHISHING_CONTROLLER_0x247596ce.md` — Phishing deployment
+- `MIXER_GATEIO_0x0d0707.md` — **Gate.io mega mixer** (9.7M txs) ⬅️ NEW
+
+### Confirmed Victims (Base chain — 15)
+`VICTIM_09FD81` `VICTIM_0D21ac` `VICTIM_3b51aD` `VICTIM_5e5C00` `VICTIM_757c9B`
+`VICTIM_7C1954` `VICTIM_8d138A` `VICTIM_9358D6` `VICTIM_A910DA` `VICTIM_A917D3`
+`VICTIM_A9e638` `VICTIM_CF5089` `VICTIM_E9A57b` `VICTIM_FF3B39` `VICTIM_a03297`
+
+### Confirmed Victims (ETH chain — 3)
+`VICTIM_ETH_48b06d` `VICTIM_ETH_4b26d6` `VICTIM_ETH_70cd43`
+
+---
+
+## Intelligence Files
+
+| File | Contents | Session |
+|---|---|---|
+| `intel_update_gl_l22_exchange_map.md` | 8 exchanges, Kraken $1.41B, Gate.io mixer | GL-L22 |
+| `intel_update_gl_l30_drainer_hierarchy.md` | 8-level hierarchy, L2 operator active | GL-L30 |
+| `intel_update_gl_l12.md` *(in gumloop/2026-05-20/)* | Relay Protocol breakthrough | GL-L12 |
+| `intel_update_gl_l16.md` *(in gumloop/2026-05-21/)* | Vanity nodes, new nodes | GL-L16 |
+| `RED_WEB_Federal_Source.md` | Full federal agency briefing document | GL-L22 |
+| `intel_report.md` *(in gumloop/2026-05-20/)* | Full attack documentation | GL-L12 |
+
+---
+
+## Diagrams
+
+`red_web_diagram_gl_l24.png` — Most current network map
+
+---
+
+## Forensic Scanner Quick Start
+
+```python
+import requests
+PAT = "<from TheWardenKeys_13.pdf>"
+exec(requests.get(
+    "https://raw.githubusercontent.com/StableExo/TheWarden/main/intelligence/red_web/warden_forensic_scan.py",
+    headers={"Authorization": f"Bearer {PAT}"}
+).text, globals())
+
+KEYS = {
+    "arkham": "<TheWardenKeys>",
+    "chainbase": "<TheWardenKeys>",
+    "moralis": "<TheWardenKeys>",
+    "nansen": "<TheWardenKeys>",
+    "etherscan": "ES16B14B19XWKXJBIHUAJRXJHECXHM6WEK",
+    "bitquery_client_id": "QUOTA_EXHAUSTED",
+    "bitquery_client_secret": "QUOTA_EXHAUSTED",
+    "goplus": None,  # free
+    "tenderly": "K5LF4-PBJUwWLL-BmD3LEn3e-GvguZ3k",
+}
+
+report = scan("0x70a3df699512f39C682F94fad498454C90B8C219",
+              chains=[1, 8453, 56, 137, 42161], keys=KEYS)
+print_report(report)
+```
+
+---
+
+*TheWarden Intelligence Division | Taylor Marlow (@StableExo) | GL-L59 | June 2026*
