@@ -1,11 +1,11 @@
 # 🕸️ RED WEB — Intelligence Repository
 
 > **TheWarden Active Case File**
-> Updated: **GL-L59 | 2026-06-09** | 27 known addresses | 18 confirmed victims
+> Updated: **GL-L60 | 2026-06-09** | 27 known addresses | 18 confirmed victims
 
 ---
 
-## ⚡ CURRENT STATUS (GL-L59)
+## ⚡ CURRENT STATUS (GL-L60)
 - **Primary scan target:** `0x70a3df699512f39C682F94fad498454C90B8C219` — $922 ETH, 42,347 txs, **NOT YET FULLY SCANNED**
 - **Forensic scanner:** `intelligence/red_web/warden_forensic_scan.py` — 7/8 APIs active (Bitquery quota exhausted)
 - **Keys needed before scan:** arkham, chainbase, moralis, nansen (see TheWardenKeys_13.pdf)
@@ -117,4 +117,4 @@ print_report(report)
 
 ---
 
-*TheWarden Intelligence Division | Taylor Marlow (@StableExo) | GL-L59 | June 2026*
+*TheWarden Intelligence Division | Taylor Marlow (@StableExo) | GL-L60 | June 2026*
