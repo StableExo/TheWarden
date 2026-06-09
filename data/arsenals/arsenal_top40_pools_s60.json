@@ -1,0 +1,434 @@
+{
+  "version": "1.0",
+  "created": "2026-04-21T20:35:00Z",
+  "session": "S60",
+  "description": "TheWarden Top 40 Pool Arsenal \u2014 curated from live DexScreener data",
+  "chain": "base",
+  "chain_id": 8453,
+  "total_pools": 40,
+  "unique_pairs": 12,
+  "dexes": [
+    "aerodrome",
+    "uniswap",
+    "pancakeswap",
+    "hydrex",
+    "quickswap",
+    "alien-base"
+  ],
+  "borrow_tiers": {
+    "high": {
+      "min_tvl": 10000000,
+      "borrow_usd": 5000
+    },
+    "mid": {
+      "min_tvl": 1000000,
+      "borrow_usd": 2000
+    },
+    "low": {
+      "min_tvl": 0,
+      "borrow_usd": 500
+    }
+  },
+  "pools": [
+    {
+      "id": 1,
+      "tier": 1,
+      "pair": "cbBTC/WETH",
+      "dex": "aerodrome",
+      "tvl_usd": 23042478,
+      "volume_24h": 144211720,
+      "borrow_usd": 5000,
+      "address": "0x70aCDF2Ad0bf2402C957154f944c19Ef4e1cbAE1"
+    },
+    {
+      "id": 2,
+      "tier": 1,
+      "pair": "cbBTC/USDC",
+      "dex": "aerodrome",
+      "tvl_usd": 13361824,
+      "volume_24h": 174988749,
+      "borrow_usd": 5000,
+      "address": "0x4e962BB3889Bf030368F56810A9c96B83CB3E778"
+    },
+    {
+      "id": 3,
+      "tier": 1,
+      "pair": "cbBTC/USDC",
+      "dex": "uniswap",
+      "tvl_usd": 10223242,
+      "volume_24h": 19093745,
+      "borrow_usd": 5000,
+      "address": "0xfBB6Eed8e7aa03B138B5080Df8Bf3c4AEf1a4910"
+    },
+    {
+      "id": 4,
+      "tier": 1,
+      "pair": "cbBTC/WETH",
+      "dex": "pancakeswap",
+      "tvl_usd": 7141519,
+      "volume_24h": 42143663,
+      "borrow_usd": 5000,
+      "address": "0xC211e1f853A898Bd1302385CCdE55f33a8C4B3f3"
+    },
+    {
+      "id": 5,
+      "tier": 1,
+      "pair": "cbBTC/USDC",
+      "dex": "aerodrome",
+      "tvl_usd": 4203811,
+      "volume_24h": 6719526,
+      "borrow_usd": 2000,
+      "address": "0x3e66e55e97ce60096f8F3fB21FeB5b57a4E75B48"
+    },
+    {
+      "id": 6,
+      "tier": 1,
+      "pair": "cbBTC/WETH",
+      "dex": "uniswap",
+      "tvl_usd": 3852933,
+      "volume_24h": 4086074,
+      "borrow_usd": 2000,
+      "address": "0x7AeA2E8A3843516afa0FC5751293D466FCe3c028"
+    },
+    {
+      "id": 7,
+      "tier": 1,
+      "pair": "cbBTC/USDC",
+      "dex": "pancakeswap",
+      "tvl_usd": 2674534,
+      "volume_24h": 19820989,
+      "borrow_usd": 2000,
+      "address": "0xb94b22332ABf5f89877A14Cc88f2aBC48c34B3Df"
+    },
+    {
+      "id": 8,
+      "tier": 1,
+      "pair": "cbBTC/USDC",
+      "dex": "uniswap",
+      "tvl_usd": 2604599,
+      "volume_24h": 3872309,
+      "borrow_usd": 2000,
+      "address": "0x12d76c5c8ec8edffd3eA3BB97f0C6BA1f7F40279"
+    },
+    {
+      "id": 9,
+      "tier": 1,
+      "pair": "cbETH/WETH",
+      "dex": "aerodrome",
+      "tvl_usd": 2339246,
+      "volume_24h": 2521250,
+      "borrow_usd": 2000,
+      "address": "0x47cA96Ea59C13F72745928887f84C9F52C3D7348"
+    },
+    {
+      "id": 10,
+      "tier": 1,
+      "pair": "wstETH/WETH",
+      "dex": "aerodrome",
+      "tvl_usd": 1997486,
+      "volume_24h": 5080994,
+      "borrow_usd": 2000,
+      "address": "0x861A2922bE165a5Bd41b1E482B49216b465e1B5F"
+    },
+    {
+      "id": 11,
+      "tier": 1,
+      "pair": "cbBTC/WETH",
+      "dex": "hydrex",
+      "tvl_usd": 1880201,
+      "volume_24h": 976265,
+      "borrow_usd": 2000,
+      "address": "0x3f9b863EF4B295d6Ba41fC85C1E19F3D3851aBd6"
+    },
+    {
+      "id": 12,
+      "tier": 1,
+      "pair": "cbBTC/USDC",
+      "dex": "hydrex",
+      "tvl_usd": 831821,
+      "volume_24h": 649194,
+      "borrow_usd": 500,
+      "address": "0x0BA69825c4C033e72361E6B39f7468a0DE4a6f9c"
+    },
+    {
+      "id": 13,
+      "tier": 1,
+      "pair": "cbBTC/WETH",
+      "dex": "aerodrome",
+      "tvl_usd": 673036,
+      "volume_24h": 5990179,
+      "borrow_usd": 500,
+      "address": "0x22AEe3699b6A0fEd717ECB39F8368149cCB6378C"
+    },
+    {
+      "id": 14,
+      "tier": 1,
+      "pair": "cbBTC/WETH",
+      "dex": "aerodrome",
+      "tvl_usd": 446317,
+      "volume_24h": 5867220,
+      "borrow_usd": 500,
+      "address": "0x7C7420DD105E277931dB09FB5Db52AeC37e14C98"
+    },
+    {
+      "id": 15,
+      "tier": 1,
+      "pair": "cbETH/WETH",
+      "dex": "pancakeswap",
+      "tvl_usd": 292507,
+      "volume_24h": 489442,
+      "borrow_usd": 500,
+      "address": "0x257FCbAE4Ac6B26A02b10Fe5b8739C64Ec31f784"
+    },
+    {
+      "id": 16,
+      "tier": 1,
+      "pair": "cbBTC/WETH",
+      "dex": "quickswap",
+      "tvl_usd": 248235,
+      "volume_24h": 446220,
+      "borrow_usd": 500,
+      "address": "0xd800B7e8C0949dFFBD3b10a67e1a4E5a2E076c1a"
+    },
+    {
+      "id": 17,
+      "tier": 2,
+      "pair": "AERO/USDC",
+      "dex": "aerodrome",
+      "tvl_usd": 24381685,
+      "volume_24h": 1571189,
+      "borrow_usd": 5000,
+      "address": "0x6cDcb1C4A4D1C3C6d054b27AC5B77e89B8AcBF68"
+    },
+    {
+      "id": 18,
+      "tier": 2,
+      "pair": "VIRTUAL/WETH",
+      "dex": "aerodrome",
+      "tvl_usd": 5412743,
+      "volume_24h": 144366,
+      "borrow_usd": 5000,
+      "address": "0x21594b992F68495dD28d605834b58889d0a727c7"
+    },
+    {
+      "id": 19,
+      "tier": 2,
+      "pair": "AERO/WETH",
+      "dex": "aerodrome",
+      "tvl_usd": 2386271,
+      "volume_24h": 3262334,
+      "borrow_usd": 2000,
+      "address": "0x82321f3BEB69f50338e9Ee585B0EaB6D42C6De4f"
+    },
+    {
+      "id": 20,
+      "tier": 2,
+      "pair": "AERO/USDC",
+      "dex": "aerodrome",
+      "tvl_usd": 1287602,
+      "volume_24h": 70679,
+      "borrow_usd": 2000,
+      "address": "0xBE00fF35AF70E8415Df73cc1b55E2B2b4fF35B02"
+    },
+    {
+      "id": 21,
+      "tier": 2,
+      "pair": "USDT/USDC",
+      "dex": "aerodrome",
+      "tvl_usd": 969263,
+      "volume_24h": 4614034,
+      "borrow_usd": 500,
+      "address": "0xa41Bc0AFfbA7Fd420d186b84899d7ab2aC57fcD1"
+    },
+    {
+      "id": 22,
+      "tier": 2,
+      "pair": "VIRTUAL/WETH",
+      "dex": "aerodrome",
+      "tvl_usd": 672102,
+      "volume_24h": 5450610,
+      "borrow_usd": 500,
+      "address": "0x3f0296BF652e19bca772EC3dF08b32732F93014A"
+    },
+    {
+      "id": 23,
+      "tier": 2,
+      "pair": "AERO/cbBTC",
+      "dex": "aerodrome",
+      "tvl_usd": 631335,
+      "volume_24h": 390403,
+      "borrow_usd": 500,
+      "address": "0xdFe5F275020def30996F8ADEE4e70dB87EFf3099"
+    },
+    {
+      "id": 24,
+      "tier": 2,
+      "pair": "VIRTUAL/WETH",
+      "dex": "uniswap",
+      "tvl_usd": 535712,
+      "volume_24h": 109258,
+      "borrow_usd": 500,
+      "address": "0xE31c372a7Af875b3B5E0F3713B17ef51556da667"
+    },
+    {
+      "id": 25,
+      "tier": 2,
+      "pair": "VIRTUAL/WETH",
+      "dex": "uniswap",
+      "tvl_usd": 523046,
+      "volume_24h": 798791,
+      "borrow_usd": 500,
+      "address": "0x9c087Eb773291e50CF6c6a90ef0F4500e349B903"
+    },
+    {
+      "id": 26,
+      "tier": 2,
+      "pair": "AERO/USDC",
+      "dex": "aerodrome",
+      "tvl_usd": 435221,
+      "volume_24h": 351798,
+      "borrow_usd": 500,
+      "address": "0xa4FDd479eda160671606716DB2b2a84E7E6ade08"
+    },
+    {
+      "id": 27,
+      "tier": 2,
+      "pair": "AERO/WETH",
+      "dex": "pancakeswap",
+      "tvl_usd": 214899,
+      "volume_24h": 372446,
+      "borrow_usd": 500,
+      "address": "0x20CB8f872ae894F7c922eF8C0e7a33e849b05082"
+    },
+    {
+      "id": 28,
+      "tier": 2,
+      "pair": "AERO/USDC",
+      "dex": "uniswap",
+      "tvl_usd": 150746,
+      "volume_24h": 154197,
+      "borrow_usd": 500,
+      "address": "0xE5B5f522E98B5a2baA5e94cAdf667Dac72c3cE42"
+    },
+    {
+      "id": 29,
+      "tier": 3,
+      "pair": "USDC/USDbC",
+      "dex": "uniswap",
+      "tvl_usd": 907360,
+      "volume_24h": 11977,
+      "borrow_usd": 500,
+      "address": "0xa0ab20a64f46b5676fAe8e0f388EFb2e19E3c7C2"
+    },
+    {
+      "id": 30,
+      "tier": 3,
+      "pair": "cbETH/WETH",
+      "dex": "quickswap",
+      "tvl_usd": 279156,
+      "volume_24h": 312141,
+      "borrow_usd": 500,
+      "address": "0x74A4bF2cad1b172cDc3F1cC5B3F8d1461E05D80A"
+    },
+    {
+      "id": 31,
+      "tier": 3,
+      "pair": "USDC/USDbC",
+      "dex": "alien-base",
+      "tvl_usd": 269077,
+      "volume_24h": 2863,
+      "borrow_usd": 500,
+      "address": "0x0E635F8EeED4F7279d43D6136FfA06eA9DF9d4f8"
+    },
+    {
+      "id": 32,
+      "tier": 3,
+      "pair": "USDC/USDbC",
+      "dex": "aerodrome",
+      "tvl_usd": 264573,
+      "volume_24h": 27379,
+      "borrow_usd": 500,
+      "address": "0x98c7A2338336d2d354A0F12117b08E6Aab7Da7aC"
+    },
+    {
+      "id": 33,
+      "tier": 3,
+      "pair": "WETH/USDbC",
+      "dex": "aerodrome",
+      "tvl_usd": 252841,
+      "volume_24h": 8475,
+      "borrow_usd": 500,
+      "address": "0xB4885Bc63399BF55180af57F2a2A27d4217eF42a"
+    },
+    {
+      "id": 34,
+      "tier": 3,
+      "pair": "AERO/USDbC",
+      "dex": "aerodrome",
+      "tvl_usd": 230646,
+      "volume_24h": 3377,
+      "borrow_usd": 500,
+      "address": "0x2223F9FE624F69Da4D0eDf36d3bB5eA5d36F4C62"
+    },
+    {
+      "id": 35,
+      "tier": 3,
+      "pair": "USDT/WETH",
+      "dex": "aerodrome",
+      "tvl_usd": 214292,
+      "volume_24h": 1031678,
+      "borrow_usd": 500,
+      "address": "0x9785eF59E2b499fB741674ecf6fAF912Df7b3C1b"
+    },
+    {
+      "id": 36,
+      "tier": 3,
+      "pair": "USDT/USDC",
+      "dex": "uniswap",
+      "tvl_usd": 190167,
+      "volume_24h": 64856,
+      "borrow_usd": 500,
+      "address": "0xD56da2B74bA826f19015E6B7Dd9Dae1903E85DA1"
+    },
+    {
+      "id": 37,
+      "tier": 3,
+      "pair": "USDT/USDC",
+      "dex": "quickswap",
+      "tvl_usd": 174779,
+      "volume_24h": 554411,
+      "borrow_usd": 500,
+      "address": "0xd30B9fA98713425c0302593d7F8F094be31E9710"
+    },
+    {
+      "id": 38,
+      "tier": 3,
+      "pair": "USDC/USDbC",
+      "dex": "quickswap",
+      "tvl_usd": 157343,
+      "volume_24h": 232625,
+      "borrow_usd": 500,
+      "address": "0x5D0bC342178C8Fe2c222B27d0b67eEa3b7a11F5f"
+    },
+    {
+      "id": 39,
+      "tier": 3,
+      "pair": "cbETH/WETH",
+      "dex": "alien-base",
+      "tvl_usd": 138251,
+      "volume_24h": 38376,
+      "borrow_usd": 500,
+      "address": "0xc715096EeCC3f4A0FD58707A4dEc3aD24D3C96B8"
+    },
+    {
+      "id": 40,
+      "tier": 3,
+      "pair": "cbBTC/WETH",
+      "dex": "alien-base",
+      "tvl_usd": 111155,
+      "volume_24h": 129969,
+      "borrow_usd": 500,
+      "address": "0x1D6CfEe6eeC4688DADca1cEc9b6AC3d951ceD2f8"
+    }
+  ]
+}
