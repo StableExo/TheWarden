@@ -1,0 +1,540 @@
+{
+  "version": "2.0",
+  "created": "2026-04-22T08:23:31Z",
+  "session": "S65",
+  "description": "TheWarden Pool Arsenal \u2014 S65 expansion with low-fee pool discovery across 7 DEXes",
+  "chain": "base",
+  "chain_id": 8453,
+  "total_pools": 64,
+  "fee_distribution": {
+    "1bps": 13,
+    "5bps": 21,
+    "30bps": 27,
+    "100bps": 3
+  },
+  "dex_distribution": {
+    "Aerodrome": 20,
+    "Alien Base": 2,
+    "BaseSwap": 2,
+    "HydreX": 6,
+    "PancakeSwap": 9,
+    "QuickSwap": 4,
+    "Uniswap V3": 14,
+    "dex_10": 5,
+    "dex_9": 2
+  },
+  "pools": [
+    {
+      "id": 9,
+      "pair": "USDC/USDbC",
+      "dex": "Uniswap V3",
+      "fee_bps": 1,
+      "pool_address": "0x06959273e9a65433de71f5a452d529544e07ddd0",
+      "active": true
+    },
+    {
+      "id": 189,
+      "pair": "USDC/USDbC",
+      "dex": "Aerodrome",
+      "fee_bps": 1,
+      "pool_address": "0x98c7A2338336d2d354663246F64676009c7bDa97",
+      "active": true
+    },
+    {
+      "id": 199,
+      "pair": "USDT/USDC",
+      "dex": "Aerodrome",
+      "fee_bps": 1,
+      "pool_address": "0xa41Bc0AFfbA7Fd420d186b84899d7ab2aC57fcD1",
+      "active": true
+    },
+    {
+      "id": 200,
+      "pair": "USDT/USDC",
+      "dex": "Uniswap V3",
+      "fee_bps": 1,
+      "pool_address": "0xD56da2B74bA826f19015E6B7Dd9Dae1903E85DA1",
+      "active": true
+    },
+    {
+      "id": 208,
+      "pair": "USDT/DAI",
+      "dex": "Uniswap V3",
+      "fee_bps": 1,
+      "pool_address": "0xd64e7bf24ee5cc10b5ab92525d256300ad3fb81e",
+      "active": true
+    },
+    {
+      "id": 211,
+      "pair": "USDC/USDT",
+      "dex": "PancakeSwap",
+      "fee_bps": 1,
+      "pool_address": "0x5f07bb9fee6062e9d09a52e6d587c64bad6ba706",
+      "active": true
+    },
+    {
+      "id": 212,
+      "pair": "USDC/USDbC",
+      "dex": "PancakeSwap",
+      "fee_bps": 1,
+      "pool_address": "0x29ed55b18af0add137952cb3e29fb77b32fce426",
+      "active": true
+    },
+    {
+      "id": 213,
+      "pair": "USDC/DAI",
+      "dex": "PancakeSwap",
+      "fee_bps": 1,
+      "pool_address": "0x345825a980bd94e1480bc4f20fe4e3dae2f23dd3",
+      "active": true
+    },
+    {
+      "id": 214,
+      "pair": "WETH/wstETH",
+      "dex": "PancakeSwap",
+      "fee_bps": 1,
+      "pool_address": "0xbd59a718e60bd868123c6e949c9fd97185efbdb7",
+      "active": true
+    },
+    {
+      "id": 215,
+      "pair": "WETH/USDC",
+      "dex": "PancakeSwap",
+      "fee_bps": 1,
+      "pool_address": "0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38",
+      "active": true
+    },
+    {
+      "id": 216,
+      "pair": "WETH/USDT",
+      "dex": "PancakeSwap",
+      "fee_bps": 1,
+      "pool_address": "0x526d54cd4fac2e6b2ddcb6bc98b9292603061f85",
+      "active": true
+    },
+    {
+      "id": 232,
+      "pair": "USDC/USDbC",
+      "dex": "Alien Base",
+      "fee_bps": 1,
+      "pool_address": "0x0e635f8eeed4f7279d56692d552f034ece136019",
+      "active": true
+    },
+    {
+      "id": 233,
+      "pair": "WETH/cbBTC",
+      "dex": "Alien Base",
+      "fee_bps": 1,
+      "pool_address": "0x1d6cfee6eec4688dad33e6fbb2304a9efe8be3c8",
+      "active": true
+    },
+    {
+      "id": 42,
+      "pair": "WETH/cbBTC",
+      "dex": "Uniswap V3",
+      "fee_bps": 5,
+      "pool_address": "0x7aea2e8a3843516afa07293a10ac8e49906dabd1",
+      "active": true
+    },
+    {
+      "id": 113,
+      "pair": "USDC/cbBTC",
+      "dex": "Uniswap V3",
+      "fee_bps": 5,
+      "pool_address": "0xfbb6eed8e7aa03b138556eedaf5d271a5e1e43ef",
+      "active": true
+    },
+    {
+      "id": 171,
+      "pair": "cbETH/WETH",
+      "dex": "Aerodrome",
+      "fee_bps": 5,
+      "pool_address": "0x47cA96Ea59C13F72745928887f84C9F52C3D7348",
+      "active": true
+    },
+    {
+      "id": 172,
+      "pair": "wstETH/WETH",
+      "dex": "Aerodrome",
+      "fee_bps": 5,
+      "pool_address": "0x861A2922bE165a5Bd41b1E482B49216b465e1B5F",
+      "active": true
+    },
+    {
+      "id": 177,
+      "pair": "cbETH/WETH",
+      "dex": "BaseSwap",
+      "fee_bps": 5,
+      "pool_address": "0x257FCbAE4Ac6B26A02E4FC5e1a11e4174B5ce395",
+      "active": true
+    },
+    {
+      "id": 183,
+      "pair": "AERO/USDC",
+      "dex": "Aerodrome",
+      "fee_bps": 5,
+      "pool_address": "0xa4FDd479eda160671636e2eCF8f993Cbf86258a8",
+      "active": true
+    },
+    {
+      "id": 209,
+      "pair": "USDC/USDT",
+      "dex": "Uniswap V3",
+      "fee_bps": 5,
+      "pool_address": "0xb7f084c7f7f1c680d08780e2b2ef4f2133db0df8",
+      "active": true
+    },
+    {
+      "id": 210,
+      "pair": "WETH/USDT",
+      "dex": "Uniswap V3",
+      "fee_bps": 5,
+      "pool_address": "0xd92e0767473d1e3ff11ac036f2b1db90ad0ae55f",
+      "active": true
+    },
+    {
+      "id": 217,
+      "pair": "USDC/USDT",
+      "dex": "PancakeSwap",
+      "fee_bps": 5,
+      "pool_address": "0x2db0fff9f1afcef3a77e673dfba9883c036ebd53",
+      "active": true
+    },
+    {
+      "id": 218,
+      "pair": "WETH/cbBTC",
+      "dex": "PancakeSwap",
+      "fee_bps": 5,
+      "pool_address": "0xd974d59e30054cf1abeded0c9947b0d8baf90029",
+      "active": true
+    },
+    {
+      "id": 219,
+      "pair": "WETH/USDC",
+      "dex": "PancakeSwap",
+      "fee_bps": 5,
+      "pool_address": "0xb775272e537cc670c65dc852908ad47015244eaf",
+      "active": true
+    },
+    {
+      "id": 220,
+      "pair": "USDC/DAI",
+      "dex": "HydreX",
+      "fee_bps": 5,
+      "pool_address": "0xd604cf300a4ae4345426df42ffb296aa35b4bef2",
+      "active": true
+    },
+    {
+      "id": 221,
+      "pair": "WETH/cbETH",
+      "dex": "HydreX",
+      "fee_bps": 5,
+      "pool_address": "0xb1383dc47d9971fc999c3a9088f79e744b376e97",
+      "active": true
+    },
+    {
+      "id": 222,
+      "pair": "WETH/wstETH",
+      "dex": "HydreX",
+      "fee_bps": 5,
+      "pool_address": "0x19398851f424e03eed4b09a47f3bf5b0dd85805b",
+      "active": true
+    },
+    {
+      "id": 223,
+      "pair": "WETH/USDC",
+      "dex": "HydreX",
+      "fee_bps": 5,
+      "pool_address": "0x82dbe18346a8656dbb5e76f74bf3ae279cc16b29",
+      "active": true
+    },
+    {
+      "id": 224,
+      "pair": "WETH/cbBTC",
+      "dex": "HydreX",
+      "fee_bps": 5,
+      "pool_address": "0x3f9b863ef4b295d6ba370215bcca3785fcc44f44",
+      "active": true
+    },
+    {
+      "id": 225,
+      "pair": "cbBTC/USDC",
+      "dex": "HydreX",
+      "fee_bps": 5,
+      "pool_address": "0x0ba69825c4c033e72309f6ac0bde0023b15cc97c",
+      "active": true
+    },
+    {
+      "id": 226,
+      "pair": "WETH/wstETH",
+      "dex": "QuickSwap",
+      "fee_bps": 5,
+      "pool_address": "0x03122fc0c902d6fe9cf019e16a406eac8efa7fdd",
+      "active": true
+    },
+    {
+      "id": 227,
+      "pair": "WETH/USDC",
+      "dex": "QuickSwap",
+      "fee_bps": 5,
+      "pool_address": "0x5a9ad2bb92b0b3e5c571fdd5125114e04e02be1a",
+      "active": true
+    },
+    {
+      "id": 228,
+      "pair": "WETH/USDT",
+      "dex": "QuickSwap",
+      "fee_bps": 5,
+      "pool_address": "0xae7b9f8d0e164e099f4794a7441c72620e291815",
+      "active": true
+    },
+    {
+      "id": 229,
+      "pair": "cbBTC/USDC",
+      "dex": "QuickSwap",
+      "fee_bps": 5,
+      "pool_address": "0xacc2874ed22e811afdc47979c7b7985cced53b29",
+      "active": true
+    },
+    {
+      "id": 3,
+      "pair": "WETH/USDC",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0xB4885Bc63399BF5518b994c1d0C153334Ee579D0",
+      "active": true
+    },
+    {
+      "id": 7,
+      "pair": "WETH/USDbC",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75",
+      "active": true
+    },
+    {
+      "id": 24,
+      "pair": "USDC/AERO",
+      "dex": "Uniswap V3",
+      "fee_bps": 30,
+      "pool_address": "0x2426dc0a657bd481ab48f86c1616431905901238",
+      "active": true
+    },
+    {
+      "id": 43,
+      "pair": "WETH/cbBTC",
+      "dex": "Uniswap V3",
+      "fee_bps": 30,
+      "pool_address": "0x8c7080564b5a792a33ef2fd473fba6364d5495e5",
+      "active": true
+    },
+    {
+      "id": 114,
+      "pair": "USDC/cbBTC",
+      "dex": "Uniswap V3",
+      "fee_bps": 30,
+      "pool_address": "0xec558e484cc9f2210714e345298fdc53b253c27d",
+      "active": true
+    },
+    {
+      "id": 147,
+      "pair": "cbBTC/WETH",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x70aCDF2Ad0bf2402C957154f944c19Ef4e1cbAE1",
+      "active": true
+    },
+    {
+      "id": 148,
+      "pair": "cbBTC/USDC",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x4e962BB3889Bf030368F56810A9c96B83CB3E778",
+      "active": true
+    },
+    {
+      "id": 149,
+      "pair": "cbBTC/USDC",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x3e66e55e97ce60096f74b7C475e8249f2D31a9fb",
+      "active": true
+    },
+    {
+      "id": 152,
+      "pair": "cbBTC/WETH",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x22AEe3699b6A0fEd71490C103Bd4E5f3309891D5",
+      "active": true
+    },
+    {
+      "id": 155,
+      "pair": "cbBTC/WETH",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x7C7420DD105E2779316423Ba3E973f434315EFA9",
+      "active": true
+    },
+    {
+      "id": 166,
+      "pair": "cbBTC/WETH",
+      "dex": "dex_9",
+      "fee_bps": 30,
+      "pool_address": "0xC211e1f853A898Bd1302385CCdE55f33a8C4B3f3",
+      "active": true
+    },
+    {
+      "id": 169,
+      "pair": "cbBTC/USDC",
+      "dex": "dex_9",
+      "fee_bps": 30,
+      "pool_address": "0xb94b22332ABf5f89877A14Cc88f2aBC48c34B3Df",
+      "active": true
+    },
+    {
+      "id": 178,
+      "pair": "cbBTC/WETH",
+      "dex": "dex_10",
+      "fee_bps": 30,
+      "pool_address": "0xd800B7e8C0949dFFBD59E3DF9527a22E311C0e7b",
+      "active": true
+    },
+    {
+      "id": 179,
+      "pair": "AERO/USDC",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x6cDcb1C4A4D1C3C6d054b27AC5B77e89eAFb971d",
+      "active": true
+    },
+    {
+      "id": 180,
+      "pair": "AERO/WETH",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x82321f3BEB69f503380D6B233857d5C43562e2D0",
+      "active": true
+    },
+    {
+      "id": 184,
+      "pair": "AERO/WETH",
+      "dex": "BaseSwap",
+      "fee_bps": 30,
+      "pool_address": "0x20CB8f872ae894F7c9e32e621C186e5AFCe82Fd0",
+      "active": true
+    },
+    {
+      "id": 187,
+      "pair": "cbETH/WETH",
+      "dex": "dex_10",
+      "fee_bps": 30,
+      "pool_address": "0x74A4bF2cad1b172cDc82a5Da7130C7A59EB5460b",
+      "active": true
+    },
+    {
+      "id": 192,
+      "pair": "USDC/USDbC",
+      "dex": "dex_10",
+      "fee_bps": 30,
+      "pool_address": "0x5D0bC342178C8Fe2c2f9A9fcC9D52555C99936db",
+      "active": true
+    },
+    {
+      "id": 193,
+      "pair": "cbETH/WETH",
+      "dex": "dex_10",
+      "fee_bps": 30,
+      "pool_address": "0xc715096EeCC3f4A0FDBfF055a3db2926adC83244",
+      "active": true
+    },
+    {
+      "id": 195,
+      "pair": "VIRTUAL/WETH",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x21594b992F68495dD28d605834b58889d0a727c7",
+      "active": true
+    },
+    {
+      "id": 197,
+      "pair": "VIRTUAL/WETH",
+      "dex": "Uniswap V3",
+      "fee_bps": 30,
+      "pool_address": "0xE31c372a7Af875b3B5E0F3713B17ef51556da667",
+      "active": true
+    },
+    {
+      "id": 201,
+      "pair": "USDT/USDC",
+      "dex": "dex_10",
+      "fee_bps": 30,
+      "pool_address": "0xd30B9fA98713425c0302593d7F8F094be31E9710",
+      "active": true
+    },
+    {
+      "id": 202,
+      "pair": "USDT/WETH",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x9785eF59E2b499fB741674ecf6fAF912Df7b3C1b",
+      "active": true
+    },
+    {
+      "id": 204,
+      "pair": "AERO/WETH",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0x7f670f78B17dEC44d5Ef68a48740b6f8849cc2e6",
+      "active": true
+    },
+    {
+      "id": 205,
+      "pair": "AERO/WETH",
+      "dex": "Uniswap V3",
+      "fee_bps": 30,
+      "pool_address": "0x3d5D143381916280ff91407FeBEB52f2b60f33Cf",
+      "active": true
+    },
+    {
+      "id": 206,
+      "pair": "VIRTUAL/USDC",
+      "dex": "Uniswap V3",
+      "fee_bps": 30,
+      "pool_address": "0x529d2863a1521d0b57db028168fdE2E97120017C",
+      "active": true
+    },
+    {
+      "id": 207,
+      "pair": "AERO/cbBTC",
+      "dex": "Aerodrome",
+      "fee_bps": 30,
+      "pool_address": "0xdFe5F275020def30993f042174Fc2D335678b626",
+      "active": true
+    },
+    {
+      "id": 181,
+      "pair": "AERO/USDC",
+      "dex": "Aerodrome",
+      "fee_bps": 100,
+      "pool_address": "0xBE00fF35AF70E8415D0eB605a286D8A45466A4c1",
+      "active": true
+    },
+    {
+      "id": 196,
+      "pair": "VIRTUAL/WETH",
+      "dex": "Aerodrome",
+      "fee_bps": 100,
+      "pool_address": "0x3f0296BF652e19bca772EC3dF08b32732F93014A",
+      "active": true
+    },
+    {
+      "id": 198,
+      "pair": "VIRTUAL/WETH",
+      "dex": "Uniswap V3",
+      "fee_bps": 100,
+      "pool_address": "0x9c087Eb773291e50CF6c6a90ef0F4500e349B903",
+      "active": true
+    }
+  ]
+}
