@@ -197,12 +197,13 @@ def _chainbase_mcp(address, chains, keys):
                 "address":          address
             })
 
-            # Parse tx count from response
+            # Parse tx count from response — GL-L60 FIX: type guard before slice
             tx_count = 0
             tx_list  = []
             if isinstance(txs, dict):
                 tx_count = txs.get("count", txs.get("total", txs.get("row_count", 0)))
-                tx_list  = txs.get("data", txs.get("result", []))
+                raw      = txs.get("data", txs.get("result", []))
+                tx_list  = raw if isinstance(raw, list) else []
             elif isinstance(txs, list):
                 tx_count = len(txs)
                 tx_list  = txs
@@ -237,7 +238,15 @@ def _chainbase_mcp(address, chains, keys):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _nansen_mcp(address, keys):
-    """Nansen via MCP — entity label + smart money profile + PnL."""
+    """
+    Nansen via MCP — smart money profile, portfolio, PnL, counterparties.
+    GL-L60 FIX: Added proper initialization (session-id), updated tool names:
+      entity_search    → general_search
+      get_token_balances → address_portfolio
+      get_wallet_labels  → address_counterparties
+      wallet_pnl_summary — same name, fixed args
+      address_transactions — NEW: tx history from Nansen
+    """
     url  = "https://mcp.nansen.ai/ra/mcp"
     hdrs = {
         "NANSEN-API-KEY": keys["nansen"],
@@ -245,28 +254,54 @@ def _nansen_mcp(address, keys):
         "Accept":         "application/json, text/event-stream"
     }
 
+    # Initialize session to get session-id (required for Nansen MCP)
+    try:
+        init_r = requests.post(url, json={
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "TheWarden", "version": "GL-L60"}
+            }
+        }, headers=hdrs, timeout=15)
+        sid = init_r.headers.get("mcp-session-id", "")
+        if sid:
+            hdrs["mcp-session-id"] = sid
+    except Exception:
+        pass
+
     def _call(tool, args):
         return _mcp_call(url, hdrs, tool, args, timeout=30)
 
-    out = {}
-    try:
-        out["entity"]    = _call("entity_search",      {"query": address.lower()})
-    except Exception as e:
-        out["entity"]    = {"error": str(e)}
-    try:
-        out["portfolio"] = _call("get_token_balances",  {"address": address.lower()})
-    except Exception as e:
-        out["portfolio"] = {"error": str(e)}
-    try:
-        out["pnl"]       = _call("wallet_pnl_summary",  {"address": address.lower(), "chain": "ethereum"})
-    except Exception as e:
-        out["pnl"]       = {"error": str(e)}
-    try:
-        out["labels"]    = _call("get_wallet_labels",   {"address": address.lower()})
-    except Exception as e:
-        out["labels"]    = {"error": str(e)}
+    addr = address.lower()
+    out  = {}
 
-    out["source"] = "nansen_mcp GL-L60"
+    try:
+        out["search"]         = _call("general_search",        {"query": addr})
+    except Exception as e:
+        out["search"]         = {"error": str(e)}
+    try:
+        out["portfolio"]      = _call("address_portfolio",     {"address": addr})
+    except Exception as e:
+        out["portfolio"]      = {"error": str(e)}
+    try:
+        out["pnl"]            = _call("wallet_pnl_summary",    {"address": addr})
+    except Exception as e:
+        out["pnl"]            = {"error": str(e)}
+    try:
+        out["counterparties"] = _call("address_counterparties",{"address": addr})
+    except Exception as e:
+        out["counterparties"] = {"error": str(e)}
+    try:
+        out["transactions"]   = _call("address_transactions",  {"address": addr})
+    except Exception as e:
+        out["transactions"]   = {"error": str(e)}
+    try:
+        out["related"]        = _call("address_related_addresses", {"address": addr})
+    except Exception as e:
+        out["related"]        = {"error": str(e)}
+
+    out["source"] = "nansen_mcp ✅ GL-L60"
     return out
 
 
@@ -332,13 +367,14 @@ def _arkham_rest(address, keys):
     except Exception as e:
         out["entity"] = {"error": str(e)}
 
-    # Transfers TO/FROM this address (limit 20, sorted desc)
+    # Transfers TO/FROM this address using ?base= param (GL-L60 FIX)
+    # toAddress/fromAddress params return generic market data — use base= for address-specific
     try:
         r = requests.get(
-            f"https://api.arkm.com/transfers?address={addr_lc}&limit=20&sortKey=blockTimestamp&sortDir=desc&usdGte=0",
+            f"https://api.arkm.com/transfers?base={addr_lc}&limit=20&sortKey=blockTimestamp&sortDir=desc&usdGte=0",
             headers=hdrs, timeout=20
         )
-        d = r.json()
+        d    = r.json()
         xfers = d.get("transfers", [])
         out["transfers"] = []
         for tx in xfers[:10]:
@@ -349,10 +385,11 @@ def _arkham_rest(address, keys):
             ts   = tx.get("blockTimestamp", "")[:10]
             out["transfers"].append({
                 "date":   ts,
-                "from":   frm.get("address", "?")[:14] if isinstance(frm, dict) else str(frm)[:14],
-                "to":     to.get("address",  "?")[:14] if isinstance(to,  dict) else str(to)[:14],
+                "from":   frm.get("address", "?")[:16] if isinstance(frm, dict) else str(frm)[:16],
+                "to":     to.get("address",  "?")[:16] if isinstance(to,  dict) else str(to)[:16],
                 "value":  flow,
-                "symbol": sym
+                "symbol": sym,
+                "dir":    "IN" if (isinstance(to, dict) and to.get("address","").lower() == addr_lc) else "OUT"
             })
         out["transfer_count"] = len(xfers)
     except Exception as e:
@@ -520,23 +557,49 @@ def _etherscan_rest(address, chains, keys):
     for chain_id in chains:
         chain_name = CHAIN_NAMES.get(chain_id, str(chain_id))
         try:
-            # Use Basescan API directly for Base chain (chain_id 8453)
-            if chain_id == 8453 and bs_key:
-                base_url = "https://api.basescan.org/api"
-                api_key  = bs_key
-            else:
-                base_url = v2
-                api_key  = es_key
+            # GL-L60 FIX: Base chain (8453) — Etherscan V2 requires paid plan for non-ETH chains
+            # Basescan V1 deprecated. Use Chainstack Base RPC directly for balance + nonce.
+            # For tx/token history on Base, fall through to Moralis (which covers Base cleanly).
+            if chain_id == 8453:
+                cs_base = "https://base-mainnet.core.chainstack.com/c726a0ad837354cad25d58bd89c7ac57"
+                def _rpc(method, params):
+                    try:
+                        r = requests.post(cs_base, json={"jsonrpc":"2.0","id":1,"method":method,"params":params}, timeout=10)
+                        return r.json()
+                    except Exception as ex:
+                        return {"error": str(ex)}
+                b   = _rpc("eth_getBalance",          [address, "latest"])
+                n   = _rpc("eth_getTransactionCount", [address, "latest"])
+                c   = _rpc("eth_getCode",             [address, "latest"])
+                bal_wei  = int(b.get("result","0x0"),16) if "result" in b else 0
+                nonce    = int(n.get("result","0x0"),16) if "result" in n else 0
+                code_val = c.get("result","0x")
+                is_contr = isinstance(code_val,str) and len(code_val) > 2
+                out[chain_id] = {
+                    "chain_name":    "Base",
+                    "balance_eth":   bal_wei / 1e18,
+                    "balance_raw":   bal_wei,
+                    "tx_count":      nonce,
+                    "is_contract":   is_contr,
+                    "code_size":     (len(code_val)-2)//2 if is_contr else 0,
+                    "tx_sample":     [],
+                    "token_transfers": 0,
+                    "token_sample":  [],
+                    "source":        "chainstack_rpc ✅ GL-L60"
+                }
+                continue
+
+            base_url = v2
+            api_key  = es_key
 
             params_bal = {
-                "module":  "account",
-                "action":  "balance",
-                "address": address,
-                "tag":     "latest",
-                "apikey":  api_key
+                "module":   "account",
+                "action":   "balance",
+                "address":  address,
+                "tag":      "latest",
+                "apikey":   api_key,
+                "chainid":  chain_id
             }
-            if chain_id != 8453:
-                params_bal["chainid"] = chain_id
 
             bal_r = requests.get(base_url, params=params_bal, headers=hdrs, timeout=15)
             bal_d = bal_r.json()
@@ -550,10 +613,9 @@ def _etherscan_rest(address, chains, keys):
                 "page":       "1",
                 "offset":     "10",
                 "sort":       "desc",
-                "apikey":     api_key
+                "apikey":     api_key,
+                "chainid":    chain_id
             }
-            if chain_id != 8453:
-                params_tx["chainid"] = chain_id
 
             tx_r  = requests.get(base_url, params=params_tx,  headers=hdrs, timeout=20)
             tx_d  = tx_r.json()
@@ -922,12 +984,12 @@ def print_report(results):
     # ── Nansen ──────────────────────────────────────────────────────────────
     print(f"\n[NANSEN MCP — Smart Money Profile]")
     na = results.get("nansen", {})
-    entity = na.get("entity", "")
-    print(f"  Entity search: {str(entity)[:80]}")
-    pnl = na.get("pnl", {})
-    print(f"  PnL (30d): {str(pnl)[:80]}")
-    labels = na.get("labels", {})
-    print(f"  Labels:    {str(labels)[:80]}")
+    for key in ("search", "portfolio", "pnl", "counterparties", "transactions", "related"):
+        val = na.get(key)
+        if val is None:
+            continue
+        snippet = str(val)[:100] if not isinstance(val, dict) or "error" not in val else f"❌ {val['error'][:80]}"
+        print(f"  {key:<16} {snippet}")
 
     # ── Tenderly ─────────────────────────────────────────────────────────────
     print(f"\n[TENDERLY MCP — Contract Check]")
