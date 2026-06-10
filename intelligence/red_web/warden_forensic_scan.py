@@ -86,7 +86,13 @@ ETHERSCAN_V2_CHAINS = {1, 8453, 56, 137, 42161, 10}
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _mcp_call(url, headers, tool_name, arguments, timeout=25):
-    """Call a hosted HTTP MCP server. Handles SSE + JSON responses."""
+    """
+    Call a hosted HTTP MCP server.
+    GL-L60 FIX: Two response formats handled:
+      1. SSE (Nansen): 'event: message\r\ndata: {...}' — strip \r before JSON parse
+      2. Plain JSON (Chainbase, Tenderly): {"jsonrpc":"2.0","result":{"content":[...]}}
+         — extract result.content[0].text in fallback path
+    """
     # Initialize session
     try:
         init_r = requests.post(url, json={
@@ -109,8 +115,9 @@ def _mcp_call(url, headers, tool_name, arguments, timeout=25):
         "params": {"name": tool_name, "arguments": arguments}
     }, headers=hdrs, timeout=timeout)
 
-    # Parse SSE stream or plain JSON
+    # ── Try SSE parse (strip \r from line endings) ───────────────────────────
     for line in r.text.split("\n"):
+        line = line.strip()          # GL-L60 FIX: strip \r and whitespace
         if line.startswith("data: "):
             try:
                 d = json.loads(line[6:])
@@ -123,8 +130,20 @@ def _mcp_call(url, headers, tool_name, arguments, timeout=25):
                         return text
             except Exception:
                 pass
+
+    # ── Fallback: plain JSON — extract result.content[0].text ────────────────
     try:
-        return r.json()
+        d      = r.json()
+        result = d.get("result", {})
+        if isinstance(result, dict) and "content" in result:
+            content = result["content"]
+            if content and isinstance(content, list):
+                text = content[0].get("text", "")
+                try:
+                    return json.loads(text) if isinstance(text, str) and text.strip().startswith(("{", "[")) else text
+                except Exception:
+                    return text
+        return d
     except Exception:
         return {"raw": r.text[:500], "status": r.status_code}
 
@@ -274,32 +293,52 @@ def _nansen_mcp(address, keys):
         return _mcp_call(url, hdrs, tool, args, timeout=30)
 
     addr = address.lower()
+    now  = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     out  = {}
 
+    # general_search — direct args (no request wrapper)
     try:
-        out["search"]         = _call("general_search",        {"query": addr})
+        out["search"]    = _call("general_search", {"query": addr, "result_type": "eoa"})
     except Exception as e:
-        out["search"]         = {"error": str(e)}
+        out["search"]    = {"error": str(e)}
+
+    # address_portfolio — walletAddress field (GL-L60 FIX: not "address")
     try:
-        out["portfolio"]      = _call("address_portfolio",     {"address": addr})
+        out["portfolio"] = _call("address_portfolio", {"request": {"walletAddress": addr}})
     except Exception as e:
-        out["portfolio"]      = {"error": str(e)}
+        out["portfolio"] = {"error": str(e)}
+
+    # wallet_pnl_summary — walletAddress + dateRange required (GL-L60 FIX)
     try:
-        out["pnl"]            = _call("wallet_pnl_summary",    {"address": addr})
+        out["pnl"]       = _call("wallet_pnl_summary", {"request": {
+            "walletAddress": addr,
+            "dateRange": {"from": "2023-01-01", "to": now}
+        }})
     except Exception as e:
-        out["pnl"]            = {"error": str(e)}
+        out["pnl"]       = {"error": str(e)}
+
+    # address_counterparties — address + timeRange + sourceInput + groupBy required
     try:
-        out["counterparties"] = _call("address_counterparties",{"address": addr})
+        out["counterparties"] = _call("address_counterparties", {"request": {
+            "address":     addr,
+            "timeRange":   {"from": "2023-01-01", "to": now},
+            "sourceInput": "Combined",
+            "groupBy":     "wallet"
+        }})
     except Exception as e:
         out["counterparties"] = {"error": str(e)}
+
+    # address_transactions — request wrapper with address
     try:
-        out["transactions"]   = _call("address_transactions",  {"address": addr})
+        out["transactions"] = _call("address_transactions", {"request": {"address": addr}})
     except Exception as e:
-        out["transactions"]   = {"error": str(e)}
+        out["transactions"] = {"error": str(e)}
+
+    # address_related_addresses — request wrapper with address
     try:
-        out["related"]        = _call("address_related_addresses", {"address": addr})
+        out["related"]   = _call("address_related_addresses", {"request": {"address": addr}})
     except Exception as e:
-        out["related"]        = {"error": str(e)}
+        out["related"]   = {"error": str(e)}
 
     out["source"] = "nansen_mcp ✅ GL-L60"
     return out
