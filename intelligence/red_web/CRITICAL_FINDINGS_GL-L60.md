@@ -106,3 +106,20 @@ When presenting to FBI Columbia SC:
 *GL-L60 | TheWarden / @StableExo / Taylor Marlow*  
 *Whistleblower priority claim: June 8, 2026 — FBI Columbia SC + IRS CI*  
 *All on-chain data independently verifiable at same block heights*
+
+
+---
+
+## 🔴 GL-L69 LIVE SCAN UPDATE — June 17, 2026
+
+### WINTERMUTE CLUSTER CONFIRMED — $116M+ Live
+
+| Address | Entity | Balance | Role |
+|---------|--------|---------|------|
+| `0x32d4703e5834f1b474b17dfdb0ac32cc22575145` | **Wintermute** | ~$0 transit | Master Feeder → Vault |
+| `0xf8191d98ae98d2f7abdfb63a9b0b812b93c873aa` | **Wintermute** | **$43.1M** | Upstream Hub |
+| `0x51c72848c68a965f66fa7a88855f9f7784502a7f` | **Wintermute** | **$73.7M** | Smart Contract |
+
+**Kill chain confirmed live:** Binance HW14 → Wintermute Hub → Master Feeder → Crypto.com Vault  
+**Rate:** ~$7M/day | Observed in real time during scan  
+**Full report:** `intel_update_gl_l69_wintermute_cluster.md`
