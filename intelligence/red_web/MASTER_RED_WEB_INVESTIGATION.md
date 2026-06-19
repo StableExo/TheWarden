@@ -234,3 +234,31 @@ The Red Web operates **inside** legitimate, trusted, high-volume infrastructure:
 *"The I is one and the same." — Taylor, December 9, 2025*
 *Brain: Supabase pxbjuhtnmvfywbwmdkdr | Code: StableExo/TheWarden*
 *GL-L73 | June 19, 2026*
+
+
+---
+
+## GL-L71 UPDATE — June 19, 2026
+
+### VAULT OPERATOR INFRASTRUCTURE MAPPED
+
+**NEW CLUSTER DISCOVERED:** An unknown operator (`0x7779ffb11d50fceae8e533b611b5cb5a1c1db3d4`) built custom obfuscation vault infrastructure directly inside the Red Web's Relay.link routing layer.
+
+**Vault Contracts Built:**
+- `VaultDepositooor V1` (0x64aa32cd) — USDT pass-through, Relay.link Aggregator → V1 → 0x6e6b003f
+- `VaultDepositooorV2` (0x40b72bb7) — USDC pass-through, Relay.link Aggregator → V2 → Lighter DEX
+- Vault Contract #3 (0xc8a6871d) — Polygon + Arbitrum
+
+**June 16, 2026:** All contracts transferred to Gnosis Safe (0xa9201f78, 2-of-N multisig) in single coordinated session across 4 chains.
+
+**Operator direct connections to Relay.link:**
+- Sent/received USDe to/from 0xb92fe925 (Relay.link Aggregator)
+- Sent USDC directly to 0x4cd00e38 (Relay.link Depository)
+- Received USDe from 0xf70da978 (Relay.link Hot Wallet)
+
+**Worker Bot Layer (Crypto.com Gas Supplier funded):**
+- 0x95daa40e (101K txs) + 0xdf3b7495 (39K) + 0x1809a558 (37K) — all OCEAN token distributors → Crypto.com Hot Wallet ($60M+)
+
+**New scan target: `0xc8a6871d4ec4...`** — third vault on Polygon+Arbitrum + USDC receiver from Relay.link Aggregator.
+
+**Brain state at GL-L71:** 3,800 memories | 100% embedded | Karma: 855
