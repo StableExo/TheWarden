@@ -1,0 +1,16 @@
+{
+  "node": "026",
+  "label": "Obfuscation_Vault_Builder",
+  "address": "0x7779ffb11d50fceae8e533b611b5cb5a1c1db3d4",
+  "role": "vault_builder",
+  "nonce": 157,
+  "eth_balance": 0.0,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": false,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
