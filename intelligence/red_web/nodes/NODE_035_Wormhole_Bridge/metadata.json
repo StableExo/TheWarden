@@ -1,0 +1,16 @@
+{
+  "node": "035",
+  "label": "Wormhole_Bridge",
+  "address": "0x3ee18b2214aff97000d974cf647e7c347e8fa585",
+  "role": "bridge",
+  "nonce": 0,
+  "eth_balance": 0.0,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": true,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
