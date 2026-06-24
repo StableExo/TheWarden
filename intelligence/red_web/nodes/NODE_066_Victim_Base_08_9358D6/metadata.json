@@ -1,0 +1,18 @@
+{
+  "node": "066",
+  "label": "Victim_Base_08_9358D6",
+  "address": "0x9358D67164258370B0C07C37d3BF15A4c97b8Ab3",
+  "role": "victim_honeypot",
+  "nonce": 45,
+  "eth_balance": 0.0,
+  "is_contract": false,
+  "total_usd": 0.0,
+  "entity_label": "Unknown / Unlabeled",
+  "transfer_count": 10,
+  "goplus_flags": [],
+  "bq_inbound": 0,
+  "bq_outbound": 0,
+  "tools_fired": 12,
+  "scan_date": "2026-06-24",
+  "scanner_ver": "GL-L76 v3.1"
+}

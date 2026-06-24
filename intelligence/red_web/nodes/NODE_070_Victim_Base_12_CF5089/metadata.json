@@ -1,0 +1,18 @@
+{
+  "node": "070",
+  "label": "Victim_Base_12_CF5089",
+  "address": "0xCF5089cFC5F00074877bdB3C8c2a5f2e7F8e2b4E",
+  "role": "victim",
+  "nonce": 0,
+  "eth_balance": 0.0,
+  "is_contract": false,
+  "total_usd": 0.0,
+  "entity_label": "Unknown / Unlabeled",
+  "transfer_count": 10,
+  "goplus_flags": [],
+  "bq_inbound": 0,
+  "bq_outbound": 0,
+  "tools_fired": 12,
+  "scan_date": "2026-06-24",
+  "scanner_ver": "GL-L76 v3.1"
+}

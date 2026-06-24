@@ -1,0 +1,18 @@
+{
+  "node": "067",
+  "label": "Victim_Base_09_A910DA",
+  "address": "0xA910DA4c3cFE1Dd149ACBe7F8e2b4E3C8c1a5f2e",
+  "role": "victim",
+  "nonce": 0,
+  "eth_balance": 0.0,
+  "is_contract": false,
+  "total_usd": 0.0,
+  "entity_label": "Unknown / Unlabeled",
+  "transfer_count": 10,
+  "goplus_flags": [],
+  "bq_inbound": 0,
+  "bq_outbound": 0,
+  "tools_fired": 12,
+  "scan_date": "2026-06-24",
+  "scanner_ver": "GL-L76 v3.1"
+}
