@@ -1,0 +1,16 @@
+{
+  "node": "027",
+  "label": "VaultDepositooor_V1_64aa32cd",
+  "address": "0x64aa32cd65a1a61e2b87a6e27d1f5ac4040f1a1",
+  "role": "vault_contract",
+  "nonce": 0,
+  "eth_balance": 0.0,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": false,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
