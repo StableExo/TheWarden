@@ -1,0 +1,16 @@
+{
+  "node": "025",
+  "label": "Wintermute_Master_Feeder_6B",
+  "address": "0x32d4703e5834f1b474b17dfdb0ac32cc22575145",
+  "role": "market_maker",
+  "nonce": 0,
+  "eth_balance": 0.0,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": false,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
