@@ -1,0 +1,33 @@
+{
+  "node_num": "043",
+  "label": "Genesis_CryptoCom_2018_A",
+  "address": "0x0681d8db095565fe8a346fa0277bffde9c0edbbf",
+  "node_type": "genesis_contact",
+  "contact_of": "Crypto.com 2018",
+  "context": "First wallet to contact Crypto.com node (2018)",
+  "assessment": "MAJOR_OPERATOR",
+  "assessment_reasoning": "Extremely high nonce (4,944,002) \u2014 this is a major operator, not just a genesis wallet",
+  "stats": {
+    "nonce": 4944002,
+    "balance_eth": 0.05298357615207724,
+    "tx_count": 0,
+    "net_worth_usd": 31473836225.53,
+    "total_usd_all_chains": 2408.4,
+    "transfer_count": 10,
+    "entity": "Unknown / Unlabeled",
+    "flag_count": 0,
+    "bq_inbound": 0,
+    "bq_outbound": 0
+  },
+  "nonce": 4944002,
+  "balance_eth": 0.05298357615207724,
+  "is_contract": false,
+  "entity_arkham": "Unknown / Unlabeled",
+  "net_worth_usd": 31473836225.53,
+  "goplus_flags": 0,
+  "tenderly_eth": "EOA / Not contract",
+  "chainabuse_sanctioned": null,
+  "scanner_version": "GL-L76 v3.1",
+  "scanned_at": "2026-06-24T09:43:27.144641+00:00",
+  "tools_fired": 12
+}

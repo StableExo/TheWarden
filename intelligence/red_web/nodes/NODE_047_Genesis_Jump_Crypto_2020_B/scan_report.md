@@ -1,0 +1,191 @@
+# 🔍 TheWarden Forensic Report — NODE 047
+
+**Label:** `Genesis_Jump_Crypto_2020_B`  
+**Address:** `0x476c5e26a75bd202a9683ffd34359c0cc15be0ff`  
+**Node Type:** `genesis_contact`  
+**First Contacted:** Jump Crypto 2020  
+**Context:** Second wallet to contact Jump Crypto node (2020)  
+**Scanner Version:** GL-L76 v3.1  
+**Scanned At:** 2026-06-24T09:43:19 UTC  
+**Tools Fired:** 12/13
+
+---
+
+## ⚡ Assessment
+
+| Field | Value |
+|-------|-------|
+| **Verdict** | 🟡 ACTIVE |
+| **Reasoning** | Active: nonce=1, balance=0.000000 ETH, total_usd=$2025.32 |
+| **Nonce** | 1 |
+| **ETH Balance** | 0.000000 ETH |
+| **Type** | 📜 Contract |
+| **Arkham Entity** | Unknown / Unlabeled |
+| **Net Worth (Moralis)** | $148,065.76 |
+
+---
+
+## 🔒 GoPlus — Security Flags
+
+✅ No flags — address is clean
+
+---
+
+## 🏦 Arkham — Entity Attribution & Transfers
+
+**Entity:** `Unknown / Unlabeled`  
+**Total Transfers (sample window):** 10
+
+| Date | From | To | Amount | Token | Chain |
+|------|------|----|--------|-------|-------|
+| — | No transfers found | — | — | — | — |
+
+---
+
+## 💰 GoldRush — Token Balances (200+ Chains)
+
+| Chain | Status | Total USD | Tokens |
+|-------|--------|-----------|--------|
+| ETH | 🔴 | $1,590.44 | 11 |
+| &nbsp;&nbsp;↳ SRM | | 275566.475288 | ≈ $1,549.29 |
+| &nbsp;&nbsp;↳ KEEP | | 1362.332888 | ≈ $23.09 |
+| &nbsp;&nbsp;↳ ELONONE | | 83182586905.317749 | ≈ $9.13 |
+| &nbsp;&nbsp;↳ Ayylien | | 33098392.300000 | ≈ $8.89 |
+| &nbsp;&nbsp;↳ None | | 100.000000 | ≈ $0.03 |
+| Base | ⚫ | $0.00 | 1 |
+| BSC | 🔴 | $434.88 | 7 |
+| &nbsp;&nbsp;↳ BNB | | 0.755408 | ≈ $434.87 |
+| &nbsp;&nbsp;↳ MSVP | | 0.579048 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ USDT | | 3.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ MetaWar | | 10000.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ BULL | | 600.000000 | ≈ $0.00 |
+| Polygon | ⚫ | $0.00 | 9 |
+| &nbsp;&nbsp;↳ Access Liquid-ether.com to claim rewards | | 2703.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ META | | 200.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ $ | | 10000.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ META | | 1.000000 | ≈ $0.00 |
+| Arbitrum | ⚫ | $0.00 | 1 |
+
+
+---
+
+## 📡 Bitquery — Live Transfer Flow (Base Chain)
+
+**Inbound:** 0 recent  
+**Outbound:** 0 recent
+
+### Inbound
+| Time | Sender | Amount | Token |
+|------|--------|--------|-------|
+| — | No inbound transfers | — | — |
+
+### Outbound
+| Time | Receiver | Amount | Token |
+|------|----------|--------|-------|
+| — | No outbound transfers | — | — |
+
+---
+
+## 🔎 Etherscan V2 — Multi-chain Activity
+
+| Chain | Balance | Transactions |
+|-------|---------|-------------|
+| ETH | ⚫ 0.000000 ETH | 0 txs |
+| Base | ⚫ 0.000000 ETH | 0 txs |
+| BSC | ⚫ 0.000000 ETH | 0 txs |
+| Polygon | ⚫ 0.000000 ETH | 0 txs |
+| Arbitrum | ⚫ 0.000000 ETH | 0 txs |
+
+
+---
+
+## 📊 Moralis — Wallet History & Net Worth
+
+**Net Worth:** $148,065.76
+
+**ETH** — 5 transactions
+- ✅ `2026-06-24` Signed a transaction ETH:0
+- ✅ `2026-06-24` Signed a transaction ETH:0
+- ✅ `2026-06-24` Approved 4,500,000 SRM ETH:0
+**BASE** — 5 transactions
+- ✅ `2026-05-17` Airdrop from Null Address: 0x000...000 ETH:0
+- ✅ `2026-03-31` Airdrop from 0xf9...acec ETH:0
+- ✅ `2026-03-16` Airdrop from Null Address: 0x000...000 ETH:0
+**BSC** — 5 transactions
+- ✅ `2026-03-04` Received 0.579 MSVP from 0xe2...262e ETH:0
+- ✅ `2026-01-19` Received 3 USDT from 0x92...ed95 ETH:0
+- ✅ `2025-11-29` Received 1 NFT from 0x3a...d19f ETH:0
+**POLYGON** — 5 transactions
+- ✅ `2025-11-10` Airdrop from Polygon BabyDoge (PolyBabyDoge) ETH:0
+- ✅ `2025-10-16` Received 1 NFT from 0xd1...8ab9 ETH:0
+- ✅ `2025-10-16` Received 1 NFT from 0xd1...8ab9 ETH:0
+
+
+---
+
+## 🧠 Nansen — Smart Money Intelligence
+
+- **portfolio**: # Token Holdings
+**Error retrieving token balances**: API request to profiler/address/current-balance failed with status 403. The request body was
+
+{
+  "address": "0x476c5e26a75bd202a9683ffd34359c0cc1
+- **transactions**: Error calling tool 'address_transactions': API request to profiler/address/transactions failed with status 403. The request body was
+
+{
+  "address": "0x476c5e26a75bd202a9683ffd34359c0cc15be0ff",
+  "ch
+- **entity_search**: # Search Results for "0x476c5e26a75bd202a9683ffd34359c0cc15be0ff"
+
+**Query**: 0x476c5e26a75bd202a9683ffd34359c0cc15be0ff
+**Filters**: Type: any
+**Total Results**: 1
+
+## Tokens (1 results)
+
+**Name**: S
+
+
+---
+
+## 🔬 Tenderly — Contract Analysis
+
+| Chain | Type |
+|-------|------|
+| ETH | 👤 EOA |
+| Base | 👤 EOA |
+
+---
+
+## 🛡️ OnChainRisk — AML Score
+
+🔑 Key valid — Upgrade to paid plan for AML scores
+
+---
+
+## ⚠️ Chainabuse — Sanctions Screening
+
+Register at chainabuse.com — free, 100/day
+
+---
+
+## 📋 Raw Metadata
+
+```json
+{
+  "node_num": "047",
+  "label": "Genesis_Jump_Crypto_2020_B",
+  "address": "0x476c5e26a75bd202a9683ffd34359c0cc15be0ff",
+  "node_type": "genesis_contact",
+  "contact_of": "Jump Crypto 2020",
+  "assessment": "ACTIVE",
+  "nonce": 1,
+  "balance_eth": 0.0,
+  "is_contract": true,
+  "tools_fired": 12,
+  "scanned_at": "2026-06-24T09:43:19"
+}
+```
+
+---
+*Generated by TheWarden GL-L76 v3.1 — Red Web Intelligence Network*
