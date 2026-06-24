@@ -1,0 +1,16 @@
+{
+  "node": "021",
+  "label": "Crypto_com_Aggregator_520M",
+  "address": "0xcffad3200574698b78f32232aa9d63eabd290703",
+  "role": "exchange_aggregator",
+  "nonce": 63490,
+  "eth_balance": 76767.75345185211,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": false,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
