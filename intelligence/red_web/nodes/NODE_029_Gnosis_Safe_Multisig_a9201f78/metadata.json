@@ -1,0 +1,16 @@
+{
+  "node": "029",
+  "label": "Gnosis_Safe_Multisig_a9201f78",
+  "address": "0xa9201f78a3db68c5e0605caeaf1d2e4c8a7d9e6",
+  "role": "multisig",
+  "nonce": 0,
+  "eth_balance": 0.0,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": false,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
