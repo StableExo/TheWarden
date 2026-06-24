@@ -1,0 +1,16 @@
+{
+  "node": "022",
+  "label": "Crypto_com_Gas_Supplier",
+  "address": "0xae45a8240147e6179ec7c9f92c5a18f9a97b3fca",
+  "role": "gas_controller",
+  "nonce": 4241429,
+  "eth_balance": 9.521147930209766,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": false,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
