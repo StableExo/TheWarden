@@ -1,0 +1,16 @@
+{
+  "node": "037",
+  "label": "Binance_4th_Recipient_12K",
+  "address": "0xa369e6004697b9bf78c72de7f8e8bfde60396dff",
+  "role": "recipient",
+  "nonce": 0,
+  "eth_balance": 0.0,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": false,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
