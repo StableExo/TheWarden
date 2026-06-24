@@ -1,0 +1,16 @@
+{
+  "node": "033",
+  "label": "HITBTC_322M_Largest_Live_Node",
+  "address": "0xa3222357a0ec7f0d7d2b4a3b6c7c7e5b5c5a5b5",
+  "role": "exchange_hw",
+  "nonce": 0,
+  "eth_balance": 0.0,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": false,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
