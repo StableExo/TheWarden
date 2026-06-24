@@ -1,0 +1,16 @@
+{
+  "node": "023",
+  "label": "Worker_Bot_OCEAN_95daa40e",
+  "address": "0x95daa40eb4d8561e5d9d94e553a20d387775c528",
+  "role": "worker_bot",
+  "nonce": 50453,
+  "eth_balance": 6.11310768e-06,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": false,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
