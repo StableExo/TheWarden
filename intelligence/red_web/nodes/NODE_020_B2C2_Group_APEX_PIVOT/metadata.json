@@ -1,0 +1,16 @@
+{
+  "node": "020",
+  "label": "B2C2_Group_APEX_PIVOT",
+  "address": "0xc333e80ef2dec2805f239e3f1e810612d294f771",
+  "role": "otc_market_maker",
+  "nonce": 132056,
+  "eth_balance": 351.9699020704209,
+  "total_usd": 0.0,
+  "entity_label": "Unknown",
+  "is_contract": false,
+  "goplus_flags": [],
+  "aml_risk_score": "N/A",
+  "chainabuse_reports": 0,
+  "scan_date": "2026-06-24T09:45:58Z",
+  "scanner_ver": "GL-L76 v3.1"
+}
