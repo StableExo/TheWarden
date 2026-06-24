@@ -1,0 +1,180 @@
+# 🔍 TheWarden Forensic Report — NODE 050
+
+**Label:** `Genesis_Wintermute_2021_B`  
+**Address:** `0xfbb1b73c4f0bda4f67dca266ce6ef42f520fbb98`  
+**Node Type:** `genesis_contact`  
+**First Contacted:** Wintermute 2021  
+**Context:** Second wallet to contact Wintermute node (2021)  
+**Scanner Version:** GL-L76 v3.1  
+**Scanned At:** 2026-06-24T09:43:58 UTC  
+**Tools Fired:** 12/13
+
+---
+
+## ⚡ Assessment
+
+| Field | Value |
+|-------|-------|
+| **Verdict** | 🔴 MAJOR_OPERATOR |
+| **Reasoning** | Extremely high nonce (11,536,138) — this is a major operator, not just a genesis wallet |
+| **Nonce** | 11,536,138 🚨 **EXTREMELY HIGH — MAJOR OPERATOR** |
+| **ETH Balance** | 0.133647 ETH |
+| **Type** | 👤 EOA |
+| **Arkham Entity** | Unknown / Unlabeled |
+| **Net Worth (Moralis)** | $278,570,754,173,616.03 |
+
+---
+
+## 🔒 GoPlus — Security Flags
+
+✅ No flags — address is clean
+
+---
+
+## 🏦 Arkham — Entity Attribution & Transfers
+
+**Entity:** `Unknown / Unlabeled`  
+**Total Transfers (sample window):** 10
+
+| Date | From | To | Amount | Token | Chain |
+|------|------|----|--------|-------|-------|
+| — | No transfers found | — | — | — | — |
+
+---
+
+## 💰 GoldRush — Token Balances (200+ Chains)
+
+| Chain | Status | Total USD | Tokens |
+|-------|--------|-----------|--------|
+| Base | 🔴 | $0.43 | 24 |
+| &nbsp;&nbsp;↳ XCCX | | 15.000000 | ≈ $0.35 |
+| &nbsp;&nbsp;↳ BASED | | 27222.000000 | ≈ $0.07 |
+| &nbsp;&nbsp;↳ ETH | | 0.000004 | ≈ $0.01 |
+| &nbsp;&nbsp;↳ SKYA | | 3.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ LOA | | 5.000000 | ≈ $0.00 |
+| BSC | 🔴 | $590.64 | 177 |
+| &nbsp;&nbsp;↳ ETH | | 0.325214 | ≈ $541.08 |
+| &nbsp;&nbsp;↳ EV | | 18033.500000 | ≈ $28.31 |
+| &nbsp;&nbsp;↳ ROOM | | 138727.815951 | ≈ $20.74 |
+| &nbsp;&nbsp;↳ ANY | | 1.000000 | ≈ $0.50 |
+| &nbsp;&nbsp;↳ MTV | | 100.000000 | ≈ $0.02 |
+| Polygon | 🔴 | $487.62 | 124 |
+| &nbsp;&nbsp;↳ WETH | | 0.292751 | ≈ $487.61 |
+| &nbsp;&nbsp;↳ POL | | 0.122000 | ≈ $0.01 |
+| &nbsp;&nbsp;↳ ECLD | | 3.100000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ LGNS | | 0.000111 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ VOXEL | | 0.025360 | ≈ $0.00 |
+| Arbitrum | ⚫ | $0.00 | 18 |
+| &nbsp;&nbsp;↳ Visit https://fetdao.com to claim $fetch rewards. | | 72500.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ Claim $GPepe rewards at https://gpepe.gift | | 7240000.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ BTCXT | | 1.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ ELK | | 1000000000000000.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ Claim rewards at https://ousd.gift | | 248000.000000 | ≈ $0.00 |
+
+
+---
+
+## 📡 Bitquery — Live Transfer Flow (Base Chain)
+
+**Inbound:** 0 recent  
+**Outbound:** 0 recent
+
+### Inbound
+| Time | Sender | Amount | Token |
+|------|--------|--------|-------|
+| — | No inbound transfers | — | — |
+
+### Outbound
+| Time | Receiver | Amount | Token |
+|------|----------|--------|-------|
+| — | No outbound transfers | — | — |
+
+---
+
+## 🔎 Etherscan V2 — Multi-chain Activity
+
+| Chain | Balance | Transactions |
+|-------|---------|-------------|
+| ETH | ⚫ 0.133647 ETH | 0 txs |
+| Base | ⚫ 0.000000 ETH | 0 txs |
+| BSC | ⚫ 0.000000 ETH | 0 txs |
+| Polygon | ⚫ 0.122000 ETH | 0 txs |
+| Arbitrum | ⚫ 0.000000 ETH | 0 txs |
+
+
+---
+
+## 📊 Moralis — Wallet History & Net Worth
+
+**Net Worth:** $278,570,754,173,616.03
+
+**ETH** — 5 transactions
+- ✅ `2026-06-11` Received 100 KPER from 0x51...f07f ETH:0
+- ✅ `2026-06-04` Received 11.63 USDT from 0xcd...2af2 ETH:0
+- ✅ `2026-06-02` Received 425 ZIK from 0xd1...80e3 ETH:0
+**BASE** — 5 transactions
+- ✅ `2026-06-23` Airdrop from 0xa9...2732 ETH:0
+- ✅ `2026-06-17` Airdrop from 0x88...ceb0 ETH:0
+- ✅ `2026-06-13` Airdrop from 0xf8...405a ETH:0
+
+
+---
+
+## 🧠 Nansen — Smart Money Intelligence
+
+- **portfolio**: # Token Holdings
+**Error retrieving token balances**: API request to profiler/address/current-balance failed with status 429. The request body was
+
+{
+  "address": "0xfbb1b73c4f0bda4f67dca266ce6ef42f52
+- **transactions**: Error calling tool 'address_transactions': API request to profiler/address/transactions failed with status 429. The request body was
+
+{
+  "address": "0xfbb1b73c4f0bda4f67dca266ce6ef42f520fbb98",
+  "ch
+- **entity_search**: No results found for query: "0xfbb1b73c4f0bda4f67dca266ce6ef42f520fbb98"
+
+
+---
+
+## 🔬 Tenderly — Contract Analysis
+
+| Chain | Type |
+|-------|------|
+| ETH | 👤 EOA |
+| Base | 👤 EOA |
+
+---
+
+## 🛡️ OnChainRisk — AML Score
+
+🔑 Key valid — Upgrade to paid plan for AML scores
+
+---
+
+## ⚠️ Chainabuse — Sanctions Screening
+
+Register at chainabuse.com — free, 100/day
+
+---
+
+## 📋 Raw Metadata
+
+```json
+{
+  "node_num": "050",
+  "label": "Genesis_Wintermute_2021_B",
+  "address": "0xfbb1b73c4f0bda4f67dca266ce6ef42f520fbb98",
+  "node_type": "genesis_contact",
+  "contact_of": "Wintermute 2021",
+  "assessment": "MAJOR_OPERATOR",
+  "nonce": 11536138,
+  "balance_eth": 0.1336466195358424,
+  "is_contract": false,
+  "tools_fired": 12,
+  "scanned_at": "2026-06-24T09:43:58"
+}
+```
+
+---
+*Generated by TheWarden GL-L76 v3.1 — Red Web Intelligence Network*

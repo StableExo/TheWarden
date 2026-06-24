@@ -1,0 +1,33 @@
+{
+  "node_num": "052",
+  "label": "Genesis_Binance_HW14_NK_B",
+  "address": "0x0cf0ee63788a0849fe5297f3407f701e122cc023",
+  "node_type": "genesis_contact",
+  "contact_of": "Binance HW14 NK",
+  "context": "Second wallet to contact Binance HW14 NK-linked node",
+  "assessment": "ACTIVE",
+  "assessment_reasoning": "Active: nonce=1, balance=0.000000 ETH, total_usd=$233.89",
+  "stats": {
+    "nonce": 1,
+    "balance_eth": 0.0,
+    "tx_count": 0,
+    "net_worth_usd": 6974.84,
+    "total_usd_all_chains": 233.89,
+    "transfer_count": 10,
+    "entity": "Unknown / Unlabeled",
+    "flag_count": 0,
+    "bq_inbound": 0,
+    "bq_outbound": 0
+  },
+  "nonce": 1,
+  "balance_eth": 0.0,
+  "is_contract": true,
+  "entity_arkham": "Unknown / Unlabeled",
+  "net_worth_usd": 6974.84,
+  "goplus_flags": 0,
+  "tenderly_eth": "EOA / Not contract",
+  "chainabuse_sanctioned": null,
+  "scanner_version": "GL-L76 v3.1",
+  "scanned_at": "2026-06-24T09:43:45.627127+00:00",
+  "tools_fired": 12
+}

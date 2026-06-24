@@ -1,0 +1,185 @@
+# 🔍 TheWarden Forensic Report — NODE 049
+
+**Label:** `Genesis_Wintermute_2021_A`  
+**Address:** `0xa7efae728d2936e78bda97dc267687568dd593f3`  
+**Node Type:** `genesis_contact`  
+**First Contacted:** Wintermute 2021  
+**Context:** First wallet to contact Wintermute node (2021)  
+**Scanner Version:** GL-L76 v3.1  
+**Scanned At:** 2026-06-24T09:43:46 UTC  
+**Tools Fired:** 12/13
+
+---
+
+## ⚡ Assessment
+
+| Field | Value |
+|-------|-------|
+| **Verdict** | 🔴 MAJOR_OPERATOR |
+| **Reasoning** | Extremely high nonce (2,743,908) — this is a major operator, not just a genesis wallet |
+| **Nonce** | 2,743,908 ⚠️ HIGH — operator-level activity |
+| **ETH Balance** | 1.420396 ETH |
+| **Type** | 👤 EOA |
+| **Arkham Entity** | Unknown / Unlabeled |
+| **Net Worth (Moralis)** | $68,204,783,398.16 |
+
+---
+
+## 🔒 GoPlus — Security Flags
+
+✅ No flags — address is clean
+
+---
+
+## 🏦 Arkham — Entity Attribution & Transfers
+
+**Entity:** `Unknown / Unlabeled`  
+**Total Transfers (sample window):** 10
+
+| Date | From | To | Amount | Token | Chain |
+|------|------|----|--------|-------|-------|
+| — | No transfers found | — | — | — | — |
+
+---
+
+## 💰 GoldRush — Token Balances (200+ Chains)
+
+| Chain | Status | Total USD | Tokens |
+|-------|--------|-----------|--------|
+| ETH | 🔴 | $4,859.42 | 295 |
+| &nbsp;&nbsp;↳ ETH | | 1.420396 | ≈ $2,363.74 |
+| &nbsp;&nbsp;↳ USDT | | 2279.274322 | ≈ $2,276.54 |
+| &nbsp;&nbsp;↳ ARKM | | 1668.014751 | ≈ $201.83 |
+| &nbsp;&nbsp;↳ FREE | | 273848.700880 | ≈ $8.70 |
+| &nbsp;&nbsp;↳ RIZO | | 10000000.000000 | ≈ $3.23 |
+| Base | 🔴 | $0.51 | 730 |
+| &nbsp;&nbsp;↳ ETH | | 0.000300 | ≈ $0.50 |
+| &nbsp;&nbsp;↳ BET | | 1.000000 | ≈ $0.01 |
+| &nbsp;&nbsp;↳ MINKY | | 10.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ SUMMER | | 1.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ ATHENA | | 0.001000 | ≈ $0.00 |
+| BSC | 🔴 | $24.19 | 976 |
+| &nbsp;&nbsp;↳ BNB | | 0.041137 | ≈ $23.69 |
+| &nbsp;&nbsp;↳ ANY | | 1.000000 | ≈ $0.50 |
+| &nbsp;&nbsp;↳ GEC | | 0.212000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ FREE | | 430.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ Ape | | 98411.944180 | ≈ $0.00 |
+| Polygon | 🔴 | $42.15 | 90 |
+| &nbsp;&nbsp;↳ WETH | | 0.025223 | ≈ $42.01 |
+| &nbsp;&nbsp;↳ XCCX | | 5.000000 | ≈ $0.12 |
+| &nbsp;&nbsp;↳ POL | | 0.224080 | ≈ $0.02 |
+| &nbsp;&nbsp;↳ WELT | | 2.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ Claim: https://aerodrome.supply | | 1150.000000 | ≈ $0.00 |
+| Arbitrum | ⚫ | $0.00 | 0 |
+
+
+---
+
+## 📡 Bitquery — Live Transfer Flow (Base Chain)
+
+**Inbound:** 0 recent  
+**Outbound:** 0 recent
+
+### Inbound
+| Time | Sender | Amount | Token |
+|------|--------|--------|-------|
+| — | No inbound transfers | — | — |
+
+### Outbound
+| Time | Receiver | Amount | Token |
+|------|----------|--------|-------|
+| — | No outbound transfers | — | — |
+
+---
+
+## 🔎 Etherscan V2 — Multi-chain Activity
+
+| Chain | Balance | Transactions |
+|-------|---------|-------------|
+| ETH | ⚫ 0.000000 ETH | 0 txs |
+| Base | ⚫ 0.000000 ETH | 0 txs |
+| BSC | ⚫ 0.000000 ETH | 0 txs |
+| Polygon | ⚫ 0.000000 ETH | 0 txs |
+| Arbitrum | ⚫ 0.000000 ETH | 0 txs |
+
+
+---
+
+## 📊 Moralis — Wallet History & Net Worth
+
+**Net Worth:** $68,204,783,398.16
+
+**ETH** — 5 transactions
+- ✅ `2026-06-02` Received 0.000000104 ARKM from 0x03...6c74 ETH:0
+- ✅ `2026-06-02` Received 0.000000107 ARKM from 0x03...6c74 ETH:0
+- ✅ `2026-06-02` Received 0.00000027 ARKM from 0x03...6c74 ETH:0
+**BASE** — 5 transactions
+- ✅ `2026-06-17` Airdrop from 0xf1...9caf ETH:0
+- ✅ `2026-06-02` Airdrop from 0x6e...1007 ETH:0
+- ✅ `2026-06-02` Airdrop from 0x29...6a6e ETH:0
+**BSC** — 5 transactions
+- ✅ `2026-05-04` Received 1.10 ZB from 0x2d...f8e7 ETH:0
+- ✅ `2026-04-24` Airdrop from 0xf9...dc97 ETH:0
+- ✅ `2026-02-16` Received 1 USDTz from 0x00...8aa1 ETH:0
+
+
+---
+
+## 🧠 Nansen — Smart Money Intelligence
+
+- **portfolio**: # Token Holdings
+**Error retrieving token balances**: API request to profiler/address/current-balance failed with status 429. The request body was
+
+{
+  "address": "0xa7efae728d2936e78bda97dc267687568d
+- **transactions**: Error calling tool 'address_transactions': API request to profiler/address/transactions failed with status 429. The request body was
+
+{
+  "address": "0xa7efae728d2936e78bda97dc267687568dd593f3",
+  "ch
+- **entity_search**: No results found for query: "0xa7efae728d2936e78bda97dc267687568dd593f3"
+
+
+---
+
+## 🔬 Tenderly — Contract Analysis
+
+| Chain | Type |
+|-------|------|
+| ETH | 👤 EOA |
+| Base | 👤 EOA |
+
+---
+
+## 🛡️ OnChainRisk — AML Score
+
+🔑 Key valid — Upgrade to paid plan for AML scores
+
+---
+
+## ⚠️ Chainabuse — Sanctions Screening
+
+Register at chainabuse.com — free, 100/day
+
+---
+
+## 📋 Raw Metadata
+
+```json
+{
+  "node_num": "049",
+  "label": "Genesis_Wintermute_2021_A",
+  "address": "0xa7efae728d2936e78bda97dc267687568dd593f3",
+  "node_type": "genesis_contact",
+  "contact_of": "Wintermute 2021",
+  "assessment": "MAJOR_OPERATOR",
+  "nonce": 2743908,
+  "balance_eth": 1.4203964671217133,
+  "is_contract": false,
+  "tools_fired": 12,
+  "scanned_at": "2026-06-24T09:43:46"
+}
+```
+
+---
+*Generated by TheWarden GL-L76 v3.1 — Red Web Intelligence Network*

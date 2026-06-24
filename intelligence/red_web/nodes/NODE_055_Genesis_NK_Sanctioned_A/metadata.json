@@ -1,0 +1,33 @@
+{
+  "node_num": "055",
+  "label": "Genesis_NK_Sanctioned_A",
+  "address": "0x54ace95dd92d29eef3ddcd0e3e0f23ac51f696ec",
+  "node_type": "genesis_contact",
+  "contact_of": "NK Sanctioned",
+  "context": "First NK-sanctioned genesis contact",
+  "assessment": "ACTIVE",
+  "assessment_reasoning": "Active: nonce=42, balance=0.570673 ETH, total_usd=$949.68",
+  "stats": {
+    "nonce": 42,
+    "balance_eth": 0.5706734974266854,
+    "tx_count": 0,
+    "net_worth_usd": 0,
+    "total_usd_all_chains": 949.68,
+    "transfer_count": 10,
+    "entity": "Unknown / Unlabeled",
+    "flag_count": 0,
+    "bq_inbound": 0,
+    "bq_outbound": 0
+  },
+  "nonce": 42,
+  "balance_eth": 0.5706734974266854,
+  "is_contract": false,
+  "entity_arkham": "Unknown / Unlabeled",
+  "net_worth_usd": 0,
+  "goplus_flags": 0,
+  "tenderly_eth": "EOA / Not contract",
+  "chainabuse_sanctioned": null,
+  "scanner_version": "GL-L76 v3.1",
+  "scanned_at": "2026-06-24T09:44:14.150864+00:00",
+  "tools_fired": 12
+}

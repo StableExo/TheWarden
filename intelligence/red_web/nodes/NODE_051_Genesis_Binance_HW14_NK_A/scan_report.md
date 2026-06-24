@@ -1,0 +1,183 @@
+# 🔍 TheWarden Forensic Report — NODE 051
+
+**Label:** `Genesis_Binance_HW14_NK_A`  
+**Address:** `0x00799bbc833d5b168f0410312d2a8fd9e0e3079c`  
+**Node Type:** `genesis_contact`  
+**First Contacted:** Binance HW14 NK  
+**Context:** First wallet to contact Binance HW14 NK-linked node  
+**Scanner Version:** GL-L76 v3.1  
+**Scanned At:** 2026-06-24T09:43:46 UTC  
+**Tools Fired:** 12/13
+
+---
+
+## ⚡ Assessment
+
+| Field | Value |
+|-------|-------|
+| **Verdict** | 🟡 ACTIVE |
+| **Reasoning** | High activity: nonce=8,299, tx_count=0 |
+| **Nonce** | 8,299 ⚠️ elevated |
+| **ETH Balance** | 0.001922 ETH |
+| **Type** | 👤 EOA |
+| **Arkham Entity** | Unknown / Unlabeled |
+| **Net Worth (Moralis)** | $23,496,076,673.46 |
+
+---
+
+## 🔒 GoPlus — Security Flags
+
+✅ No flags — address is clean
+
+---
+
+## 🏦 Arkham — Entity Attribution & Transfers
+
+**Entity:** `Unknown / Unlabeled`  
+**Total Transfers (sample window):** 10
+
+| Date | From | To | Amount | Token | Chain |
+|------|------|----|--------|-------|-------|
+| — | No transfers found | — | — | — | — |
+
+---
+
+## 💰 GoldRush — Token Balances (200+ Chains)
+
+| Chain | Status | Total USD | Tokens |
+|-------|--------|-----------|--------|
+| ETH | 🔴 | $217.75 | 660 |
+| &nbsp;&nbsp;↳ None | | 567.500000 | ≈ $214.51 |
+| &nbsp;&nbsp;↳ ETH | | 0.001922 | ≈ $3.20 |
+| &nbsp;&nbsp;↳ PLR | | 68.000000 | ≈ $0.03 |
+| &nbsp;&nbsp;↳ ARCONA | | 1.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ FOR | | 1.000000 | ≈ $0.00 |
+| Base | ⚫ | $0.00 | 4 |
+| &nbsp;&nbsp;↳ SACHI | | 1.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ OOMER | | 0.010000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ VPRM | | 500.000000 | ≈ $0.00 |
+| BSC | 🔴 | $29.99 | 11 |
+| &nbsp;&nbsp;↳ USDC | | 20.000000 | ≈ $20.00 |
+| &nbsp;&nbsp;↳ USDT | | 10.000000 | ≈ $9.99 |
+| &nbsp;&nbsp;↳ PLT | | 0.002000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ FREE | | 6648.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ WSG | | 500000.000000 | ≈ $0.00 |
+| Polygon | ⚫ | $0.00 | 7 |
+| &nbsp;&nbsp;↳ CHLI | | 230933.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ nftfan | | 40000000000.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ BTN | | 74000.000000 | ≈ $0.00 |
+| &nbsp;&nbsp;↳ CHP | | 20583.656688 | ≈ $0.00 |
+| Arbitrum | ⚫ | $0.00 | 2 |
+| &nbsp;&nbsp;↳ NCASH | | 2.100000 | ≈ $0.00 |
+
+
+---
+
+## 📡 Bitquery — Live Transfer Flow (Base Chain)
+
+**Inbound:** 0 recent  
+**Outbound:** 0 recent
+
+### Inbound
+| Time | Sender | Amount | Token |
+|------|--------|--------|-------|
+| — | No inbound transfers | — | — |
+
+### Outbound
+| Time | Receiver | Amount | Token |
+|------|----------|--------|-------|
+| — | No outbound transfers | — | — |
+
+---
+
+## 🔎 Etherscan V2 — Multi-chain Activity
+
+| Chain | Balance | Transactions |
+|-------|---------|-------------|
+| ETH | ⚫ 0.000000 ETH | 0 txs |
+| Base | ⚫ 0.000000 ETH | 0 txs |
+| BSC | ⚫ 0.000000 ETH | 0 txs |
+| Polygon | ⚫ 0.000000 ETH | 0 txs |
+| Arbitrum | ⚫ 0.000000 ETH | 0 txs |
+
+
+---
+
+## 📊 Moralis — Wallet History & Net Worth
+
+**Net Worth:** $23,496,076,673.46
+
+**ETH** — 5 transactions
+- ✅ `2025-12-11` Received 0.0018 ETH from Binance: Hot Wallet ETH:0.0018
+- ✅ `2025-08-01` Received 13 YOY from 0x76...962d ETH:0
+- ✅ `2025-06-22` Received 0 ETH from 0x4f...0ac3 ETH:0.000000000000000041
+**BASE** — 5 transactions
+- ✅ `2026-04-08` Received 1,780 ⭐️Visit to claim - | t.me/s/us_pool | from 0x ETH:0
+- ✅ `2025-11-25` Received 1 SACHI from 0x5f...3676 ETH:0
+- ✅ `2025-06-29` Airdrop from Uniswap: PoolManager ETH:0
+**BSC** — 5 transactions
+- ✅ `2026-04-30` Received 10 USDT from 0x1b...09e7 ETH:0
+- ✅ `2025-12-11` Received 1 NFT from 0x6c...61d5 ETH:0
+- ✅ `2025-09-11` Airdrop from 0x20...4f08 ETH:0
+
+
+---
+
+## 🧠 Nansen — Smart Money Intelligence
+
+- **portfolio**: # Token Holdings
+**Error retrieving token balances**: API request to profiler/address/current-balance failed with status 429. The request body was
+
+{
+  "address": "0x00799bbc833d5b168f0410312d2a8fd9e0
+- **transactions**: Error calling tool 'address_transactions': API request to profiler/address/transactions failed with status 429. The request body was
+
+{
+  "address": "0x00799bbc833d5b168f0410312d2a8fd9e0e3079c",
+  "ch
+- **entity_search**: No results found for query: "0x00799bbc833d5b168f0410312d2a8fd9e0e3079c"
+
+
+---
+
+## 🔬 Tenderly — Contract Analysis
+
+| Chain | Type |
+|-------|------|
+| ETH | 👤 EOA |
+| Base | 👤 EOA |
+
+---
+
+## 🛡️ OnChainRisk — AML Score
+
+🔑 Key valid — Upgrade to paid plan for AML scores
+
+---
+
+## ⚠️ Chainabuse — Sanctions Screening
+
+Register at chainabuse.com — free, 100/day
+
+---
+
+## 📋 Raw Metadata
+
+```json
+{
+  "node_num": "051",
+  "label": "Genesis_Binance_HW14_NK_A",
+  "address": "0x00799bbc833d5b168f0410312d2a8fd9e0e3079c",
+  "node_type": "genesis_contact",
+  "contact_of": "Binance HW14 NK",
+  "assessment": "ACTIVE",
+  "nonce": 8299,
+  "balance_eth": 0.00192195576657637,
+  "is_contract": false,
+  "tools_fired": 12,
+  "scanned_at": "2026-06-24T09:43:46"
+}
+```
+
+---
+*Generated by TheWarden GL-L76 v3.1 — Red Web Intelligence Network*

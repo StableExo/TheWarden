@@ -1,0 +1,186 @@
+# 🔍 TheWarden Forensic Report — NODE 057
+
+**Label:** `Genesis_NK_Sanctioned_C`  
+**Address:** `0xdac17f958d2ee523a2206206994597c13d831ec7`  
+**Node Type:** `genesis_contact`  
+**First Contacted:** NK Sanctioned  
+**Context:** Third NK-sanctioned genesis contact (USDT contract)  
+**Scanner Version:** GL-L76 v3.1  
+**Scanned At:** 2026-06-24T09:44:27 UTC  
+**Tools Fired:** 12/13
+
+---
+
+## ⚡ Assessment
+
+| Field | Value |
+|-------|-------|
+| **Verdict** | 🟡 ACTIVE |
+| **Reasoning** | Active: nonce=1, balance=0.000000 ETH, total_usd=$1937684.88 |
+| **Nonce** | 1 |
+| **ETH Balance** | 0.000000 ETH |
+| **Type** | 📜 Contract |
+| **Arkham Entity** | Unknown / Unlabeled |
+| **Net Worth (Moralis)** | $0.00 |
+
+---
+
+## 🔒 GoPlus — Security Flags
+
+✅ No flags — address is clean
+
+---
+
+## 🏦 Arkham — Entity Attribution & Transfers
+
+**Entity:** `Unknown / Unlabeled`  
+**Total Transfers (sample window):** 10
+
+| Date | From | To | Amount | Token | Chain |
+|------|------|----|--------|-------|-------|
+| — | No transfers found | — | — | — | — |
+
+---
+
+## 💰 GoldRush — Token Balances (200+ Chains)
+
+| Chain | Status | Total USD | Tokens |
+|-------|--------|-----------|--------|
+| ETH | 🔴 | $1,109,305.08 | 4273 |
+| &nbsp;&nbsp;↳ USDT | | 487816.491993 | ≈ $487,231.10 |
+| &nbsp;&nbsp;↳ USDC | | 334396.772879 | ≈ $334,396.78 |
+| &nbsp;&nbsp;↳ CRO | | 4800173.764581 | ≈ $269,710.25 |
+| &nbsp;&nbsp;↳ LINK | | 634.446426 | ≈ $4,820.33 |
+| &nbsp;&nbsp;↳ MNT | | 5381.897180 | ≈ $2,766.30 |
+| Base | 🔴 | $4,368.60 | 293 |
+| &nbsp;&nbsp;↳ USDT | | 2779.564268 | ≈ $2,774.28 |
+| &nbsp;&nbsp;↳ USDC | | 817.286244 | ≈ $817.29 |
+| &nbsp;&nbsp;↳ ETH | | 0.442197 | ≈ $735.88 |
+| &nbsp;&nbsp;↳ cbBTC | | 0.000306 | ≈ $19.18 |
+| &nbsp;&nbsp;↳ ALTT | | 1875.000000 | ≈ $11.33 |
+| BSC | 🔴 | $476,069.67 | 751 |
+| &nbsp;&nbsp;↳ USDT | | 355377.253981 | ≈ $354,950.78 |
+| &nbsp;&nbsp;↳ BNB | | 158.234070 | ≈ $91,141.24 |
+| &nbsp;&nbsp;↳ BUSD | | 16670.710549 | ≈ $16,639.03 |
+| &nbsp;&nbsp;↳ AI | | 2275000.000000 | ≈ $4,527.93 |
+| &nbsp;&nbsp;↳ USDC | | 4031.606335 | ≈ $4,031.61 |
+| Polygon | 🔴 | $26,569.52 | 205 |
+| &nbsp;&nbsp;↳ USDT0 | | 24258.085258 | ≈ $24,228.97 |
+| &nbsp;&nbsp;↳ USDC | | 947.490151 | ≈ $947.49 |
+| &nbsp;&nbsp;↳ DAI | | 627.189201 | ≈ $627.19 |
+| &nbsp;&nbsp;↳ USDC.e | | 368.609209 | ≈ $368.61 |
+| &nbsp;&nbsp;↳ POL | | 3752.904033 | ≈ $286.35 |
+| Arbitrum | 🔴 | $321,372.01 | 172 |
+| &nbsp;&nbsp;↳ USDC | | 300040.070289 | ≈ $299,890.44 |
+| &nbsp;&nbsp;↳ USDT | | 18437.833480 | ≈ $18,405.56 |
+| &nbsp;&nbsp;↳ ETH | | 1.386927 | ≈ $2,308.43 |
+| &nbsp;&nbsp;↳ USDC | | 765.743076 | ≈ $765.36 |
+| &nbsp;&nbsp;↳ MAGIC | | 34.261415 | ≈ $1.52 |
+
+
+---
+
+## 📡 Bitquery — Live Transfer Flow (Base Chain)
+
+**Inbound:** 0 recent  
+**Outbound:** 0 recent
+
+### Inbound
+| Time | Sender | Amount | Token |
+|------|--------|--------|-------|
+| — | No inbound transfers | — | — |
+
+### Outbound
+| Time | Receiver | Amount | Token |
+|------|----------|--------|-------|
+| — | No outbound transfers | — | — |
+
+---
+
+## 🔎 Etherscan V2 — Multi-chain Activity
+
+| Chain | Balance | Transactions |
+|-------|---------|-------------|
+| ETH | ⚫ 0.000000 ETH | 0 txs |
+| Base | ⚫ 0.000000 ETH | 0 txs |
+| BSC | ⚫ 0.000000 ETH | 0 txs |
+| Polygon | ⚫ 3752.904033 ETH | 0 txs |
+| Arbitrum | ⚫ 0.000000 ETH | 0 txs |
+
+
+---
+
+## 📊 Moralis — Wallet History & Net Worth
+
+**Net Worth:** $0.00
+
+_No transaction history found across monitored chains._
+
+---
+
+## 🧠 Nansen — Smart Money Intelligence
+
+- **portfolio**: # Token Holdings
+**Error retrieving token balances**: API request to profiler/address/current-balance failed with status 403. The request body was
+
+{
+  "address": "0xdac17f958d2ee523a2206206994597c13d
+- **transactions**: Error calling tool 'address_transactions': API request to profiler/address/transactions failed with status 403. The request body was
+
+{
+  "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+  "ch
+- **entity_search**: # Search Results for "0xdac17f958d2ee523a2206206994597c13d831ec7"
+
+**Query**: 0xdac17f958d2ee523a2206206994597c13d831ec7
+**Filters**: Type: any
+**Total Results**: 2
+
+## Tokens (2 results)
+
+| Name     
+
+
+---
+
+## 🔬 Tenderly — Contract Analysis
+
+| Chain | Type |
+|-------|------|
+| ETH | 👤 EOA |
+| Base | 👤 EOA |
+
+---
+
+## 🛡️ OnChainRisk — AML Score
+
+🔑 Key valid — Upgrade to paid plan for AML scores
+
+---
+
+## ⚠️ Chainabuse — Sanctions Screening
+
+Register at chainabuse.com — free, 100/day
+
+---
+
+## 📋 Raw Metadata
+
+```json
+{
+  "node_num": "057",
+  "label": "Genesis_NK_Sanctioned_C",
+  "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+  "node_type": "genesis_contact",
+  "contact_of": "NK Sanctioned",
+  "assessment": "ACTIVE",
+  "nonce": 1,
+  "balance_eth": 4.2e-17,
+  "is_contract": true,
+  "tools_fired": 12,
+  "scanned_at": "2026-06-24T09:44:27"
+}
+```
+
+---
+*Generated by TheWarden GL-L76 v3.1 — Red Web Intelligence Network*
