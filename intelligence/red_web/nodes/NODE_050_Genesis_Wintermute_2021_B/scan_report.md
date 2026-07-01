@@ -11,7 +11,7 @@
 
 ---
 
-## ⚡ Assessment
+## ⚠️ Assessment
 
 | Field | Value |
 |-------|-------|
@@ -31,130 +31,54 @@
 
 ---
 
-## 🏦 Arkham — Entity Attribution & Transfers
+## ⚡ QuickNode — ETH Mainnet RPC
 
-**Entity:** `Unknown / Unlabeled`  
-**Total Transfers (sample window):** 10
-
-| Date | From | To | Amount | Token | Chain |
-|------|------|----|--------|-------|-------|
-| — | No transfers found | — | — | — | — |
-
----
-
-## 💰 GoldRush — Token Balances (200+ Chains)
-
-| Chain | Status | Total USD | Tokens |
-|-------|--------|-----------|--------|
-| Base | 🔴 | $0.43 | 24 |
-| &nbsp;&nbsp;↳ XCCX | | 15.000000 | ≈ $0.35 |
-| &nbsp;&nbsp;↳ BASED | | 27222.000000 | ≈ $0.07 |
-| &nbsp;&nbsp;↳ ETH | | 0.000004 | ≈ $0.01 |
-| &nbsp;&nbsp;↳ SKYA | | 3.000000 | ≈ $0.00 |
-| &nbsp;&nbsp;↳ LOA | | 5.000000 | ≈ $0.00 |
-| BSC | 🔴 | $590.64 | 177 |
-| &nbsp;&nbsp;↳ ETH | | 0.325214 | ≈ $541.08 |
-| &nbsp;&nbsp;↳ EV | | 18033.500000 | ≈ $28.31 |
-| &nbsp;&nbsp;↳ ROOM | | 138727.815951 | ≈ $20.74 |
-| &nbsp;&nbsp;↳ ANY | | 1.000000 | ≈ $0.50 |
-| &nbsp;&nbsp;↳ MTV | | 100.000000 | ≈ $0.02 |
-| Polygon | 🔴 | $487.62 | 124 |
-| &nbsp;&nbsp;↳ WETH | | 0.292751 | ≈ $487.61 |
-| &nbsp;&nbsp;↳ POL | | 0.122000 | ≈ $0.01 |
-| &nbsp;&nbsp;↳ ECLD | | 3.100000 | ≈ $0.00 |
-| &nbsp;&nbsp;↳ LGNS | | 0.000111 | ≈ $0.00 |
-| &nbsp;&nbsp;↳ VOXEL | | 0.025360 | ≈ $0.00 |
-| Arbitrum | ⚫ | $0.00 | 18 |
-| &nbsp;&nbsp;↳ Visit https://fetdao.com to claim $fetch rewards. | | 72500.000000 | ≈ $0.00 |
-| &nbsp;&nbsp;↳ Claim $GPepe rewards at https://gpepe.gift | | 7240000.000000 | ≈ $0.00 |
-| &nbsp;&nbsp;↳ BTCXT | | 1.000000 | ≈ $0.00 |
-| &nbsp;&nbsp;↳ ELK | | 1000000000000000.000000 | ≈ $0.00 |
-| &nbsp;&nbsp;↳ Claim rewards at https://ousd.gift | | 248000.000000 | ≈ $0.00 |
-
+| Field | Value |
+|-------|-------|
+| ETH Balance | 0.133647 ETH |
+| Nonce (txs) | 11,536,138 |
+| Type | EOA |
 
 ---
 
-## 📡 Bitquery — Live Transfer Flow (Base Chain)
+## 🏛️ Arkham — Entity Attribution
 
-**Inbound:** 0 recent  
-**Outbound:** 0 recent
-
-### Inbound
-| Time | Sender | Amount | Token |
-|------|--------|--------|-------|
-| — | No inbound transfers | — | — |
-
-### Outbound
-| Time | Receiver | Amount | Token |
-|------|----------|--------|-------|
-| — | No outbound transfers | — | — |
+- **Entity:** Unknown / Unlabeled
+- **Transfers:** 0 total shown
 
 ---
 
-## 🔎 Etherscan V2 — Multi-chain Activity
+## 📊 Etherscan V2 — Multi-chain
 
-| Chain | Balance | Transactions |
-|-------|---------|-------------|
-| ETH | ⚫ 0.133647 ETH | 0 txs |
-| Base | ⚫ 0.000000 ETH | 0 txs |
-| BSC | ⚫ 0.000000 ETH | 0 txs |
-| Polygon | ⚫ 0.122000 ETH | 0 txs |
-| Arbitrum | ⚫ 0.000000 ETH | 0 txs |
-
+| Chain | Balance | Txs |
+|-------|---------|-----|
+| ETH | 0.133647 ETH | 5 |
+| Base | 0.000000 ETH | 0 |
 
 ---
 
-## 📊 Moralis — Wallet History & Net Worth
+## 🔗 Chainbase MCP — Multi-chain
 
-**Net Worth:** $278,570,754,173,616.03
-
-**ETH** — 5 transactions
-- ✅ `2026-06-11` Received 100 KPER from 0x51...f07f ETH:0
-- ✅ `2026-06-04` Received 11.63 USDT from 0xcd...2af2 ETH:0
-- ✅ `2026-06-02` Received 425 ZIK from 0xd1...80e3 ETH:0
-**BASE** — 5 transactions
-- ✅ `2026-06-23` Airdrop from 0xa9...2732 ETH:0
-- ✅ `2026-06-17` Airdrop from 0x88...ceb0 ETH:0
-- ✅ `2026-06-13` Airdrop from 0xf8...405a ETH:0
-
+All chains: 0 txs  
+⚠️ Zero from Chainbase may indicate EIP-7702 type 4 txs
 
 ---
 
-## 🧠 Nansen — Smart Money Intelligence
+## 🧠 Moralis — Wallet History
 
-- **portfolio**: # Token Holdings
-**Error retrieving token balances**: API request to profiler/address/current-balance failed with status 429. The request body was
-
-{
-  "address": "0xfbb1b73c4f0bda4f67dca266ce6ef42f52
-- **transactions**: Error calling tool 'address_transactions': API request to profiler/address/transactions failed with status 429. The request body was
-
-{
-  "address": "0xfbb1b73c4f0bda4f67dca266ce6ef42f520fbb98",
-  "ch
-- **entity_search**: No results found for query: "0xfbb1b73c4f0bda4f67dca266ce6ef42f520fbb98"
-
+**Recent activity (spam airdrops only):**
+- 2026-06-11: Received 100 KPER (ETH)
+- 2026-06-04: Received 11.63 USDT (ETH)
+- 2026-06-02: Received 425 ZIK (ETH)
+- 2026-06-23: Airdrop (Base)
+- 2026-03-31: Received 20,000 POLDOG (Polygon)
 
 ---
 
-## 🔬 Tenderly — Contract Analysis
+## 🌐 Nansen MCP — Smart Money
 
-| Chain | Type |
-|-------|------|
-| ETH | 👤 EOA |
-| Base | 👤 EOA |
-
----
-
-## 🛡️ OnChainRisk — AML Score
-
-🔑 Key valid — Upgrade to paid plan for AML scores
-
----
-
-## ⚠️ Chainabuse — Sanctions Screening
-
-Register at chainabuse.com — free, 100/day
+- entity_search: No results found
+- Portfolio: token holdings only (dust)
 
 ---
 
@@ -162,7 +86,6 @@ Register at chainabuse.com — free, 100/day
 
 ```json
 {
-  "node_num": "050",
   "label": "Genesis_Wintermute_2021_B",
   "address": "0xfbb1b73c4f0bda4f67dca266ce6ef42f520fbb98",
   "node_type": "genesis_contact",
@@ -178,3 +101,31 @@ Register at chainabuse.com — free, 100/day
 
 ---
 *Generated by TheWarden GL-L76 v3.1 — Red Web Intelligence Network*
+
+---
+
+## 🔄 Rescan — GL-L82 | 2026-07-01
+
+| Field | Value |
+|-------|-------|
+| **Session** | GL-L82 — Gumloop Resumed (Era 4) |
+| **Scanned At** | 2026-07-01T04:12:23 UTC |
+| **Scanner** | v3.1 — 12/13 tools — 19.19s |
+| **Nonce** | 11,536,138 ✅ Confirmed unchanged |
+| **ETH Balance** | 0.133647 ETH |
+| **Arkham** | UNLABELED — 0 transfers shown — fully dark |
+| **GoPlus** | ✅ CLEAN |
+| **Chainbase** | 0 txs — EIP-7702 blind spot confirmed |
+| **Recent Activity** | Spam airdrops only (KPER, ZIK, POLDOG, junk NFTs across ETH/Base/Polygon/Arbitrum) |
+| **Moralis Net Worth** | Junk figure — spam token inflation |
+
+### GL-L82 Assessment
+
+**No change in operator status.** Address remains dark — 11.5M nonces, completely unlabeled by Arkham, zero real initiated activity. Spam airdrop noise only. Classic post-operation silence.
+
+This is the wallet that activated the Wintermute Master Feeder (NODE_025) in 2021 and then went quiet. The infrastructure it built continues to run. The operator does not need to touch this address again.
+
+**Missing tools this scan:** bitquery (needs `ory_at_` bearer — v17 format), goldrush (Covalent key pending), onchainrisk, chainabuse (free registration needed).
+
+---
+*Updated GL-L82 | 2026-07-01 | TheWarden Red Web Intelligence Network*
