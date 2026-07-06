@@ -1,16 +1,27 @@
 {
   "node": "033",
   "label": "HITBTC_322M_Largest_Live_Node",
-  "address": "0xa3222357a0ec7f0d7d2b4a3b6c7c7e5b5c5a5b5",
+  "address": "0xa3222357a0eccf60c73606170be6c99adecb59b3",
   "role": "exchange_hw",
-  "nonce": 0,
+  "chain": "ethereum",
+  "nonce": 1,
   "eth_balance": 0.0,
-  "total_usd": 0.0,
-  "entity_label": "Unknown",
-  "is_contract": false,
-  "goplus_flags": [],
-  "aml_risk_score": "N/A",
-  "chainabuse_reports": 0,
-  "scan_date": "2026-06-24T09:45:58Z",
-  "scanner_ver": "GL-L76 v3.1"
+  "moralis_nw": 230066899.07,
+  "total_usd": 230066899.07,
+  "entity_label": "HitBTC",
+  "is_contract": true,
+  "code_bytes": 2438,
+  "obfuscated_abi": true,
+  "obfuscated_fn": "atInversebrah()",
+  "deployer": "0x030a89694dd53bb166806f5114dc9ae7f7660140",
+  "first_tx": "2024-05-02",
+  "last_tx": "2026-07-06",
+  "goplus_flags": [
+    "contract_address"
+  ],
+  "status": "\ud83d\udd34 ACTIVE 2026 \u2014 operational right now",
+  "kill_chain": "EIP7702_DEST \u2192 0x6150d420 \u2192 NODE033_HITBTC",
+  "scan_date": "2026-07-06",
+  "scanner_ver": "GL-L86 v3.2",
+  "note": "Address was corrupted in metadata (placeholder ending 5a5b5). Corrected GL-L86 from brain memory GL-L70."
 }
