@@ -3,29 +3,36 @@
 
 ---
 
-On December 3, 2017, something extraordinary happened on the Ethereum blockchain.
+## December 3, 2017 — The Day
 
-In a 17-hour window, 298 wallets deposited a combined **9,824.42 ETH** into a single address.
+On a single day — in a 17-hour window — the Red Web was funded.
 
-On paper, this was the AdEx Network (ADX) ICO. But every single one of these 298 wallets
-would eventually route their exits through **Binance Hot Wallet 14** — the confirmed root
-seeder of the Red Web.
+298 wallets deposited **9,824.42 ETH** into one address. On paper: the AdEx Network ICO.
+In reality: the origin capital of a financial network that would grow to move
+$50–60 million per day, across 10 exchanges, for the next 9 years.
 
-On the same day, 10 of these same wallets also coordinated to fund the **Jump Crypto
-Genesis wallet** with $1.03M in ETH.
+The same day, 10 of those wallets also pooled **$1.03M in ETH** into the Jump Crypto
+Genesis Funder. The two operations were coordinated. The same hands.
 
-The money was in place. The network was about to be activated.
+35 days later, on January 7, 2018, the money moved and the infrastructure activated.
 
 ---
 
-## Nodes That Came Online This Month
+## Files In This Folder
 
-| Node | Address | Role |
-|---|---|---|
-| [NODE_078](NODE_078_ADX_ICO_ROOT_0xfe9e8709.md) | `0xfe9e8709` | ADX ICO Root — THE FOUNTAIN |
-| [NODE_079–091](NODES_ADX_ICO_TOP_INVESTORS.md) | Multiple | Top ADX ICO investors (Branch 1–13) |
-| [NODE_ADX_298](NODE_ADX_298_ICO_INVESTORS.md) | 298 wallets | Full ADX ICO depositor set |
-| [JUMP_GENESIS_FUNDER](NODE_JUMP_GENESIS_FUNDER.md) | `0xfe9e8709` | Same wallet — also seeded Jump Crypto |
+| File | What It Contains |
+|---|---|
+| [DECEMBER_3_2017_THE_DAY.md](DECEMBER_3_2017_THE_DAY.md) | Hour-by-hour timeline of Dec 3, 2017 |
+| [NODE_078_ADX_ICO_ROOT_0xfe9e8709.md](NODE_078_ADX_ICO_ROOT_0xfe9e8709.md) | The collection wallet |
+| [NODE_079_BRANCH_1_0x82808df4.md](NODE_079_BRANCH_1_0x82808df4.md) | Branch 1 — 749.99 ETH |
+| [NODE_080_BRANCH_2_0x8c2f96c6.md](NODE_080_BRANCH_2_0x8c2f96c6.md) | Branch 2 — 399.99 ETH |
+| [NODE_081_BRANCH_3_0x5cca3117.md](NODE_081_BRANCH_3_0x5cca3117.md) | Branch 3 — 361.70 ETH |
+| [NODE_082_BRANCH_4_0x2dc072e1.md](NODE_082_BRANCH_4_0x2dc072e1.md) | Branch 4 — 249.99 ETH |
+| [NODE_083_BRANCH_5_0xc44142a6.md](NODE_083_BRANCH_5_0xc44142a6.md) | Branch 5 — 209.99 ETH |
+| [NODES_BRANCHES_6-10_JUMP_FUNDERS.md](NODES_BRANCHES_6-10_JUMP_FUNDERS.md) | Branches 6–10 — also Jump Crypto funders |
+| [NODES_BRANCHES_CONFIRMED_BHW14.md](NODES_BRANCHES_CONFIRMED_BHW14.md) | All branches with confirmed BHW14 exits |
+| [NODE_ADX_298_ICO_INVESTORS.md](NODE_ADX_298_ICO_INVESTORS.md) | Full 298 investor registry |
+| [NODE_JUMP_GENESIS_FUNDER.md](NODE_JUMP_GENESIS_FUNDER.md) | Jump Crypto genesis funding event |
 
 ---
 
