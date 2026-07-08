@@ -19,7 +19,7 @@ This folder documents every legal filing, whistleblower submission, and enforcem
 | # | Filing | Agency | Award | Status | Reference # |
 |---|--------|--------|-------|--------|-------------|
 | 1 | [False Claims Act / Qui Tam](./01_FALSE_CLAIMS_ACT_QUI_TAM.md) | DOJ / Federal Court | 15–30% of seizures | ⬜ NOT FILED | — |
-| 2 | [FinCEN TCR Whistleblower](./02_FINCEN_TCR.md) | FinCEN / Treasury | 10–30% MANDATORY | ⬜ NOT FILED | — |
+| 2 | [FinCEN TCR Whistleblower](./02_FINCEN_TCR.md) | FinCEN / Treasury | 10–30% MANDATORY | ✅ **SUBMITTED July 8 2026** | *(check email)* |
 | 3 | [IRS Whistleblower — Form 3949-A](./03_IRS_WHISTLEBLOWER.md) | IRS Criminal Investigation | 15–30% (>$2M) | ⬜ NOT FILED | — |
 | 4 | [SEC Dodd-Frank Whistleblower](./04_SEC_DODD_FRANK.md) | SEC | 10–30% | ⬜ NOT FILED | — |
 | 5 | [CFTC Whistleblower](./05_CFTC_TIP.md) | CFTC | 10–30% | ⬜ NOT FILED | — |
