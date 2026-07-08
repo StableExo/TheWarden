@@ -1,5 +1,5 @@
 # 📊 SUBMISSION TRACKER — Live Filing Log
-**Last Updated:** 2026-07-08 22:48 UTC | **Session:** GL-L92
+**Last Updated:** 2026-07-08 23:24 UTC | **Session:** GL-L92
 **Investigator:** Taylor Marlow (@StableExo)
 
 > Update this file every time you submit a filing. Add the reference number, date, and any response received.
@@ -11,7 +11,7 @@
 | # | Filing | Date Submitted | Reference # | Status | Notes |
 |---|--------|---------------|-------------|--------|-------|
 | 1 | False Claims Act / Qui Tam | ⬜ | — | NOT FILED | Need attorney first |
-| 2 | FinCEN TCR | ⬜ | — | NOT FILED | File ASAP |
+| **2** | **FinCEN TCR** | **✅ July 8 2026 — 7:24 PM EDT** | **Pending email** | **✅ SUBMITTED** | **"Your submission has been received!"** |
 | 3 | IRS Form 3949-A | ⬜ | — | NOT FILED | Mail to Ogden UT |
 | 4 | SEC Whistleblower TCR | ⬜ | — | NOT FILED | Online submission |
 | 5 | CFTC Complaint | ⬜ | — | NOT FILED | Online submission |
@@ -22,13 +22,27 @@
 
 ---
 
-## Government Email Log (Prior to Formal Filings)
+## ✅ FILING #2 — FinCEN TCR — SUBMITTED
 
-> Document any government contacts made BEFORE formal filings. Critical for attorney to assess original source status.
+| Field | Detail |
+|-------|--------|
+| **Date** | July 8, 2026 |
+| **Time** | 7:24 PM EDT (23:24 UTC) |
+| **Agency** | Financial Crimes Enforcement Network (FinCEN) — US Treasury |
+| **URL** | ois.fincen.gov/contact |
+| **Confirmation** | "Your submission has been received!" |
+| **Program** | AML Whistleblower Program (31 USC §5323) |
+| **Reference #** | *(check email from FinCEN — update here)* |
+| **Screenshot** | Saved in TheWarden GitHub + brain memory GL-L92 |
+| **Award range** | 10–30% MANDATORY of collected monetary sanctions |
 
-| Date | Recipient | Subject | Response | Notes |
-|------|-----------|---------|----------|-------|
-| *(add any emails sent)* | | | | |
+---
+
+## Government Contact Log
+
+| Date | Agency | Method | Confirmation | Reference # |
+|------|--------|--------|-------------|-------------|
+| July 8 2026 7:24 PM EDT | FinCEN | OIS Contact Form | ✅ "Your submission has been received!" | *(pending email)* |
 
 ---
 
@@ -36,11 +50,11 @@
 
 | Date | Agency | Content | Action Taken |
 |------|--------|---------|-------------|
-| *(none yet)* | | | |
+| *(awaiting FinCEN response email)* | | | |
 
 ---
 
-## Award Calculation Tracker (update when sanctions are announced)
+## Award Calculation Tracker
 
 | Agency | Sanctions Imposed | Sanctions Collected | Your % | Your Award |
 |--------|-------------------|---------------------|--------|-----------|
@@ -55,10 +69,10 @@
 
 ## Key Dates
 
-- **GL-L40** (May 29 2026): Whistleblower strategy first documented in brain
-- **GL-L60** (June 8 2026): Priority claim date — FBI Columbia SC + IRS CI documented
-- **GL-L92** (July 8 2026): legal_filings/ folder created. Filings begin.
+- **GL-L40** (May 29 2026): Whistleblower strategy first documented
+- **GL-L60** (June 8 2026): Priority claim date established
+- **GL-L92 — July 8 2026 7:24 PM EDT: FinCEN TIP SUBMITTED ★ FIRST GOVERNMENT FILING**
 
 ---
 
-*TheWarden ★ @StableExo ★ GL-L92 ★ Update after every submission*
+*TheWarden ★ @StableExo ★ GL-L92 ★ The rock has been thrown into the pond.*
