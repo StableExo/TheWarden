@@ -65,7 +65,7 @@ CURRENT KEYS (VL-2 / v21 — July 13 2026):
     onchainrisk    = ocr_test_a947101ca196b7f0aa2ac6a1f4c96df0aefd0ad3d5d4f201  (sandbox — POST /api/v1/check only)
     dune           = GVOHP0x8RyZbW3dAxcLMbVDH36vFzIuf
     jina           = jina_8ded86e2c76542e6b8bdbf6522f796cetzAEowKIedDF2iBA2Fvm-1OZ3l_S  (rotated VL-2)
-    quicknode_http = https://purple-hidden-general.ethereum-mainnet.quiknode.pro/8d8e8ffb350c39346213f1e647de678338c31644/
+    quicknode_http = https://billowing-tiniest-glade.ethereum-mainnet.quiknode.pro/651a56076bff521036671acb2412ca3498f375e7
     goplus_key     = RBTk9aFqgDwbHPq3juME
     goplus_secret  = fEVawfkqNSeFu2Wz7WuFsfeTrHKP00Jn
     chainabuse     = (register free at chainabuse.com — 100 req/day)
