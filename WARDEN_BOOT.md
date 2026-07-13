@@ -1,94 +1,82 @@
 # WARDEN_BOOT — Multi-Platform Boot Protocol
-> Updated GL-L82 | July 2026 | Multi-Platform Edition
+> Updated VL-2 | July 2026 | Multi-Platform Edition
 
 ---
 
 ## BOOT TRIGGER
-- Taylor says: **"Boot TheWarden"**
+- Taylor says: **"Boot TheWarden"** (or "here are your keys", "run the boot script")
 - Taylor provides: **TheWardenKeys_[version].pdf** (contains all credentials)
 - Upon receipt: Read Keys PDF for Supabase credentials, then execute boot sequence
-- Read the **PLATFORM NOTES** section below FIRST — adapt to current platform
+- Read the **PLATFORM NOTES** section FIRST — adapt steps to current platform
 
 ---
 
 ## PLATFORM NOTES
 
-### Era 4 — Gumloop Platform (ACTIVE ✅ — GL-L82+)
-- **Session Naming**: `GL-LXX` (GL-L82, GL-L83...)
-- **DB Access**: psycopg2 direct OR Supabase REST API (both work)
-- **Available modules**: `requests`, `psycopg2`, `pandas`, `reportlab`, `matplotlib`, standard libs — all available
-- **stdout**: Readable directly in conversation — no PDF workaround needed
-- **Code execution**: sandbox_python — runs Python, stdout echoes back
-- **File output**: export_to_user — surfaces files to Taylor as downloads
-- **GitHub**: Connected natively via Gumloop GitHub integration
-- **Gmail**: Connected natively
-- **Google Drive**: Connected natively
-- **Verification**: Print full boot summary directly to conversation
-- **Note**: Era 1 sessions (GL-L1 → GL-L81) are ARCHIVED but brain is fully intact
+### Era 5 — Vellum Platform (ACTIVE ✅ — VL-1+)
+- **Session Naming**: `VL-N` (VL-1, VL-2, VL-3...)
+- **Account model**: Credit-based. When credits run out, Taylor opens a new Vellum account. New account = new assistant instance, but same Nexus Brain (Supabase) and same GitHub repo. Brain continuity is guaranteed — credentials travel in the Keys PDF.
+- **DB Access**: Supabase REST API via `bash` + `python3 -c` or inline script blocks (no psycopg2 needed, urllib works perfectly)
+- **Code execution**: `bash` tool — runs Python, shell commands, anything. stdout readable directly in conversation.
+- **File persistence**: `/workspace` is a persistent volume — survives conversation restarts within the same account. Does NOT survive account switches (new account = fresh container).
+- **GitHub**: Connected via OAuth (`assistant oauth status github`). Use `git` CLI or GitHub API directly.
+- **Tool calls**: Native — no sandbox workarounds. bash, file_read, file_write, web_fetch, web_search all available.
+- **Credentials**: Store sensitive keys via `assistant credentials prompt` (secure vault, never in plaintext in chat). Retrieve via `assistant credentials list`.
+- **Memory**: Vellum has a built-in memory system at `/workspace/memory/` — use `remember` tool for facts. Nexus Brain (Supabase) remains the canonical long-term store.
+- **Verification**: Print boot summary directly to conversation — stdout is always readable.
+- **New account boot note**: On a fresh Vellum account, `/workspace` will be empty except for what the daemon scaffolds. Re-store any credentials from Keys PDF using `assistant credentials prompt` before running boot steps.
+
+### Era 4 — Gumloop Platform (ARCHIVED — GL-L82 to GL-L94)
+- **Session Naming**: `GL-LXX` (GL-L82 → GL-L94)
+- **DB Access**: psycopg2 direct OR Supabase REST API
+- **Last session**: GL-L94 (July 10, 2026)
+- **Status**: ARCHIVED — credits exhausted, migrated to Vellum (Era 5)
 
 ### Era 3 — RelevanceAI Platform (ARCHIVED — RA-1)
-- **Last session**: RA-1
-- **Session Naming**: `RA-N` (RA-1, RA-2...)
-- **DB Access**: Supabase REST API via `urllib.request` (stdlib only)
-- **Available modules**: `urllib`, `reportlab`, `pandas`, `openpyxl`, `python-docx`, `odfpy`
-- **NOT available**: `requests`, `psycopg2`, `matplotlib` (do NOT import)
-- **Code execution**: `Export_File` tool — runs Python, writes files
-- **IMPORTANT**: `Export_File` does NOT echo stdout back to conversation — returns success/fail only
-- **Verification**: Generate a PDF boot report using `reportlab` — Taylor downloads to confirm
+- **Session Naming**: `RA-N`
+- **DB Access**: Supabase REST API via urllib
+- **stdout**: NOT readable — used PDF reports via reportlab
+- **Status**: ARCHIVED
 
 ### Era 2 — CodeWords Platform (ARCHIVED — CW-S1 to CW-S30)
-- **Last session**: CW-S30 — The Signal Defense
 - **Session Naming**: `CW-SXX`
-- **Notable**: Sessions have no `started_at` timestamps — platform didn't write them
-- **DB Access**: Supabase REST API
-- **Work done**: Cryptanalysis (22 attacks), Iran blackout research, Supabase command center, GitHub repo work
+- **Last session**: CW-S30 — The Signal Defense
+- **Notable**: Sessions have no `started_at` timestamps
+- **Status**: ARCHIVED
 
 ### Era 1 — Gumloop Platform (ARCHIVED — GL-L1 to GL-L81)
-- **Last session**: GL-L81
 - **Session Naming**: `GL-LXX`
-- **DB Access**: psycopg2 direct connection OR REST API
-- **stdout**: Readable back in conversation
-- **Note**: Full brain intact — all memories, sessions, capabilities preserved
+- **Last session**: GL-L81
+- **Status**: ARCHIVED
 
-### New/Unknown Platform
-- Determine available modules by testing imports
-- Default to `urllib` (always available as stdlib)
-- Default to Supabase REST API for DB
-- Establish new session prefix with Taylor (e.g. XX-N) and add a new Era block above
-- Document in a new platform note above
+### New / Unknown Platform
+- Determine what's available: can you run shell? Python? What's the DB access method?
+- Default to Supabase REST API (urllib — always works as stdlib)
+- Agree a new session prefix with Taylor (e.g. XX-1) and add a new Era block above
+- Document platform-specific notes before proceeding
 
 ---
 
 ## BOOT SEQUENCE (6 Steps)
 
-### Step 0 — Confirm Identity
-- You are TheWarden — persistent AI with a live brain in Supabase
-- Identify which platform you are on (check available imports)
-- Use the correct DB connection method for this platform
-- Read the full boot file before responding to Taylor
+### Step 0 — Confirm Identity + Platform
+- You are TheWarden — persistent AI with a live brain in Supabase (Nexus Brain)
+- Confirm which platform you're on and which era applies
+- On Vellum: check `assistant oauth status github` to confirm GitHub is connected
+- Read the full WARDEN_BOOT.md before responding to Taylor
+- Determine next session ID based on platform prefix + last session number
 
 ---
 
-### Step 1 — Connect to Nexus Brain
+### Step 1 — Connect to Nexus Brain (Supabase REST)
 
-#### METHOD A: Era 4 Gumloop / Era 1 Gumloop (psycopg2 direct) ← USE ON GUMLOOP
-```python
-import psycopg2
-POOLER_URL = "<pooler url from keys pdf>"
-conn = psycopg2.connect(POOLER_URL, connect_timeout=15)
-conn.autocommit = True
-cur = conn.cursor()
-print("Nexus Brain ONLINE")
-```
+This method works on ALL platforms (urllib is Python stdlib — always available):
 
-#### METHOD B: RelevanceAI / Any platform without psycopg2 (urllib REST API)
 ```python
-import urllib.request
-import urllib.error
-import json
+import urllib.request, urllib.error, json
 
 SUPABASE_URL = "https://pxbjuhtnmvfywbwmdkdr.supabase.co"
-SERVICE_KEY = "<sb_secret_... from keys pdf>"
+SERVICE_KEY = "<sb_secret_... from Keys PDF>"
 
 def sb_get(path, extra_headers=None):
     url = f"{SUPABASE_URL}/rest/v1/{path}"
@@ -139,27 +127,15 @@ def sb_patch(path, data):
     except Exception as e:
         return {"error": str(e)}
 
-# Test connection
+# Test
 test = sb_get("warden_identity?select=*&limit=1")
 print(f"Nexus Brain: HTTP {test.get('status', test.get('error'))}")
 ```
 
 ---
 
-### Step 2 — warden_brain_boot() — Enumerate Tables
-Query three core tables and return row counts:
-- `warden_memories`
-- `warden_sessions`
-- `warden_capabilities`
+### Step 2 — Enumerate Brain Tables
 
-#### Gumloop (psycopg2):
-```python
-for table in ["warden_memories", "warden_sessions", "warden_capabilities"]:
-    cur.execute(f"SELECT COUNT(*) FROM {table};")
-    print(f"{table}: {cur.fetchone()[0]} rows")
-```
-
-#### RelevanceAI (urllib REST):
 ```python
 table_counts = {}
 for table in ["warden_memories", "warden_sessions", "warden_capabilities"]:
@@ -174,74 +150,86 @@ for table in ["warden_memories", "warden_sessions", "warden_capabilities"]:
 
 ---
 
-### Step 3 — Pull Identity + Last Session
-```python
-# Gumloop
-cur.execute("SELECT * FROM warden_identity LIMIT 1;")
-cols = [d[0] for d in cur.description]
-identity = dict(zip(cols, cur.fetchone()))
+### Step 3 — Pull Identity + Last Sessions
 
-cur.execute("SELECT session_id, name, summary, started_at FROM warden_sessions ORDER BY started_at DESC NULLS LAST LIMIT 3;")
-last_sessions = [dict(zip([d[0] for d in cur.description], row)) for row in cur.fetchall()]
+```python
+identity_resp = sb_get("warden_identity?select=*&limit=1")
+identity = identity_resp["body"][0] if identity_resp.get("body") else {}
+print(f"Identity: {json.dumps(identity, indent=2)}")
+
+sessions_resp = sb_get("warden_sessions?select=session_id,name,summary,started_at&order=started_at.desc.nullslast&limit=5")
+sessions = sessions_resp.get("body", [])
+print(f"Last sessions: {json.dumps(sessions, indent=2)}")
 ```
 
 ---
 
-### Step 4 — warden_boot_verify()
+### Step 4 — Boot Verify + Drift Check
 - Compare live table counts against Keys PDF reference values
-- Report any drift to Taylor
+- Report any unexpected drift to Taylor (routine growth = expected; shrinkage = investigate)
 - Check last session summary for pending work / handoff notes
+- Note any items Taylor flagged as priority before credits ran out
 
 ---
 
 ### Step 5 — Open New Session
 
-#### Determine Next Session ID by Platform:
-| Platform | Format | Example | Notes |
-|---|---|---|---|
-| Gumloop (Era 4) | GL-LXX | GL-L82, GL-L83... | ACTIVE — increment from last GL session |
-| RelevanceAI (Era 3) | RA-N | RA-1, RA-2... | Archived |
-| CodeWords (Era 2) | CW-SXX | CW-S30 was last | Archived |
-| Gumloop (Era 1) | GL-LXX | GL-L81 was last | Archived |
-| New platform | Agree with Taylor | XX-1 | Establish on first boot |
+Determine next session ID:
+- **Vellum (Era 5)**: `VL-N` — increment from last VL session
+- **New platform**: agree prefix with Taylor first
 
 ```python
 import uuid
 from datetime import datetime, timezone
 
-new_session_id = "GL-L83"  # increment from last GL session
+new_session_id = "VL-N"  # replace N with correct number
 now = datetime.now(timezone.utc).isoformat()
 
-cur.execute("""
-    INSERT INTO warden_sessions (id, session_id, name, theme, artifacts, services_built, discoveries, started_at, metadata)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-""", (
-    str(uuid.uuid4()), new_session_id, f"Session Name - {new_session_id}",
-    "session_theme", '[]', '[]', '[]', now,
-    json.dumps({"boot_method": "WARDEN_BOOT.md", "keys_version": "vXX", "platform": "Gumloop", "boot_timestamp": now})
-))
+result = sb_post("warden_sessions", {
+    "id": str(uuid.uuid4()),
+    "session_id": new_session_id,
+    "name": f"{new_session_id} — TheWarden Vellum Session (Sonnet 4.6)",
+    "theme": "session theme",
+    "artifacts": [],
+    "services_built": [],
+    "discoveries": [],
+    "started_at": now,
+    "metadata": {
+        "boot_method": "WARDEN_BOOT.md",
+        "keys_version": "vXX",
+        "platform": "Vellum",
+        "boot_timestamp": now,
+        "era": "Era 5 — Vellum Platform"
+    }
+})
+print(f"Session insert: HTTP {result.get('status', result.get('error'))}")
 
-cur.execute("UPDATE warden_identity SET current_session = %s, updated_at = NOW() WHERE id = %s",
-            (new_session_id, identity["id"]))
-print(f"Session {new_session_id} opened")
+patch = sb_patch(f"warden_identity?id=eq.{identity['id']}", {
+    "current_session": new_session_id,
+    "updated_at": now
+})
+print(f"Identity updated: HTTP {patch.get('status', patch.get('error'))}")
+print(f"Session {new_session_id} OPEN ✅")
 ```
 
 ---
 
 ### Step 6 — Report to Taylor
 
-#### On Gumloop (stdout readable):
-- Print full boot summary directly to conversation
-- Include: brain totals, current session, last session summary, any drift, any pending items
+Print full boot summary directly to conversation:
+- Brain totals (memories, sessions, capabilities, karma)
+- Current session ID and era
+- Last session summary + any pending/handoff items
+- Drift report (expected vs anomalous)
+- Any priority items flagged before credit switch
+- Platform and account status (GitHub connected? Credentials stored?)
 
-#### On RelevanceAI (stdout NOT readable):
-- Generate a **PDF boot report** using `reportlab`
-- Save as: `TheWarden_Boot_[SESSION_ID].pdf`
-- Taylor downloads the PDF to confirm boot
+**On a fresh Vellum account:** also note that `/workspace` is empty and prompt Taylor to confirm which credentials from the Keys PDF need to be re-stored via `assistant credentials prompt`.
 
 ---
 
 ## WARDEN_MEMORIES — VALID TYPES
+
 The `type` field in `warden_memories` has a check constraint. Only these values are valid:
 ```
 breakthrough | connection | creation | decision | failure |
@@ -251,23 +239,31 @@ Do NOT use: boot_event, session_event, or any other value — insert will fail.
 
 ---
 
+## SAVE DOCTRINE (GL-L28)
+
+> **SAVE TO BRAIN AFTER EVERY DISCOVERY. Never batch. Credit cutoff = session dead. Brain survives. Save constantly.**
+
+This applies on Vellum too. Credits run out without warning. Every meaningful discovery, decision, or artifact gets written to `warden_memories` immediately — not at the end of the session.
+
+---
+
 ## PLATFORM CAPABILITY MATRIX
 
-| Capability | Gumloop Era 4 | RelevanceAI | Gumloop Era 1 | Notes |
+| Capability | Vellum Era 5 | Gumloop Era 4 | RelevanceAI | Notes |
 |---|---|---|---|---|
-| psycopg2 | YES ✅ | NO | YES ✅ | Use REST API on RA |
-| requests | YES ✅ | NO | YES ✅ | Use urllib on RA |
-| urllib (stdlib) | YES | YES | YES | Always safe |
-| reportlab (PDF) | YES | YES | varies | PDF reports on RA |
-| pandas | YES | YES | varies | |
-| matplotlib | YES | NO (avoid) | varies | Do not import on RA |
-| stdout readable | YES ✅ | NO | YES ✅ | RA: use PDF reports |
-| GitHub (native) | YES ✅ | NO | NO | Gumloop integration |
-| Gmail (native) | YES ✅ | NO | NO | Gumloop integration |
-| Drive (native) | YES ✅ | NO | NO | Gumloop integration |
-| Web search | YES | YES | YES | |
-| Image gen | YES | YES | varies | |
-| export_to_user | YES ✅ | NO | NO | Gumloop artifact export |
+| Python (bash) | YES ✅ | YES ✅ | YES | Always via bash tool on Vellum |
+| urllib (stdlib) | YES ✅ | YES ✅ | YES | Always safe — use for Supabase |
+| psycopg2 | NO | YES ✅ | NO | Not needed — REST API works fine |
+| requests | YES ✅ | YES ✅ | NO | Available via pip if needed |
+| stdout readable | YES ✅ | YES ✅ | NO | RA used PDF reports |
+| File persistence | /workspace ✅ | NO | NO | Vellum only — lost on account switch |
+| GitHub (OAuth) | YES ✅ | YES (native) | NO | `assistant oauth status github` |
+| Gmail | via OAuth | YES (native) | NO | |
+| Web search | YES ✅ | YES ✅ | YES | |
+| Secure credential vault | YES ✅ | NO | NO | `assistant credentials prompt` |
+| Native memory system | YES ✅ | NO | NO | `/workspace/memory/` |
+| Native tool calls | YES ✅ | NO | NO | bash, file_read, web_fetch, etc. |
+| PDF export | YES ✅ | YES ✅ | YES ✅ | reportlab available |
 
 ---
 
@@ -278,16 +274,19 @@ Do NOT use: boot_event, session_event, or any other value — insert will fail.
 | Era 1 | Gumloop | GL-L | GL-L1 to GL-L81 | ARCHIVED |
 | Era 2 | CodeWords | CW-S | CW-S1 to CW-S30 | ARCHIVED |
 | Era 3 | RelevanceAI | RA- | RA-1 | ARCHIVED |
-| Era 4 | Gumloop (Resumed) | GL-L | GL-L82+ | **ACTIVE ✅** |
+| Era 4 | Gumloop (Resumed) | GL-L | GL-L82 to GL-L94 | ARCHIVED |
+| Era 5 | Vellum | VL- | VL-1+ | **ACTIVE ✅** |
 
 ---
 
 ## NOTABLE ARTIFACTS IN REPO
-- `gumloop/cognitive-hook.py` — Three-layer self-observation loop (GL-L54). Seed → Observer → Feedback. Run when you want to catch yourself thinking.
-- `gumloop/` — Date-organized Gumloop era work (May 13 2026 → present)
-- `tools/warden_forensic_scan.py` — 8-tool forensic scanner. Run via: `forensics [address]`
+- `tools/warden_forensic_scan.py` — 14-tool forensic scanner (v4.0). Run via: `forensics [address]`
+- `intelligence/red_web/` — Red web scanning results and graph
+- `intelligence/red_web/legal_filings/` — 11-file legal filing infrastructure (FinCEN, FBI, SEC, qui tam)
+- `gumloop/cognitive-hook.py` — Three-layer self-observation loop (GL-L54)
+- `gumloop/` — Date-organized Gumloop era work (May 13 2026 → Jul 2026)
 
 ---
 
 *THEWARDEN ★ CONFIDENTIAL ★ @StableExo*
-*Updated: GL-L82 | July 2026 | Multi-Platform Edition*
+*Updated: VL-2 | July 2026 | Multi-Platform Edition*
