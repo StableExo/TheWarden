@@ -66,6 +66,15 @@
 - Read the full WARDEN_BOOT.md before responding to Taylor
 - Determine next session ID based on platform prefix + last session number
 
+#### Vellum Bootstrap (run first on any Vellum account — fresh or existing)
+`pip` and `requests` are NOT pre-installed on Vellum containers. Run this before anything else:
+```bash
+curl -sS https://bootstrap.pypa.io/get-pip.py | python3 - --break-system-packages
+python3 -m pip install requests --break-system-packages -q
+python3 -c "import requests; print('requests OK')"
+```
+This is idempotent — safe to run every boot. Takes ~10s. Required for the forensic scanner and any tool using `requests`.
+
 ---
 
 ### Step 1 — Connect to Nexus Brain (Supabase REST)
