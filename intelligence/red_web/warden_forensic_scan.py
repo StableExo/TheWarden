@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-GL-L76 v3.1 — 13/13 TOOLS ARMED AND FIRING IN PARALLEL
+VL-2 v4.1 — 13/13 TOOLS ARMED AND FIRING IN PARALLEL
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -42,6 +42,33 @@ CHANGELOG:
     GL-L83: Arkham key rotated — old da733601... BURNED
             New key: 77d24c4d-6b2b-471a-88b6-9e6e75ba7358
             Keys PDF v19 issued July 1 2026
+    VL-1:   Moralis JWT refreshed — v20 was truncated/invalid
+            GoldRush key rotated — old cqt_rQDDX... quota-exhausted
+            New GoldRush: cqt_rQGWWvgk9qGMtCMQMxKY7VWQJJXy
+            Bitquery key refreshed: ory_at_tqCfYwmmhNjVi_... confirmed working
+            OnChainRisk sandbox key added: ocr_test_a947101c...
+    VL-2:   Jina key rotated — old key 403 Cloudflare blocked
+            New Jina: jina_8ded86e2c76542e6b8bdbf6522f796cetzAEowKIedDF2iBA2Fvm-1OZ3l_S
+            NOTE: Jina requires User-Agent + Accept headers to bypass Cloudflare
+            Keys PDF v21 issued July 13 2026
+
+CURRENT KEYS (VL-2 / v21 — July 13 2026):
+    arkham         = 77d24c4d-6b2b-471a-88b6-9e6e75ba7358
+    chainbase      = 3EEEM9sRu2rzYSGX1GCR1Jc7X8i
+    nansen         = nsn_32d50c7e1dec90ec0ee4cfca4f5c29f9
+    moralis        = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...ni5R9da4GZM2Bi-Ipmfa8d1-0LGLQuu4sJn4K3Cjh0Q  (FULL JWT in Keys PDF v21)
+    etherscan      = ES16B14B19XWKXJBIHUAJRXJHECXHM6WEK
+    basescan       = QT7KI56B365U22NXMJJM4IU7Q8MVER69RY
+    tenderly       = K5LF4-PBJUwWLL-BmD3LEn3e-GvguZ3k
+    goldrush       = cqt_rQGWWvgk9qGMtCMQMxKY7VWQJJXy   (rotated VL-1)
+    bitquery       = ory_at_tqCfYwmmhNjVi_0UOc9AHsyKDhNXQUC7b6osI6UJGwA.0oMC8mWHSnvXZL_xSWRn19XApCfNV2i-AjgR12gxu8w  (refreshed VL-1)
+    onchainrisk    = ocr_test_a947101ca196b7f0aa2ac6a1f4c96df0aefd0ad3d5d4f201  (sandbox — POST /api/v1/check only)
+    dune           = GVOHP0x8RyZbW3dAxcLMbVDH36vFzIuf
+    jina           = jina_8ded86e2c76542e6b8bdbf6522f796cetzAEowKIedDF2iBA2Fvm-1OZ3l_S  (rotated VL-2)
+    quicknode_http = https://purple-hidden-general.ethereum-mainnet.quiknode.pro/8d8e8ffb350c39346213f1e647de678338c31644/
+    goplus_key     = RBTk9aFqgDwbHPq3juME
+    goplus_secret  = fEVawfkqNSeFu2Wz7WuFsfeTrHKP00Jn
+    chainabuse     = (register free at chainabuse.com — 100 req/day)
 ══════════════════════════════════════════════════════════════════════════
 """
 
@@ -450,7 +477,7 @@ def scan(address, chains=None, keys=None):
         "mcp_stack":  [t for t in tool_log if t in ("chainbase","nansen","tenderly")],
         "rest_stack": [t for t in tool_log if t not in ("chainbase","nansen","tenderly")],
         "scanned_at": datetime.now(timezone.utc).isoformat(),
-        "scanner_ver":"GL-L83 v3.2",
+        "scanner_ver":"VL-2 v4.1",
     }
     return results
 
