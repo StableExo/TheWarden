@@ -12,7 +12,7 @@
 | **3** | **IRS Form 211 (§7623)** | **✅ July 9 2026 — 1:18 AM EDT** | **Pending IRS letter (30-60 days)** | **✅ SUBMITTED** | **"Your Form 211 is submitted"** |
 | **4** | **SEC Whistleblower TCR** | **✅ July 10 2026 — 2:52 PM EDT** | **17837-095-358-890** | **✅ SUBMITTED** | **"7 of 7 Complete — received successfully"** |
 | **5** | **CFTC Form TCR** | **✅ July 13 2026 — 7:33 PM ET** | **2607-1319-3300-72** | **✅ SUBMITTED** | **"Your submission has been successful"** |
-| 6 | FBI IC3 | ⬜ | — | NOT FILED | Online at ic3.gov — **NEXT** |
+| **6** | **FBI IC3** | **✅ July 13 2026 — 8:16 PM EST** | **22e2996d7fb14057858f2d4386f9d6e5** | **✅ SUBMITTED** | **"You Have Submitted Your Complaint"** |
 | 7 | Anti-Fraud Task Force | ⬜ | — | NOT CONTACTED | @WHFraudTF or Todd Rokita |
 | 8 | Bittrex PACER Records | ⬜ | — | NOT PULLED | Free at CourtListener |
 | 9 | FBI In-Person Columbia SC | ⬜ | — | PENDING ATTORNEY | After filings 1–3 |
@@ -90,6 +90,29 @@
 
 ---
 
+## ✅ FILING #6 — FBI IC3 — SUBMITTED
+
+| Field | Detail |
+|-------|--------|
+| **Date** | July 13, 2026 |
+| **Time** | 8:16:19 PM EST |
+| **Agency** | FBI Internet Crime Complaint Center (IC3) |
+| **Portal** | complaint.ic3.gov |
+| **Submission ID** | **22e2996d7fb14057858f2d4386f9d6e5** |
+| **Confirmation** | "You Have Submitted Your Complaint — Thank You For Taking Action For Yourself and Others" |
+| **Complainant** | Taylor Marlow — 1116 Jessamine Road, Lexington SC 29073 |
+| **Transaction Type** | Cryptocurrency/Crypto ATM |
+| **Cryptocurrency** | Ethereum (ETH) |
+| **Originating Wallet** | 0x70a3df699512f39C682F94fad498454C90B8C219 |
+| **Transaction Date** | 05/26/2026 |
+| **Subjects** | Wintermute Trading Ltd (wintermute.com), B2C2 Group Ltd (b2c2.com), Binance Holdings Ltd (binance.com) |
+| **Incident** | 78-node Red Web money laundering network, $17B+ illicit funds, 14 victim wallets |
+| **Prior Filings Cross-Referenced** | FinCEN Jul 8, IRS Jul 9, SEC Jul 10 ref 17837-095-358-890, CFTC Jul 13 ref 2607-1319-3300-72 |
+| **Digital Signature** | Taylor A Marlow |
+| **Session** | VL-4 |
+
+---
+
 ## Government Contact Log
 
 | Date | Agency | Method | Confirmation | Reference # |
@@ -98,6 +121,7 @@
 | July 9 2026 1:18 AM EDT | IRS WO | Form 211 online | ✅ "Your Form 211 is submitted" | *(pending IRS letter 30-60 days)* |
 | July 10 2026 2:52 PM EDT | SEC WO | TCR online (7/7 steps) | ✅ "Received successfully" | **17837-095-358-890** |
 | July 13 2026 7:33 PM ET | CFTC WO | Form TCR online | ✅ "Your submission has been successful" | **2607-1319-3300-72** |
+| July 13 2026 8:16 PM EST | FBI IC3 | IC3 online complaint | ✅ "You Have Submitted Your Complaint" | **22e2996d7fb14057858f2d4386f9d6e5** |
 
 ---
 
@@ -109,7 +133,10 @@
 - **GL-L93 — July 9 2026 1:18 AM EDT ★ IRS FORM 211 SUBMITTED ★ FILING #2**
 - **GL-L94 — July 10 2026 2:52 PM EDT ★ SEC DODD-FRANK TCR SUBMITTED ★ FILING #3 ★ #17837-095-358-890**
 - **VL-4 — July 13 2026 7:33 PM ET ★ CFTC FORM TCR SUBMITTED ★ FILING #4 ★ #2607-1319-3300-72**
+- **VL-4 — July 13 2026 8:16 PM EST ★ FBI IC3 SUBMITTED ★ FILING #5 ★ #22e2996d7fb14057858f2d4386f9d6e5**
 
 ---
 
-*TheWarden ★ @StableExo ★ VL-4 ★ Four agencies. Four confirmed submissions. The net is tightening.*
+## 🏁 ALL 5 MAJOR WHISTLEBLOWER FILINGS COMPLETE — VL-4
+
+*TheWarden ★ @StableExo ★ VL-4 ★ Five agencies. Five confirmed submissions. The net is tightening.*
