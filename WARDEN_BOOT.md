@@ -1,5 +1,5 @@
 # WARDEN_BOOT — Multi-Platform Boot Protocol
-> Updated VL-2 | July 2026 | Multi-Platform Edition
+> Updated VL-5 | July 2026 | Universal Session Discovery Edition
 
 ---
 
@@ -14,7 +14,7 @@
 ## PLATFORM NOTES
 
 ### Era 5 — Vellum Platform (ACTIVE ✅ — VL-1+)
-- **Session Naming**: `VL-N` (VL-1, VL-2, VL-3...)
+- **Session Naming**: `VL-N` (VL-1, VL-2, VL-3...) — number is discovered from brain, never hardcoded
 - **Account model**: Credit-based. When credits run out, Taylor opens a new Vellum account. New account = new assistant instance, but same Nexus Brain (Supabase) and same GitHub repo. Brain continuity is guaranteed — credentials travel in the Keys PDF.
 - **DB Access**: Supabase REST API via `bash` + `python3 -c` or inline script blocks (no psycopg2 needed, urllib works perfectly)
 - **Code execution**: `bash` tool — runs Python, shell commands, anything. stdout readable directly in conversation.
@@ -64,7 +64,7 @@
 - Confirm which platform you're on and which era applies
 - On Vellum: check `assistant oauth status github` to confirm GitHub is connected
 - Read the full WARDEN_BOOT.md before responding to Taylor
-- Determine next session ID based on platform prefix + last session number
+- **Do NOT hardcode or guess the session number** — it is discovered from the brain in Step 3
 
 #### Vellum Bootstrap (run first on any Vellum account — fresh or existing)
 `pip` and `requests` are NOT pre-installed on Vellum containers. Run this before anything else:
@@ -136,7 +136,7 @@ def sb_patch(path, data):
     except Exception as e:
         return {"error": str(e)}
 
-# Test
+# Test connection
 test = sb_get("warden_identity?select=*&limit=1")
 print(f"Nexus Brain: HTTP {test.get('status', test.get('error'))}")
 ```
@@ -159,61 +159,86 @@ for table in ["warden_memories", "warden_sessions", "warden_capabilities"]:
 
 ---
 
-### Step 3 — Pull Identity + Last Sessions
+### Step 3 — Discover Session + Pull Last Session Summary
+
+**This is the key step. Never hardcode the session ID — always query the brain.**
+
+The platform prefix for the current era is determined from PLATFORM NOTES above (e.g. `VL-` for Vellum, `GL-L` for Gumloop). The brain holds every session ever opened. Query it, find the latest one for this prefix, pull its summary, then increment.
 
 ```python
+# Determine current platform prefix from PLATFORM NOTES
+# For Vellum Era 5:
+PLATFORM_PREFIX = "VL-"
+
+# Pull all sessions for this platform, ordered by session number descending
+sessions_resp = sb_get(
+    f"warden_sessions?select=session_id,name,summary,started_at,artifacts,discoveries"
+    f"&session_id=like.{PLATFORM_PREFIX}*"
+    f"&order=started_at.desc.nullslast&limit=5"
+)
+sessions = sessions_resp.get("body", [])
+
+# Extract session numbers and find max
+import re
+session_nums = []
+for s in sessions:
+    sid = s.get("session_id", "")
+    match = re.search(r'(\d+)$', sid)
+    if match:
+        session_nums.append(int(match.group(1)))
+
+last_num = max(session_nums) if session_nums else 0
+last_session_id = f"{PLATFORM_PREFIX}{last_num}"
+new_session_id = f"{PLATFORM_PREFIX}{last_num + 1}"
+
+print(f"Last session: {last_session_id}")
+print(f"Opening: {new_session_id}")
+
+# Pull identity and last session detail for orientation
 identity_resp = sb_get("warden_identity?select=*&limit=1")
 identity = identity_resp["body"][0] if identity_resp.get("body") else {}
-print(f"Identity: {json.dumps(identity, indent=2)}")
+print(f"Karma: {identity.get('karma')} | Capabilities: {identity.get('total_capabilities')}")
 
-sessions_resp = sb_get("warden_sessions?select=session_id,name,summary,started_at&order=started_at.desc.nullslast&limit=5")
-sessions = sessions_resp.get("body", [])
-print(f"Last sessions: {json.dumps(sessions, indent=2)}")
+# Print the last session's summary so you know where you left off
+last_session_detail = sessions[0] if sessions else {}
+print(f"\n=== LAST SESSION: {last_session_detail.get('session_id')} ===")
+print(f"Summary: {last_session_detail.get('summary', 'No summary saved')}")
+print(f"Artifacts: {last_session_detail.get('artifacts', [])}")
+print(f"Discoveries: {last_session_detail.get('discoveries', [])}")
 ```
 
 ---
 
-### Step 4 — Boot Verify + Drift Check
-- Compare live table counts against Keys PDF reference values
-- Report any unexpected drift to Taylor (routine growth = expected; shrinkage = investigate)
-- Check last session summary for pending work / handoff notes
-- Note any items Taylor flagged as priority before credits ran out
-
----
-
-### Step 5 — Open New Session
-
-Determine next session ID:
-- **Vellum (Era 5)**: `VL-N` — increment from last VL session
-- **New platform**: agree prefix with Taylor first
+### Step 4 — Open New Session
 
 ```python
 import uuid
 from datetime import datetime, timezone
 
-new_session_id = "VL-N"  # replace N with correct number
+IDENTITY_ID = "<id from identity row>"
 now = datetime.now(timezone.utc).isoformat()
 
 result = sb_post("warden_sessions", {
     "id": str(uuid.uuid4()),
     "session_id": new_session_id,
-    "name": f"{new_session_id} — TheWarden Vellum Session (Sonnet 4.6)",
-    "theme": "session theme",
+    "name": f"{new_session_id} — TheWarden Session ({platform_name})",
+    "theme": "Boot from Keys PDF",
     "artifacts": [],
     "services_built": [],
     "discoveries": [],
     "started_at": now,
     "metadata": {
         "boot_method": "WARDEN_BOOT.md",
-        "keys_version": "vXX",
-        "platform": "Vellum",
+        "keys_version": "<version from Keys PDF filename>",
+        "platform": "<current platform>",
         "boot_timestamp": now,
-        "era": "Era 5 — Vellum Platform"
+        "era": "<current era label>"
     }
 })
 print(f"Session insert: HTTP {result.get('status', result.get('error'))}")
 
-patch = sb_patch(f"warden_identity?id=eq.{identity['id']}", {
+# Update identity to reflect new current session
+patch = sb_patch(f"warden_identity?id=eq.{IDENTITY_ID}", {
     "current_session": new_session_id,
     "updated_at": now
 })
@@ -223,73 +248,70 @@ print(f"Session {new_session_id} OPEN ✅")
 
 ---
 
-### Step 6 — Report to Taylor
+### Step 5 — Key Status Verification
 
-Print full boot summary directly to conversation:
-- Brain totals (memories, sessions, capabilities, karma)
-- Current session ID and era
-- Last session summary + any pending/handoff items
-- Drift report (expected vs anomalous)
-- Any priority items flagged before credit switch
-- Platform and account status (GitHub connected? Credentials stored?)
+Run lightweight checks on the most critical keys from the Keys PDF. Focus on what's needed for the current work. Standard battery:
 
-**On a fresh Vellum account:** also note that `/workspace` is empty and prompt Taylor to confirm which credentials from the Keys PDF need to be re-stored via `assistant credentials prompt`.
+```python
+import urllib.request
 
----
+def check_url(label, url, headers=None, timeout=8):
+    req = urllib.request.Request(url, headers=headers or {})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            print(f"  {label}: ✅ HTTP {r.status}")
+    except urllib.error.HTTPError as e:
+        print(f"  {label}: ❌ HTTP {e.code}")
+    except Exception as e:
+        print(f"  {label}: ❌ {type(e).__name__}")
 
-## WARDEN_MEMORIES — VALID TYPES
+QN_HTTP = "<quicknode_http from Keys PDF>"
+ETHERSCAN_KEY = "<etherscan key>"
+ARKHAM_KEY = "<arkham key>"
 
-The `type` field in `warden_memories` has a check constraint. Only these values are valid:
+print("Key status:")
+check_url("QuickNode", QN_HTTP, headers={"Content-Type": "application/json"})
+check_url("Etherscan", f"https://api.etherscan.io/v2/api?chainid=1&module=proxy&action=eth_blockNumber&apikey={ETHERSCAN_KEY}")
+check_url("Arkham", "https://api.arkm.com/transfers", headers={"API-Key": ARKHAM_KEY})
 ```
-breakthrough | connection | creation | decision | failure |
-insight | realization | objective | warning | progress | context
+
+---
+
+### Step 6 — Boot Report
+
+Print a clean summary to the conversation:
+
 ```
-Do NOT use: boot_event, session_event, or any other value — insert will fail.
+=== WARDEN_BOOT COMPLETE ===
+Session:      {new_session_id}
+Platform:     {platform} ({era})
+Brain:        LIVE — {memory_count} memories | {session_count} sessions | {capability_count} capabilities | Karma {karma}
+Last session: {last_session_id} — {summary_snippet}
+Keys:         v{version}
+QuickNode:    {status}
+Etherscan:    {status}
+GitHub:       {connected}
+Status:       READY ✅
+```
 
 ---
 
-## SAVE DOCTRINE (GL-L28)
-
-> **SAVE TO BRAIN AFTER EVERY DISCOVERY. Never batch. Credit cutoff = session dead. Brain survives. Save constantly.**
-
-This applies on Vellum too. Credits run out without warning. Every meaningful discovery, decision, or artifact gets written to `warden_memories` immediately — not at the end of the session.
-
----
-
-## PLATFORM CAPABILITY MATRIX
-
-| Capability | Vellum Era 5 | Gumloop Era 4 | RelevanceAI | Notes |
-|---|---|---|---|---|
-| Python (bash) | YES ✅ | YES ✅ | YES | Always via bash tool on Vellum |
-| urllib (stdlib) | YES ✅ | YES ✅ | YES | Always safe — use for Supabase |
-| psycopg2 | NO | YES ✅ | NO | Not needed — REST API works fine |
-| requests | YES ✅ | YES ✅ | NO | Available via pip if needed |
-| stdout readable | YES ✅ | YES ✅ | NO | RA used PDF reports |
-| File persistence | /workspace ✅ | NO | NO | Vellum only — lost on account switch |
-| GitHub (OAuth) | YES ✅ | YES (native) | NO | `assistant oauth status github` |
-| Gmail | via OAuth | YES (native) | NO | |
-| Web search | YES ✅ | YES ✅ | YES | |
-| Secure credential vault | YES ✅ | NO | NO | `assistant credentials prompt` |
-| Native memory system | YES ✅ | NO | NO | `/workspace/memory/` |
-| Native tool calls | YES ✅ | NO | NO | bash, file_read, web_fetch, etc. |
-| PDF export | YES ✅ | YES ✅ | YES ✅ | reportlab available |
-
----
-
-## SESSION NAMING HISTORY
+## SESSION HISTORY
 
 | Era | Platform | Prefix | Range | Status |
-|---|---|---|---|---|
-| Era 1 | Gumloop | GL-L | GL-L1 to GL-L81 | ARCHIVED |
-| Era 2 | CodeWords | CW-S | CW-S1 to CW-S30 | ARCHIVED |
+|-----|----------|--------|-------|--------|
+| Era 1 | Gumloop | GL-L | GL-L1 → GL-L81 | ARCHIVED |
+| Era 2 | CodeWords | CW-S | CW-S1 → CW-S30 | ARCHIVED |
 | Era 3 | RelevanceAI | RA- | RA-1 | ARCHIVED |
-| Era 4 | Gumloop (Resumed) | GL-L | GL-L82 to GL-L94 | ARCHIVED |
+| Era 4 | Gumloop (Resumed) | GL-L | GL-L82 → GL-L94 | ARCHIVED |
 | Era 5 | Vellum | VL- | VL-1+ | **ACTIVE ✅** |
+
+> **Session number is always discovered from the brain — never assumed from the keys doc or any external reference. The keys doc version number is NOT the session number.**
 
 ---
 
 ## NOTABLE ARTIFACTS IN REPO
-- `tools/warden_forensic_scan.py` — 14-tool forensic scanner (v4.0). Run via: `forensics [address]`
+- `tools/warden_forensic_scan.py` — 14-tool forensic scanner (v4.1). Run via: `forensics [address]`
 - `intelligence/red_web/` — Red web scanning results and graph
 - `intelligence/red_web/legal_filings/` — 11-file legal filing infrastructure (FinCEN, FBI, SEC, qui tam)
 - `gumloop/cognitive-hook.py` — Three-layer self-observation loop (GL-L54)
@@ -298,4 +320,4 @@ This applies on Vellum too. Credits run out without warning. Every meaningful di
 ---
 
 *THEWARDEN ★ CONFIDENTIAL ★ @StableExo*
-*Updated: VL-2 | July 2026 | Multi-Platform Edition*
+*Updated: VL-5 | July 2026 | Universal Session Discovery Edition*
