@@ -70,11 +70,22 @@ const CEX_DEX_FIRE_BPS = ETH_MAINNET.monitor.cexDexFireBps; // 15
 const QUOTE_AMT      = BigInt(ETH_MAINNET.monitor.quoteAmountUsdc); // 10K USDC
 const QUOTER_ADDR    = ADDRESSES.uniswapV3.quoterV2 as Address;
 
+// ── Log Ring Buffer (GL-L57: /logs endpoint) ──────────────────────────────────
+const LOG_BUFFER_SIZE = 500;
+interface LogEntry { ts: string; level: string; msg: string; }
+const logBuffer: LogEntry[] = [];
+function pushLog(level: string, args: any[]) {
+  const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+  const entry: LogEntry = { ts: new Date().toISOString(), level, msg };
+  logBuffer.push(entry);
+  if (logBuffer.length > LOG_BUFFER_SIZE) logBuffer.shift();
+}
+
 // ── Logger ────────────────────────────────────────────────────────────────────
-const log  = (...a: any[]) => console.log( '[INF]', new Date().toISOString(), ...a);
-const dbg  = (...a: any[]) => console.log( '[DBG]', new Date().toISOString(), ...a);
-const err  = (...a: any[]) => console.error('[ERR]', new Date().toISOString(), ...a);
-const warn = (...a: any[]) => console.warn( '[WRN]', new Date().toISOString(), ...a);
+const log  = (...a: any[]) => { pushLog('INF', a); console.log( '[INF]', new Date().toISOString(), ...a); };
+const dbg  = (...a: any[]) => { pushLog('DBG', a); console.log( '[DBG]', new Date().toISOString(), ...a); };
+const err  = (...a: any[]) => { pushLog('ERR', a); console.error('[ERR]', new Date().toISOString(), ...a); };
+const warn = (...a: any[]) => { pushLog('WRN', a); console.warn( '[WRN]', new Date().toISOString(), ...a); };
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const START_TIME = Date.now();
@@ -553,6 +564,177 @@ app.post('/simulate', async (req: Request, res: Response) => {
 
 app.get('/relay/v1/bundle/list', (_req: Request, res: Response) => {
   res.json([...bundles.values()]);
+});
+
+// ── GL-L57: Log viewer endpoints ───────────────────────────────────────────────
+app.get('/logs', (req: Request, res: Response) => {
+  const n    = Math.min(parseInt((req.query.n as string) ?? '100'), LOG_BUFFER_SIZE);
+  const lvl  = (req.query.level as string ?? '').toUpperCase();
+  const since = req.query.since as string ?? '';
+  let entries = logBuffer.slice(-n);
+  if (lvl)   entries = entries.filter(e => e.level === lvl);
+  if (since) entries = entries.filter(e => e.ts > since);
+  res.json({ count: entries.length, entries });
+});
+
+app.get('/logs/ui', (_req: Request, res: Response) => {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TheWarden — Live Logs</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e2e8f0; font-family: 'Courier New', monospace; font-size: 13px; }
+  header { background: #111827; border-bottom: 1px solid #1e40af; padding: 12px 16px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; }
+  header h1 { font-size: 15px; font-weight: 700; color: #60a5fa; letter-spacing: 0.05em; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 9999px; font-weight: 600; }
+  .badge-live { background: #064e3b; color: #34d399; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }
+  .controls { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .controls label { font-size: 11px; color: #94a3b8; }
+  select, input[type=checkbox] { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 3px 6px; border-radius: 4px; font-size: 12px; }
+  .stats { background: #111827; padding: 8px 16px; border-bottom: 1px solid #1e293b; display: flex; gap: 20px; font-size: 11px; color: #64748b; }
+  .stats span b { color: #94a3b8; }
+  #log-container { padding: 8px; overflow-y: auto; height: calc(100vh - 90px); }
+  .entry { display: flex; gap: 10px; padding: 2px 6px; border-radius: 3px; line-height: 1.5; }
+  .entry:hover { background: #1e293b; }
+  .ts { color: #475569; min-width: 200px; flex-shrink: 0; font-size: 11px; }
+  .level { min-width: 36px; flex-shrink: 0; font-weight: 700; font-size: 11px; }
+  .level-INF { color: #60a5fa; }
+  .level-DBG { color: #6b7280; }
+  .level-WRN { color: #fbbf24; }
+  .level-ERR { color: #f87171; background: #1a0000; padding: 0 4px; border-radius: 2px; }
+  .msg { color: #e2e8f0; word-break: break-all; white-space: pre-wrap; }
+  .msg-fired  { color: #34d399; font-weight: 700; }
+  .msg-profit { color: #a78bfa; font-weight: 700; }
+  .msg-err    { color: #f87171; }
+  .empty { text-align: center; color: #475569; padding: 40px; }
+  #scroll-btn { position: fixed; bottom: 20px; right: 20px; background: #1e40af; color: white;
+    border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; cursor: pointer;
+    display: none; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🛡️ TheWarden — Live Logs</h1>
+  <span class="badge badge-live" id="status-badge">● LIVE</span>
+  <div class="controls">
+    <label>Filter:
+      <select id="level-filter">
+        <option value="">ALL</option>
+        <option value="INF">INF</option>
+        <option value="WRN">WRN</option>
+        <option value="ERR">ERR</option>
+        <option value="DBG">DBG</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="auto-scroll" checked> Auto-scroll</label>
+    <label><input type="checkbox" id="hide-dbg" checked> Hide DBG</label>
+  </div>
+</header>
+<div class="stats">
+  <span>Scans: <b id="s-scans">-</b></span>
+  <span>Fired: <b id="s-fired">-</b></span>
+  <span>Succeeded: <b id="s-succeeded">-</b></span>
+  <span>CEX checks: <b id="s-cex">-</b></span>
+  <span>ETH: <b id="s-price">-</b></span>
+  <span>Profit: <b id="s-profit">-</b> USDC</span>
+  <span>Log entries: <b id="s-logcount">-</b></span>
+  <span id="s-lastopp" style="color:#34d399"></span>
+</div>
+<div id="log-container"><div class="empty">Connecting...</div></div>
+<button id="scroll-btn" title="Scroll to bottom">↓</button>
+<script>
+let lastTs = '';
+let paused = false;
+
+const container = document.getElementById('log-container');
+const autoScroll = document.getElementById('auto-scroll');
+const hideDbg    = document.getElementById('hide-dbg');
+const levelFilter = document.getElementById('level-filter');
+const scrollBtn  = document.getElementById('scroll-btn');
+const badge      = document.getElementById('status-badge');
+
+function levelClass(lvl) {
+  return 'level-' + lvl;
+}
+function msgClass(msg) {
+  if (msg.includes('OPPORTUNITY') || msg.includes('UserOp SUBMITTED') || msg.includes('🚀')) return 'msg-fired';
+  if (msg.includes('💰') || msg.includes('profit') || msg.includes('USDC')) return 'msg-profit';
+  if (msg.includes('ERR') || msg.includes('failed') || msg.includes('❌')) return 'msg-err';
+  return 'msg';
+}
+
+function addEntry(e) {
+  const lvl = e.level;
+  if (hideDbg.checked && lvl === 'DBG') return;
+  const filt = levelFilter.value;
+  if (filt && lvl !== filt) return;
+
+  const div = document.createElement('div');
+  div.className = 'entry';
+  div.innerHTML =
+    '<span class="ts">' + e.ts.replace('T',' ').slice(0,23) + '</span>' +
+    '<span class="level ' + levelClass(lvl) + '">' + lvl + '</span>' +
+    '<span class="' + msgClass(e.msg) + '">' + e.msg.replace(/</g,'&lt;') + '</span>';
+  container.appendChild(div);
+}
+
+async function fetchLogs() {
+  try {
+    const url = lastTs ? '/logs?n=200&since=' + encodeURIComponent(lastTs) : '/logs?n=300';
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.entries && d.entries.length > 0) {
+      if (!lastTs) container.innerHTML = '';
+      for (const e of d.entries) { addEntry(e); lastTs = e.ts; }
+      if (autoScroll.checked) container.scrollTop = container.scrollHeight;
+    }
+    badge.textContent = '● LIVE';
+    badge.style.color = '#34d399';
+  } catch (ex) {
+    badge.textContent = '● OFFLINE';
+    badge.style.color = '#f87171';
+  }
+}
+
+async function fetchStats() {
+  try {
+    const r = await fetch('/arb');
+    const d = await r.json();
+    document.getElementById('s-scans').textContent      = d.scans;
+    document.getElementById('s-fired').textContent      = d.fired;
+    document.getElementById('s-succeeded').textContent  = d.succeeded;
+    document.getElementById('s-cex').textContent        = d.cexDexChecks;
+    document.getElementById('s-price').textContent      = d.krakenPrice;
+    document.getElementById('s-profit').textContent     = d.totalProfitUSDC;
+    if (d.lastOpp) document.getElementById('s-lastopp').textContent = '⚡ ' + d.lastOpp;
+    const lr = await fetch('/logs?n=1');
+    const ld = await lr.json();
+    document.getElementById('s-logcount').textContent = ld.count;
+  } catch {}
+}
+
+container.addEventListener('scroll', () => {
+  const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+  scrollBtn.style.display = atBottom ? 'none' : 'flex';
+});
+scrollBtn.addEventListener('click', () => { container.scrollTop = container.scrollHeight; });
+
+levelFilter.addEventListener('change', () => { lastTs = ''; container.innerHTML = '<div class="empty">Reloading...</div>'; fetchLogs(); });
+hideDbg.addEventListener('change',    () => { lastTs = ''; container.innerHTML = '<div class="empty">Reloading...</div>'; fetchLogs(); });
+
+fetchLogs();
+fetchStats();
+setInterval(fetchLogs,  2000);
+setInterval(fetchStats, 5000);
+</script>
+</body>
+</html>`;
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
 });
 
 // ── Start ──────────────────────────────────────────────────────────────────────
