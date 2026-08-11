@@ -23,11 +23,12 @@ import {
  * Pairs are alphabetically sorted (e.g., USDC/WETH not WETH/USDC)
  */
 const DEFAULT_THRESHOLDS: ProfitThresholds = {
-  'USDC/WETH': BigInt('50000000000000000000'), // 50 WETH (18 decimals)
-  'USDT/WETH': BigInt('50000000000000000000'), // 50 WETH (18 decimals)
-  'USDC/USDT': BigInt('5000000000'), // 5000 USDC (6 decimals)
-  'WBTC/WETH': BigInt('100000000'), // 1 WBTC (8 decimals)
-  DEFAULT: BigInt('10000000000000000000'), // 10 tokens (18 decimals default)
+  // VL-15 BUG 3 FIX: Realistic thresholds (were absurdly high — 50 WETH min was never hittable)
+  'USDC/WETH': BigInt('5000000000000000'),    // 0.005 WETH (~$9 at $1800) — realistic minimum
+  'USDT/WETH': BigInt('5000000000000000'),    // 0.005 WETH
+  'USDC/USDT': BigInt('5000000'),             // 5 USDC minimum
+  'WBTC/WETH': BigInt('500000'),              // 0.005 WBTC
+  DEFAULT: BigInt('5000000000000000'),         // 0.005 ETH-equivalent default
 };
 
 /**
