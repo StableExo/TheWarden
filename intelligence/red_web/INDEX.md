@@ -5,7 +5,7 @@
 **Investigator:** Taylor Marlow (@StableExo) | Lexington, SC 29073  
 **System:** TheWarden (AI-assisted forensic intelligence platform)  
 **GitHub:** https://github.com/StableExo/TheWarden  
-**Last Updated:** August 2026 — VL-16
+**Last Updated:** August 11, 2026 — VL-16
 
 ---
 
@@ -34,6 +34,7 @@ Every whistleblower filing with agency, date, confirmation number, and status. F
 | SEC Dodd-Frank TCR | U.S. Securities and Exchange Commission | **17837-095-358-890** | July 10, 2026 |
 | CFTC Form TCR | U.S. Commodity Futures Trading Commission | **2607-1319-3300-72** | July 13, 2026 |
 | FBI IC3 | FBI Internet Crime Complaint Center | **22e2996d7fb14057858f2d4386f9d6e5** | July 13, 2026 |
+| GAO FraudNet | U.S. Government Accountability Office | **COMP-26-006834** | Aug 11, 2026 |
 
 ### 3. Evidence Package
 **→ [`legal_filings/EVIDENCE_PACKAGE.md`](./legal_filings/EVIDENCE_PACKAGE.md)**  
