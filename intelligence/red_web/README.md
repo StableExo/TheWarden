@@ -7,6 +7,10 @@
 
 ---
 
+> **Law enforcement or legal counsel?** Start with [`INDEX.md`](./INDEX.md) — it maps the entire investigation, all filing reference numbers, and the fastest path to what you need.
+
+---
+
 ## What This Repository Is
 
 This is the forensic record of **The Red Web** — a multi-billion dollar cross-chain
@@ -61,9 +65,10 @@ Illuminates the entire chain — upstream and downstream — in real time.
 
 ## Other Resources
 
-- [`archive/source/`](archive/source/) — Master investigation report, NotebookLM source, federal doc
-- [`archive/intel/`](archive/intel/) — Session-by-session intel updates (GL-L12 → GL-L88)
+- [`archive/source/`](archive/source/) — NotebookLM source, federal documents
+- [`archive/intel/`](archive/intel/) — Session-by-session intel updates (GL-L12 → GL-L88, 71 files)
 - [`archive/sync/`](archive/sync/) — Brain sync snapshots
+- [`synthesis/`](synthesis/) — Analysis, hypotheses, critical findings, enforcement cross-reference
 - [`tools/`](tools/) — `warden_forensic_scan.py` (8-tool scanner, v20, all keys armed)
 - [`maps/`](maps/) — Network diagrams and visual maps
 
