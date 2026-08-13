@@ -157,3 +157,26 @@
 ## 🏁 6 GOVERNMENT ACKNOWLEDGMENTS — VL-16 UPDATE
 
 *TheWarden ★ @StableExo ★ VL-16 ★ Six agencies. Six confirmed acknowledgments. The net is tightening.*
+
+---
+
+## ⚡ VL-17 ATTORNEY UPDATES — Aug 13 2026
+
+### Strom Law Firm — Eliesha Alvarez Direct Contact
+| Field | Detail |
+|-------|--------|
+| **Date** | Aug 13 2026, 3:21 PM EDT |
+| **Contact** | Eliesha Alvarez — ealvarez@stromlaw.com |
+| **From** | stromlaw@messages.leaddocket.com (LeadDocket CRM) |
+| **Message** | "You can email me at ealvarez@stromlaw.com" — direct contact confirmed |
+| **Context** | Reply to Taylor's Aug 11 2:05 AM LeadDocket email ("Red web case") |
+
+### Strom Law Firm — Qui Tam Follow-Up Sent
+| Field | Detail |
+|-------|--------|
+| **Date** | Aug 13 2026, 7:44 PM EDT |
+| **To** | ealvarez@stromlaw.com |
+| **Subject** | Re: Red Web Case — False Claims Act / Qui Tam |
+| **Ask** | Representation for FCA qui tam filing (31 USC §3729) — the one filing requiring attorney |
+| **Pitch** | 9 federal filings, 78-node network, $17B+ illicit proceeds, Pete Strom Jr. former US Attorney background, pure contingency (15-25% DOJ join) |
+| **Status** | ⏳ AWAITING RESPONSE |
