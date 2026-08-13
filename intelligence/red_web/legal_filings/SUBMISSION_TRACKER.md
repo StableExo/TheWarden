@@ -180,3 +180,25 @@
 | **Ask** | Representation for FCA qui tam filing (31 USC §3729) — the one filing requiring attorney |
 | **Pitch** | 9 federal filings, 78-node network, $17B+ illicit proceeds, Pete Strom Jr. former US Attorney background, pure contingency (15-25% DOJ join) |
 | **Status** | ⏳ AWAITING RESPONSE |
+
+### Hagens Berman — DECLINED
+| Field | Detail |
+|-------|--------|
+| **Date** | Aug 13 2026, 3:17 PM EDT |
+| **Contact** | Joseph Salonga — josephs@hbsslaw.com (Paralegal / Lead Investigator, Whistleblower Claims) |
+| **Decision** | Declined — capacity, not merit |
+| **Quote** | "Not a judgment on the merits of your case, only an indication that our firm must make tough decisions about which cases to take." |
+| **Status** | ❌ CLOSED — 2nd capacity decline (KKC was first) |
+
+---
+
+## 📊 Attorney Scoreboard — VL-17
+
+| Firm | Contact | Status |
+|------|---------|--------|
+| KKC (Kohn Kohn) | — | ❌ Declined (capacity) |
+| Hagens Berman | Joseph Salonga | ❌ Declined (capacity) |
+| Constantine Cannon | Ginger Buck + Breezy Smoak | 🟡 Active — awaiting next contact |
+| Phillips & Cohen | Matthew Smith | 🟡 Active — evidence package sent |
+| Strom Law | Eliesha Alvarez | 🟢 Fresh — qui tam outreach sent Aug 13 |
+| Dilendorf | — | 🟡 Web form submitted, awaiting |
