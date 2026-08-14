@@ -8,8 +8,9 @@ export const ETH_MAINNET = {
   name: 'Ethereum Mainnet',
 
   rpc: {
-    http: 'https://purple-hidden-general.ethereum-mainnet.quiknode.pro/8d8e8ffb350c39346213f1e647de678338c31644/',
-    wss:  'wss://purple-hidden-general.ethereum-mainnet.quiknode.pro/8d8e8ffb350c39346213f1e647de678338c31644/',
+    // VL-17: prefer env var so RPC can be rotated without redeploy
+    http: process.env.QN_HTTP_URL ?? 'https://purple-hidden-general.ethereum-mainnet.quiknode.pro/8d8e8ffb350c39346213f1e647de678338c31644/',
+    wss:  process.env.QN_WSS_URL  ?? 'wss://purple-hidden-general.ethereum-mainnet.quiknode.pro/8d8e8ffb350c39346213f1e647de678338c31644/',
   },
 
   blockTime: 12,
