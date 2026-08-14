@@ -198,10 +198,18 @@ export class EthPoolScanner {
     // GL-L55: No spread gate — ternary search runs every cycle
     // FlashSwapV3 contract reverts on-chain if unprofitable — gas is $0 (ThirdWeb paymaster)
     console.log(`[Q2] Running ternary search on ${spreadBps}bps spread...`);
-    return this._runTernaryAndReturn(pB.pool as any, pA.pool as any, spreadBps); // buy pB(0.05%), sell pA(0.30%)
+    // buy cheapest (pA = lower price), sell into higher (pB)
+    return this._runTernaryAndReturn(pA.pool as any, pB.pool as any, spreadBps, pA.price, pB.price, spread);
   }
 
-  private async _runTernaryAndReturn(buyPool: typeof POOL_A, sellPool: typeof POOL_B, spreadBps: number): Promise<ArbOpportunity[]> {
+  private async _runTernaryAndReturn(
+    buyPool: typeof POOL_A,
+    sellPool: typeof POOL_B,
+    spreadBps: number,
+    buyPrice = 0,
+    sellPrice = 0,
+    spreadRaw = 0,
+  ): Promise<ArbOpportunity[]> {
     const profitFn = async (amt: bigint): Promise<bigint> => {
       try {
         const wethOut = await this.q2Quote(buyPool.token0, buyPool.token1, amt, buyPool.fee);
@@ -231,16 +239,16 @@ export class EthPoolScanner {
     console.log(`[Q2 ✅] ${buyPool.label}→${sellPool.label} | borrow=${(Number(optAmt)/1e9).toFixed(2)}K USDC | profit=${(Number(optProfit)/1e6).toFixed(4)} USDC | ${cbps}bps 🔥`);
 
     return [{
-      label:             `${buyPool.label}→${sellPool.label} Q2:${cbps}bps`,
-      buyPool:           buyPool as any,
-      sellPool:          sellPool as any,
-      buyPrice:          pA.price,
-      sellPrice:         pB.price,
-      spread,
-      profitable:        true,
+      label:              `${buyPool.label}→${sellPool.label} Q2:${cbps}bps`,
+      buyPool:            buyPool as any,
+      sellPool:           sellPool as any,
+      buyPrice,
+      sellPrice,
+      spread:             spreadRaw,
+      profitable:         true,
       estimatedProfitBps: cbps,
-      hopCount:          2,
-      optimalBorrow:     optAmt,
+      hopCount:           2,
+      optimalBorrow:      optAmt,
     }];
   }
 

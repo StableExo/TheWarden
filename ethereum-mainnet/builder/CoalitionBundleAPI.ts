@@ -94,6 +94,8 @@ let totalBundlesReceived = 0;
 let totalBundlesIncluded = 0;
 let arbScans = 0, arbFired = 0, arbSucceeded = 0, arbFailed = 0;
 let lastScanTime = 0, lastOpp = '', lastUserOpHash = '', lastError = '';
+// VL-17: Debug fields — best spread seen, last scan detail, last Q2 result
+let lastSpreadBps = 0, lastScanDetail = '', lastQ2Result = '', bestSpreadEver = 0;
 let totalProfitUSDC = 0, lastProfitCheck = 0;
 let krakenPrice = 0, krakenTs = 0;
 let arbInFlight = false; // GL-L56: nonce lock — prevents AA25 collisions
@@ -484,6 +486,19 @@ async function runArbCycle(hint?: { weth5: bigint; weth30: bigint; poolDeltaBps:
   try {
     dbg(`[ARB #${cycleId}] Scanning pools...`);
     const opps = await scanner.findOpportunities(hint);
+
+    // VL-17: capture debug info regardless of whether we fire
+    if (opps.length > 0) {
+      const opp = opps[0];
+      lastSpreadBps = opp.estimatedProfitBps;
+      if (opp.estimatedProfitBps > bestSpreadEver) bestSpreadEver = opp.estimatedProfitBps;
+      lastScanDetail = `${opp.label} | borrow=${opp.optimalBorrow ? (Number(opp.optimalBorrow)/1e9).toFixed(1)+'K USDC' : '?'}`;
+      lastQ2Result = `✅ profitable ${opp.estimatedProfitBps}bps`;
+    } else {
+      lastScanDetail = hint ? `CEX-DEX hint ${hint.poolDeltaBps.toFixed(1)}bps` : 'full pool scan';
+      lastQ2Result = 'no profitable opp found';
+    }
+
     if (!opps.length) { dbg(`[ARB #${cycleId}] No Q2-confirmed opportunities`); return; }
 
     await executeArb(opps[0], cycleId);
@@ -516,20 +531,60 @@ app.get('/stats', (_req: Request, res: Response) => {
 });
 
 app.get('/arb', (_req: Request, res: Response) => {
+  const uptimeSec = Math.round((Date.now() - START_TIME) / 1000);
   res.json({
-    status:         EOA_PK ? 'running' : 'disabled (no ETH_PRIVATE_KEY)',
-    contract:       FLASH_SWAP, profitDest: PROFIT_DEST,
-    scans:          arbScans, fired: arbFired, succeeded: arbSucceeded, failed: arbFailed,
+    status:          EOA_PK ? 'running' : 'disabled (no ETH_PRIVATE_KEY)',
+    mode:            'live',
+    uptime:          `${uptimeSec}s`,
+    contract:        FLASH_SWAP,
+    profitDest:      PROFIT_DEST,
+    // Scan counters
+    scans:           arbScans,
+    fires:           arbFired,
+    succeeded:       arbSucceeded,
+    failed:          arbFailed,
     totalProfitUSDC: totalProfitUSDC.toFixed(6),
-    lastScanTime:   lastScanTime ? new Date(lastScanTime).toISOString() : 'never',
+    // Timing
+    lastScanTime:    lastScanTime ? new Date(lastScanTime).toISOString() : 'never',
+    lastScanAgo:     lastScanTime ? `${((Date.now()-lastScanTime)/1000).toFixed(1)}s ago` : 'never',
+    lastFireAgo:     arbFired > 0 ? 'see lastOpp' : 'never',
     // CEX-DEX stats
-    cexDexChecks, cexDexFired,
-    krakenPrice:    krakenPrice > 0 ? `$${krakenPrice.toFixed(2)}` : 'fetching...',
-    // Simulation stats
+    cexDexChecks,
+    cexDexFired,
+    krakenPrice:     krakenPrice > 0 ? `$${krakenPrice.toFixed(2)}` : 'fetching...',
+    ethPriceUsd:     krakenPrice,
+    minSpreadBps:    MIN_SPREAD_BPS,
+    // VL-17: Debug fields
+    lastSpreadBps,
+    bestSpreadEver,
+    lastScanDetail,
+    lastQ2Result,
+    // Results
     lastSimResult,
-    // Fan-out stats
-    lastFanout:     fanoutResults,
-    lastOpp, lastUserOpHash, lastError,
+    lastFanout:      fanoutResults,
+    lastOpp,
+    lastUserOpHash,
+    lastError,
+  });
+});
+
+// VL-17: /status alias — same payload as /arb, friendly for health checks
+app.get('/status', (_req: Request, res: Response) => {
+  const uptimeSec = Math.round((Date.now() - START_TIME) / 1000);
+  res.json({
+    status:        EOA_PK ? 'running' : 'disabled',
+    mode:          'live',
+    uptime:        `${uptimeSec}s`,
+    scans:         arbScans,
+    fires:         arbFired,
+    lastScanAgo:   lastScanTime ? `${((Date.now()-lastScanTime)/1000).toFixed(1)}s ago` : 'never',
+    lastFireAgo:   arbFired > 0 ? 'see /arb' : 'never',
+    lastOpp:       lastOpp || null,
+    ethPriceUsd:   krakenPrice,
+    minSpreadBps:  MIN_SPREAD_BPS,
+    lastSpreadBps,
+    bestSpreadEver,
+    lastQ2Result,
   });
 });
 
