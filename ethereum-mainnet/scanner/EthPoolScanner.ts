@@ -45,7 +45,17 @@ const POOL_B = {
   label:    'UniV3 USDC/WETH 0.30%',
 };
 
-const POOLS = [POOL_A, POOL_B];
+// FIX #2 VL-18: USDT/WETH 0.05% — 2.45 quad liquidity, diverges vs USDC/WETH on stablecoin stress
+const POOL_C = {
+  address:  '0x11b815efB8f581194ae79006d24E0d814B7697F6' as Address, // UniV3 USDT/WETH 0.05%
+  protocol: 'uniswap-v3' as const,
+  token0:   ADDRESSES.tokens.USDT,
+  token1:   ADDRESSES.tokens.WETH,
+  fee:      500,
+  label:    'UniV3 USDT/WETH 0.05%',
+};
+
+const POOLS = [POOL_A, POOL_B, POOL_C];
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MULTICALL3  = '0xcA11bde05977b3631167028862bE2a173976CA11' as Address;
