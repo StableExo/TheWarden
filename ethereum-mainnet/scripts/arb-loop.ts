@@ -37,7 +37,7 @@ const PORT              = parseInt(process.env.PORT ?? '10000');
 const EOA_PK            = process.env.ETH_PRIVATE_KEY as Hex;
 const THIRDWEB_CLIENT_ID = process.env.THIRDWEB_CLIENT_ID || '0282b1b3ed884ef92509e46b8da1fad7';
 const THIRDWEB_SECRET_KEY = process.env.THIRDWEB_SECRET_KEY || '';
-const BUNDLER_URL       = 'https://1.bundler.thirdweb.com/v2';
+const BUNDLER_URL       = 'https://api.pimlico.io/v2/ethereum/rpc?apikey=pim_FrLy7ab9HvvjQkTWXcBEmx'; // VL-18: ThirdWeb mainnet billing required — switched to Pimlico
 const ENTRY_POINT_V06   = '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789' as Address;
 const SMART_ACCOUNT     = '0x9Cf21D503EAe5Cf33f9c4c58C75e16065007f367' as Address;
 const FLASH_SWAP        = ADDRESSES.flashSwapV3ETH as Address;
@@ -153,7 +153,7 @@ async function executeArb(opp: any, client: ReturnType<typeof createPublicClient
 
   const hdrs: Record<string, string> = {
     'Content-Type': 'application/json',
-    'x-client-id': THIRDWEB_CLIENT_ID,
+    // VL-18: Pimlico uses apikey in URL — no extra auth header needed
   };
   if (THIRDWEB_SECRET_KEY) hdrs['x-secret-key'] = THIRDWEB_SECRET_KEY;
 
