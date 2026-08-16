@@ -33,7 +33,7 @@ const EOA_PK             = process.env.ETH_PRIVATE_KEY as Hex;
 const THIRDWEB_CLIENT_ID = process.env.THIRDWEB_CLIENT_ID || '0282b1b3ed884ef92509e46b8da1fad7';
 const THIRDWEB_SECRET_KEY= process.env.THIRDWEB_SECRET_KEY || '';
 const QN_HTTP            = ETH_MAINNET.rpc.http;
-const BUNDLER_URL        = 'https://1.bundler.thirdweb.com/v2';
+const BUNDLER_URL        = 'https://api.pimlico.io/v2/ethereum/rpc?apikey=pim_FrLy7ab9HvvjQkTWXcBEmx'; // VL-18: ThirdWeb mainnet billing required — use Pimlico
 const ENTRY_POINT_V06    = '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789' as Address;
 const SMART_ACCOUNT      = '0x9Cf21D503EAe5Cf33f9c4c58C75e16065007f367' as Address;
 const FLASH_SWAP         = ADDRESSES.flashSwapV3ETH as Address;  // update to new address after redeploy
@@ -130,7 +130,9 @@ async function main() {
   console.log('\n2️⃣  Building arb calldata...');
 
   const minOut1  = 0n;   // accept any output on step 1 (profit check is on net)
-  const minFinal = BORROW_AMOUNT * 1001n / 1000n;  // at least 0.1% profit = repay + fee
+  // FIX #3 VL-18 (arb-execute.ts): use actual borrow size for minOut
+  const actualBorrow = opp.optimalBorrow ?? BORROW_AMOUNT;
+  const minFinal = actualBorrow * 1001n / 1000n;  // at least 0.1% profit = repay + fee
 
   const path = buildArbPath(
     getAddress(opp.buyPool.address),  opp.buyPool.token0,  opp.buyPool.token1,
