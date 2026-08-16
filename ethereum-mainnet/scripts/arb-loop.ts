@@ -22,7 +22,7 @@
 
 import http from 'http';
 import {
-  createPublicClient, http as viemHttp, encodeFunctionData, parseUnits, getAddress,
+  createPublicClient, http as viemHttp, webSocket, encodeFunctionData, parseUnits, getAddress,
   type Address, type Hex,
 } from 'viem';
 import { mainnet } from 'viem/chains';
@@ -51,11 +51,12 @@ const DRY_RUN = process.argv.includes('--dry-run');
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const START = Date.now();
-let scans    = 0;
-let fires    = 0;
-let lastScan = 0;
-let lastFire = 0;
+let scans      = 0;
+let fires      = 0;
+let lastScan   = 0;
+let lastFire   = 0;
 let lastOpp: string | null = null;
+const FIRE_COOLDOWN_MS = 45_000; // FIX #5 VL-18: 45s cooldown after fire — prevents AA25 nonce collision
 let liveEthPriceUsd = 0;  // Bug 2 FIX: live price, never hardcoded
 
 // ─── ABIs ─────────────────────────────────────────────────────────────────────
@@ -121,20 +122,22 @@ async function executeArb(opp: any, client: ReturnType<typeof createPublicClient
 
   const gas = await client.getGasPrice();
 
-  const minFinal = BORROW_AMOUNT * 1001n / 1000n;
+  // FIX #3 VL-18: use actual borrow size for minOut, not hardcoded constant
+  const actualBorrow = opp.optimalBorrow ?? BORROW_AMOUNT;
+  const minFinal = actualBorrow * 1001n / 1000n;
   const path = buildArbPath(
     getAddress(opp.buyPool.address),  opp.buyPool.token0,  opp.buyPool.token1,
     opp.buyPool.fee  ?? 500,          0n,                  0,
     getAddress(opp.sellPool.address), opp.sellPool.token0, opp.sellPool.token1,
     opp.sellPool.fee ?? 3000,         minFinal,             0,
-    opp.optimalBorrow ?? BORROW_AMOUNT, minFinal,
+    actualBorrow, minFinal,
   );
 
   const arbCalldata = encodeFunctionData({
     abi: FLASH_ABI, functionName: 'executeArbitrage',
     args: [
       ADDRESSES.tokens.USDC as Address,
-      opp.optimalBorrow ?? BORROW_AMOUNT,
+      actualBorrow,
       path,
       0,
       '0x0000000000000000000000000000000000000000' as Address,
@@ -252,6 +255,12 @@ async function runScanLoop(): Promise<void> {
   console.log(`[LOOP] Starting arb loop — interval=${SCAN_INTERVAL_MS}ms | min_spread=${MIN_PROFIT_BPS}bps | mode=${DRY_RUN ? 'DRY-RUN' : 'LIVE'}`);
 
   const tick = async () => {
+    // FIX #5 VL-18: skip scan if within cooldown window after a fire
+    if (lastFire > 0 && Date.now() - lastFire < FIRE_COOLDOWN_MS) {
+      const remaining = Math.ceil((FIRE_COOLDOWN_MS - (Date.now() - lastFire)) / 1000);
+      console.log(`[COOLDOWN] ${remaining}s remaining after last fire — skipping scan`);
+      return;
+    }
     scans++;
     lastScan = Date.now();
     try {
