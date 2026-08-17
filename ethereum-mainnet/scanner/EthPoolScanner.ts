@@ -18,7 +18,7 @@
  *   3. If spread >= 10bps: ternary search (8 iters = 16 Q2 calls) for optimal borrow
  *   4. Return opportunity with optimalBorrow if profitable
  *
- * GL-L56 | TheWarden | @StableExo — Gated on real profit (no more fire-regardless)
+ * VL-19 | TheWarden | @StableExo — Pool B swapped to 0.01% (6bps total fees), threshold 7bps
  */
 
 import { createPublicClient, http, getAddress, type Address, parseAbi } from 'viem';
@@ -37,12 +37,12 @@ const POOL_A = {
 };
 
 const POOL_B = {
-  address:  '0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8' as Address, // UniV3 USDC/WETH 0.30% — deep liquidity, fee-tier divergence
+  address:  '0xe0554a476A092703abdB3Ef35c80e0D76d32939e' as Address, // UniV3 USDC/WETH 0.01% — 893T liquidity, total fee cost 6bps vs 35bps (VL-19)
   protocol: 'uniswap-v3' as const,
   token0:   ADDRESSES.tokens.USDC,
   token1:   ADDRESSES.tokens.WETH,
-  fee:      3000,
-  label:    'UniV3 USDC/WETH 0.30%',
+  fee:      100,
+  label:    'UniV3 USDC/WETH 0.01%',
 };
 
 // FIX #2 VL-18: USDT/WETH 0.05% — 2.45 quad liquidity, diverges vs USDC/WETH on stablecoin stress
@@ -63,7 +63,7 @@ const QUOTER_ADDR = ADDRESSES.uniswapV3.quoterV2 as Address;
 const MIN_BORROW  = 1_000_000_000n;    //   1K USDC (6 decimals)
 const MAX_BORROW  = 500_000_000_000n;  // 500K USDC (6 decimals)
 const BORROW      = 100_000_000_000n;  // 100K USDC — fast-path / fallback
-const MIN_SPREAD_BPS = 10;            // patch#10: fire at 10bps to observe engine behavior              // GL-L56: Gate at 5bps — below fee cost (10bps), avoids noise
+const MIN_SPREAD_BPS = 7;             // VL-19: fee cost is now 6bps (0.05%+0.01%) — fire at 7bps for 1bps net minimum
 
 // ── ABIs ──────────────────────────────────────────────────────────────────────
 const MULTICALL3_ABI = [{
