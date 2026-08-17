@@ -118,9 +118,11 @@ async function fetchKrakenEthPrice(): Promise<number> {
 
 // ─── Execute one arb attempt ──────────────────────────────────────────────────
 async function executeArb(opp: any, client: ReturnType<typeof createPublicClient>, account: any): Promise<void> {
-  console.log(`\n[ARB] Executing: ${opp.label}`);
+  console.log(`\n[ARB] Executing: ${opp.label} | dryRun=${DRY_RUN}`);
 
-  const gas = await client.getGasPrice();
+  // VL-19: Floor gas at 3 gwei — getGasPrice() returns 0 from some RPC states, which makes maxFeePerGas=0 and Pimlico rejects the UserOp
+  const gasRaw = await client.getGasPrice();
+  const gas = gasRaw > 0n ? gasRaw : 3_000_000_000n;
 
   // VL-19: Fix token direction bug — sell leg must be WETH→USDC, not USDC→WETH
   // Fix minFinal — only needs to exceed borrow by 1 unit; real gate is FSV3:NOP on-chain
