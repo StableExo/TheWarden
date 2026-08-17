@@ -122,14 +122,16 @@ async function executeArb(opp: any, client: ReturnType<typeof createPublicClient
 
   const gas = await client.getGasPrice();
 
-  // FIX #3 VL-18: use actual borrow size for minOut, not hardcoded constant
+  // VL-19: Fix token direction bug — sell leg must be WETH→USDC, not USDC→WETH
+  // Fix minFinal — only needs to exceed borrow by 1 unit; real gate is FSV3:NOP on-chain
   const actualBorrow = opp.optimalBorrow ?? BORROW_AMOUNT;
-  const minFinal = actualBorrow * 1001n / 1000n;
+  const minFinal = actualBorrow + 1n;  // any profit passes; contract enforces FSV3:NOP
   const path = buildArbPath(
     getAddress(opp.buyPool.address),  opp.buyPool.token0,  opp.buyPool.token1,
     opp.buyPool.fee  ?? 500,          0n,                  0,
-    getAddress(opp.sellPool.address), opp.sellPool.token0, opp.sellPool.token1,
-    opp.sellPool.fee ?? 3000,         minFinal,             0,
+    // sell leg: WETH→USDC — token1→token0, so swap token0/token1 order
+    getAddress(opp.sellPool.address), opp.sellPool.token1, opp.sellPool.token0,
+    opp.sellPool.fee ?? 100,          0n,                  0,
     actualBorrow, minFinal,
   );
 

@@ -130,16 +130,18 @@ async function main() {
   console.log('\n2️⃣  Building arb calldata...');
 
   const minOut1  = 0n;   // accept any output on step 1 (profit check is on net)
-  // FIX #3 VL-18 (arb-execute.ts): use actual borrow size for minOut
+  // VL-19: Fix token direction — sell leg WETH→USDC (token1→token0), not USDC→WETH
+  // Fix minFinal — just needs to beat borrow by 1 wei; FSV3:NOP is the real gate
   const actualBorrow = opp.optimalBorrow ?? BORROW_AMOUNT;
-  const minFinal = actualBorrow * 1001n / 1000n;  // at least 0.1% profit = repay + fee
+  const minFinal = actualBorrow + 1n;
 
   const path = buildArbPath(
     getAddress(opp.buyPool.address),  opp.buyPool.token0,  opp.buyPool.token1,
     opp.buyPool.fee  ?? 500,          minOut1,              0,
-    getAddress(opp.sellPool.address), opp.sellPool.token0, opp.sellPool.token1,
-    opp.sellPool.fee ?? 3000,         minFinal,             0,
-    BORROW_AMOUNT, minFinal,
+    // sell leg: WETH(token1)→USDC(token0)
+    getAddress(opp.sellPool.address), opp.sellPool.token1, opp.sellPool.token0,
+    opp.sellPool.fee ?? 100,          0n,                  0,
+    actualBorrow, minFinal,
   );
 
   const arbCalldata = encodeFunctionData({
