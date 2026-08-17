@@ -43,7 +43,7 @@ const SMART_ACCOUNT     = '0x9Cf21D503EAe5Cf33f9c4c58C75e16065007f367' as Addres
 const FLASH_SWAP        = ADDRESSES.flashSwapV3ETH as Address;
 const PROFIT_DEST       = ETH_MAINNET.wallet.eoa as Address;
 const BORROW_AMOUNT     = parseUnits('100000', 6);   // 100K USDC
-const MIN_PROFIT_BPS    = 10;                         // only fire if >= 10bps
+const MIN_PROFIT_BPS    = 7;                          // VL-19: fee cost 6bps (0.05%+0.01%), fire at 7bps net minimum
 const SCAN_INTERVAL_MS  = 12_000;                     // every ~1 block (12s)
 const PRICE_REFRESH_MS  = 60_000;                     // refresh ETH price every 60s
 
