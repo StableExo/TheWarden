@@ -37,7 +37,7 @@ const POOL_A = {
 };
 
 const POOL_B = {
-  address:  '0xe0554a476A092703abdB3Ef35c80e0D76d32939e' as Address, // UniV3 USDC/WETH 0.01% — 893T liquidity, total fee cost 6bps vs 35bps (VL-19)
+  address:  '0xe0554a476A092703abdB3Ef35c80e0D76d32939F' as Address, // UniV3 USDC/WETH 0.01% — 895T liquidity, total fee cost 6bps vs 35bps (VL-19)
   protocol: 'uniswap-v3' as const,
   token0:   ADDRESSES.tokens.USDC,
   token1:   ADDRESSES.tokens.WETH,
