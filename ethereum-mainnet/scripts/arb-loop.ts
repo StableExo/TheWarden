@@ -37,7 +37,9 @@ const PORT              = parseInt(process.env.PORT ?? '10000');
 const EOA_PK            = process.env.ETH_PRIVATE_KEY as Hex;
 const THIRDWEB_CLIENT_ID = process.env.THIRDWEB_CLIENT_ID || '0282b1b3ed884ef92509e46b8da1fad7';
 const THIRDWEB_SECRET_KEY = process.env.THIRDWEB_SECRET_KEY || '';
-const BUNDLER_URL       = 'https://api.pimlico.io/v2/ethereum/rpc?apikey=pim_FrLy7ab9HvvjQkTWXcBEmx'; // VL-18: ThirdWeb mainnet billing required — switched to Pimlico
+// VL-18: ThirdWeb mainnet billing required — switched to Pimlico
+// VL-20: Pimlico v2 API — pm_sponsorUserOperation params[2] must be {} (context object), NOT "0x1" string
+const BUNDLER_URL       = 'https://api.pimlico.io/v2/ethereum/rpc?apikey=pim_FrLy7ab9HvvjQkTWXcBEmx';
 const ENTRY_POINT_V06   = '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789' as Address;
 const SMART_ACCOUNT     = '0x9Cf21D503EAe5Cf33f9c4c58C75e16065007f367' as Address;
 const FLASH_SWAP        = ADDRESSES.flashSwapV3ETH as Address;
@@ -192,25 +194,31 @@ async function executeArb(opp: any, client: ReturnType<typeof createPublicClient
     maxPriorityFeePerGas: BigInt(op.maxPriorityFeePerGas),
   });
 
-  // Paymaster stub
+  // VL-20: Correct Pimlico v2 flow:
+  // Step 1 — get stub paymasterAndData so we can sign a complete op
   const stubRes = await fetch(BUNDLER_URL, {
     method: 'POST', headers: hdrs,
-    body: JSON.stringify({ jsonrpc:'2.0', id:1, method:'pm_getPaymasterStubData', params:[userOp, ENTRY_POINT_V06, '0x1', {}] }),
+    // VL-20 FIX: params[2] is {} context object, NOT "0x1" string (causes validation error)
+    body: JSON.stringify({ jsonrpc:'2.0', id:1, method:'pm_getPaymasterStubData', params:[userOp, ENTRY_POINT_V06, {}] }),
   });
   const stubJ = await stubRes.json() as any;
   if (stubJ.error) throw new Error(`Paymaster stub: ${JSON.stringify(stubJ.error)}`);
   userOp.paymasterAndData = stubJ.result.paymasterAndData;
+  console.log(`[ARB] Stub paymasterAndData: ${(userOp.paymasterAndData as string).slice(0, 20)}...`);
 
-  // Sign
+  // Step 2 — sign with stub data so simulation can validate signature
   const hash1 = await client.readContract({ address: ENTRY_POINT_V06, abi: EP_ABI, functionName: 'getUserOpHash', args: [toContract(userOp)] });
   userOp.signature = await account.signMessage({ message: { raw: hash1 } });
+  console.log(`[ARB] Step 1 signed. Requesting gas sponsorship...`);
 
-  // Sponsor gas
+  // Step 3 — get final paymasterAndData + gas limits from Pimlico
   const sponsorRes = await fetch(BUNDLER_URL, {
     method: 'POST', headers: hdrs,
+    // VL-20 FIX: params[2] is {} context, not "0x1"
     body: JSON.stringify({ jsonrpc:'2.0', id:2, method:'pm_sponsorUserOperation', params:[userOp, ENTRY_POINT_V06, {}] }),
   });
   const sponsorJ = await sponsorRes.json() as any;
+  console.log(`[ARB] Sponsor response: ${JSON.stringify(sponsorJ).slice(0, 120)}`);
   if (sponsorJ.error) throw new Error(`Sponsor: ${JSON.stringify(sponsorJ.error)}`);
   Object.assign(userOp, {
     paymasterAndData: sponsorJ.result.paymasterAndData,
@@ -338,8 +346,17 @@ const srv = http.createServer((req, res) => {
 });
 
 srv.listen(PORT, () => {
-  console.log(`[INF] ${new Date().toISOString()} TheWarden ARB ENGINE on port ${PORT} (VL-15)`);
-  console.log(`[INF] ETH_PRIVATE_KEY: ${EOA_PK ? 'SET' : 'NOT SET'}`);
+  console.log(`[INF] ${new Date().toISOString()} TheWarden ARB ENGINE on port ${PORT} (VL-20)`);
+  console.log(`[INF] ETH_PRIVATE_KEY: ${EOA_PK ? 'SET ✅' : 'NOT SET ❌ — cannot execute'}`);
+  console.log(`[INF] QN_HTTP_URL: ${process.env.QN_HTTP_URL ? 'SET ✅ (' + process.env.QN_HTTP_URL.slice(0,40) + '...)' : 'NOT SET ⚠️ — using hardcoded fallback'}`);
+  console.log(`[INF] THIRDWEB_SECRET_KEY: ${process.env.THIRDWEB_SECRET_KEY ? 'SET ✅' : 'NOT SET ⚠️ — Pimlico will still work, ThirdWeb paymaster unavailable'}`);
+  console.log(`[INF] THIRDWEB_CLIENT_ID: ${THIRDWEB_CLIENT_ID ? 'SET ✅' : 'NOT SET'}`);
+  console.log(`[INF] BUNDLER: Pimlico v2 (${BUNDLER_URL.slice(0, 50)}...)`);
+  console.log(`[INF] FLASH_SWAP: ${FLASH_SWAP}`);
+  console.log(`[INF] SMART_ACCOUNT: ${SMART_ACCOUNT}`);
+  console.log(`[INF] PROFIT_DEST: ${PROFIT_DEST}`);
+  console.log(`[INF] MIN_PROFIT_BPS: ${MIN_PROFIT_BPS}bps`);
+  console.log(`[INF] BORROW_AMOUNT: ${Number(BORROW_AMOUNT)/1e6}K USDC`);
   console.log(`[INF] NODE_ENV: ${process.env.NODE_ENV ?? 'undefined'}`);
   console.log(`[INF] DRY_RUN: ${DRY_RUN}`);
   runScanLoop().catch(e => {
