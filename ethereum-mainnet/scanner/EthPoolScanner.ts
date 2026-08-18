@@ -14,6 +14,16 @@
  *   - FIX 5: RPC health check on init — fails fast with clear message
  *   - FIX 6: QuoterV2 uses eth_call simulation (view mode) correctly
  *
+ * VL-21 FIXES:
+ *   - FIX 7: POOL_C price=0 root cause fixed — POOL_C is token0=WETH,token1=USDT
+ *            (opposite orientation to POOL_A/B). BigInt sqrtP^2/2^192 truncates to 0.
+ *            Fix: each pool now carries token0Decimals/token1Decimals + isInverted flag.
+ *            Inverted pools use 2^192/sqrtP^2 * 1e12 to produce a comparable price.
+ *   - FIX 8: MIN_SPREAD_BPS now actually used as pre-filter — skips ternary search
+ *            (16 RPC calls) on pairs below threshold. Was defined but never applied.
+ *   - FIX 9: Cross-token pairs (USDC/WETH vs USDT/WETH) properly skipped — the
+ *            2-leg arb path is invalid across different stablecoins without a bridge leg.
+ *
  * VL-19 | TheWarden | @StableExo — Pool B swapped to 0.01% (6bps total fees), threshold 7bps
  * VL-20 | TheWarden | @StableExo — Error logging + fallback RPC + Pool C comparison
  */
@@ -34,31 +44,53 @@ const RPC_CANDIDATES = [
 ].filter(Boolean) as string[];
 
 // ── The 3 pools ───────────────────────────────────────────────────────────────
+// VL-21 FIX 7: Each pool now carries decimals and an isInverted flag.
+// isInverted=true means token0 is the expensive asset (WETH), so sqrtPriceX96
+// encodes USDT/WETH (not WETH/USDC). We take the reciprocal to compare apples-to-apples.
+//
+// Verified on-chain Aug 18 2026:
+//   POOL_A token0=USDC(6) token1=WETH(18)  — isInverted=false
+//   POOL_B token0=USDC(6) token1=WETH(18)  — isInverted=false
+//   POOL_C token0=WETH(18) token1=USDT(6)  — isInverted=TRUE (was wrong in POOL_C definition)
 const POOL_A = {
-  address:  '0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640' as Address,
-  protocol: 'uniswap-v3' as const,
-  token0:   ADDRESSES.tokens.USDC,
-  token1:   ADDRESSES.tokens.WETH,
-  fee:      500,
-  label:    'UniV3 USDC/WETH 0.05%',
+  address:       '0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640' as Address,
+  protocol:      'uniswap-v3' as const,
+  token0:        ADDRESSES.tokens.USDC,
+  token1:        ADDRESSES.tokens.WETH,
+  fee:           500,
+  label:         'UniV3 USDC/WETH 0.05%',
+  dec0:          6,
+  dec1:          18,
+  isInverted:    false,   // price = sqrtP^2/2^192 * 1e(dec1-dec0) — stablecoin per ETH unit
+  stablecoin:    'USDC',
 };
 
 const POOL_B = {
-  address:  '0xe0554a476A092703abdB3Ef35c80e0D76d32939F' as Address,
-  protocol: 'uniswap-v3' as const,
-  token0:   ADDRESSES.tokens.USDC,
-  token1:   ADDRESSES.tokens.WETH,
-  fee:      100,
-  label:    'UniV3 USDC/WETH 0.01%',
+  address:       '0xe0554a476A092703abdB3Ef35c80e0D76d32939F' as Address,
+  protocol:      'uniswap-v3' as const,
+  token0:        ADDRESSES.tokens.USDC,
+  token1:        ADDRESSES.tokens.WETH,
+  fee:           100,
+  label:         'UniV3 USDC/WETH 0.01%',
+  dec0:          6,
+  dec1:          18,
+  isInverted:    false,
+  stablecoin:    'USDC',
 };
 
+// VL-21: POOL_C on-chain token0=WETH(18), token1=USDT(6) — isInverted=true.
+// Previous definition had token0=USDT, token1=WETH which was WRONG and caused price=0.
 const POOL_C = {
-  address:  '0x11b815efB8f581194ae79006d24E0d814B7697F6' as Address,
-  protocol: 'uniswap-v3' as const,
-  token0:   ADDRESSES.tokens.USDT,
-  token1:   ADDRESSES.tokens.WETH,
-  fee:      500,
-  label:    'UniV3 USDT/WETH 0.05%',
+  address:       '0x11b815efB8f581194ae79006d24E0d814B7697F6' as Address,
+  protocol:      'uniswap-v3' as const,
+  token0:        ADDRESSES.tokens.WETH,   // VL-21 corrected: WETH is token0 on-chain
+  token1:        ADDRESSES.tokens.USDT,   // VL-21 corrected: USDT is token1 on-chain
+  fee:           500,
+  label:         'UniV3 WETH/USDT 0.05%',
+  dec0:          18,
+  dec1:          6,
+  isInverted:    true,    // price = 2^192/sqrtP^2 * 1e(dec0-dec1) to match POOL_A/B orientation
+  stablecoin:    'USDT',
 };
 
 const POOLS = [POOL_A, POOL_B, POOL_C];
@@ -198,10 +230,33 @@ export class EthPoolScanner {
           console.warn(`[SCAN WARN] Pool ${POOLS[i].label}: sqrtP=${sqrtP} liq=${liq} — zero values`);
           continue;
         }
-        const rawPrice = Number((sqrtP * sqrtP) / (1n << 192n));
-        const price    = rawPrice * 1e12;
-        if (price === 0) {
-          console.warn(`[SCAN WARN] Pool ${POOLS[i].label}: price calculated as 0`);
+        // VL-21 FIX 7: Compute price correctly for both normal and inverted pools.
+        // All pools normalize to "stablecoin units per WETH unit * 1e12" for apples-to-apples comparison.
+        //
+        // Normal pools (token0=stablecoin, token1=WETH):
+        //   price = Number(sqrtP^2 / 2^192) * 1e(dec1-dec0)
+        //   = WETH_raw/stablecoin_raw * 1e12  ← large number ~5.25e20
+        //
+        // Inverted pools (token0=WETH, token1=stablecoin, e.g. POOL_C):
+        //   sqrtP^2/2^192 is tiny (~1.9e-9) so BigInt truncates to 0.
+        //   Instead: price = Number(2^192 / sqrtP^2) * 1e(dec0-dec1)
+        //   = stablecoin_raw/WETH_raw * 1e12  ← same ~5.25e20 ✓
+        const pool = POOLS[i] as typeof POOL_A;
+        let price: number;
+        if (pool.isInverted) {
+          // Use floating point reciprocal — BigInt division would give 0
+          const sqrtPNum = Number(sqrtP);
+          const pow192 = Math.pow(2, 192);
+          const decAdj = Math.pow(10, pool.dec0 - pool.dec1); // 1e(18-6) = 1e12
+          price = (pow192 / (sqrtPNum * sqrtPNum)) * decAdj;
+        } else {
+          // Normal: BigInt division is fine (sqrtP is large enough)
+          const rawPrice = Number((sqrtP * sqrtP) / (1n << 192n));
+          const decAdj = Math.pow(10, pool.dec1 - pool.dec0); // 1e(18-6) = 1e12
+          price = rawPrice * decAdj;
+        }
+        if (price === 0 || !isFinite(price)) {
+          console.warn(`[SCAN WARN] Pool ${POOLS[i].label}: price calculated as ${price}`);
           continue;
         }
         console.log(`[SCAN] ${POOLS[i].label}: price=${price.toFixed(8)} liq=${liq}`);
@@ -241,12 +296,19 @@ export class EthPoolScanner {
       return [];
     }
 
-    // VL-20: Compare ALL pairs (A vs B, A vs C, B vs C) — not just first two
+    // VL-21 FIX 9: Only compare pools with the same stablecoin (same quote token).
+    // USDC/WETH vs USDT/WETH cross-token pairs are NOT valid 2-leg arb — they'd need
+    // a USDC↔USDT bridge leg which this executor doesn't support.
+    // Same stablecoin check: both pools must have the same stablecoin field.
     const pairs: Array<[PoolPrice, PoolPrice]> = [];
     for (let i = 0; i < prices.length; i++) {
       for (let j = i + 1; j < prices.length; j++) {
-        // Only compare same token1 (WETH) — skip USDT/WETH vs USDC/WETH cross-token pairs
-        // They can only arb if both legs involve WETH; USDC↔USDT cross is a separate opportunity
+        const poolI = prices[i].pool as typeof POOL_A;
+        const poolJ = prices[j].pool as typeof POOL_A;
+        if (poolI.stablecoin !== poolJ.stablecoin) {
+          console.log(`[SCAN] Skipping cross-stablecoin pair: ${poolI.label} vs ${poolJ.label}`);
+          continue;
+        }
         pairs.push([prices[i], prices[j]]);
       }
     }
@@ -266,6 +328,12 @@ export class EthPoolScanner {
 
     // Try pairs in order of spread until we find a profitable one
     for (const { lo, hi, spreadBps } of spreads) {
+      // VL-21 FIX 8: MIN_SPREAD_BPS was defined but never used as a pre-filter.
+      // Skip ternary search entirely (saves ~16 RPC calls) if spread is below threshold.
+      if (spreadBps < MIN_SPREAD_BPS) {
+        console.log(`[SCAN] ${lo.pool.label} vs ${hi.pool.label}: ${spreadBps}bps < ${MIN_SPREAD_BPS}bps threshold — skipping Q2`);
+        continue;
+      }
       console.log(`[Q2] Checking ${lo.pool.label}→${hi.pool.label} | ${spreadBps}bps`);
       const opps = await this._runTernaryAndReturn(
         lo.pool as any, hi.pool as any, spreadBps, lo.price, hi.price,
@@ -289,22 +357,33 @@ export class EthPoolScanner {
     const profitFn = async (amt: bigint): Promise<bigint> => {
       try {
         const label = `${(Number(amt)/1e6).toFixed(0)}K`;
-        // Buy leg: USDC → WETH (buying cheap ETH)
+        const buyPoolTyped  = buyPool  as typeof POOL_A;
+        const sellPoolTyped = sellPool as typeof POOL_A;
+
+        // VL-21: For inverted pools (token0=WETH), the stablecoin is token1.
+        // Buy leg: stablecoin → WETH (buying cheap ETH on the buy pool)
+        //   Normal pool: tokenIn=token0 (USDC), tokenOut=token1 (WETH)
+        //   Inverted pool: tokenIn=token1 (USDT), tokenOut=token0 (WETH)
+        const buyStable = buyPoolTyped.isInverted ? buyPoolTyped.token1 : buyPoolTyped.token0;
+        const buyWeth   = buyPoolTyped.isInverted ? buyPoolTyped.token0 : buyPoolTyped.token1;
         const wethOut = await this.q2Quote(
           `buy-leg-${label}`,
-          buyPool.token0, buyPool.token1, amt, buyPool.fee
+          buyStable, buyWeth, amt, buyPool.fee
         );
         if (!wethOut || wethOut === 0n) return -amt;
 
-        // Sell leg: WETH → USDC (selling expensive ETH)
-        // VL-19 fix: sell leg is token1→token0 (WETH→USDC), so tokenIn=token1, tokenOut=token0
-        const usdcOut = await this.q2Quote(
+        // Sell leg: WETH → stablecoin (selling expensive ETH on the sell pool)
+        //   Normal pool: tokenIn=token1 (WETH), tokenOut=token0 (USDC)
+        //   Inverted pool: tokenIn=token0 (WETH), tokenOut=token1 (USDT)
+        const sellWeth   = sellPoolTyped.isInverted ? sellPoolTyped.token0 : sellPoolTyped.token1;
+        const sellStable = sellPoolTyped.isInverted ? sellPoolTyped.token1 : sellPoolTyped.token0;
+        const stableOut = await this.q2Quote(
           `sell-leg-${label}`,
-          sellPool.token1, sellPool.token0, wethOut, sellPool.fee
+          sellWeth, sellStable, wethOut, sellPool.fee
         );
-        if (!usdcOut || usdcOut === 0n) return -amt;
+        if (!stableOut || stableOut === 0n) return -amt;
 
-        return usdcOut - amt;
+        return stableOut - amt;
       } catch (e: any) {
         console.error(`[PROFIT FN ERR] ${e?.message?.slice(0, 80)}`);
         return -amt;
