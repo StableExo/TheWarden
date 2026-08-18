@@ -1,8 +1,9 @@
-# 2017-12-03 — NETWORK ORIGIN: The Day the Red Web Was Funded
+# 2017-12-03 — ADX ICO FUNDRAISE + JUMP CRYPTO SEEDED
 
-> **Layer 0 — Genesis Event**
-> This is the founding moment of the Red Web.
-> Every node that exists in 2026 traces back to this single day.
+> **Status: DOCUMENTED — Major Capital Event**
+> This is NOT confirmed as the network origin.
+> The operator is documented as active since at least 2015 (Poloniex, Block 46,468).
+> Forensic scanning may reveal earlier structured activity. This file records what happened on this specific date.
 
 ---
 
@@ -17,18 +18,18 @@
 | **USD Value (day-of)** | ~$4.9 million (ETH ≈ $500) |
 | **Wallets Involved** | 298 ICO investors + 10 cross-coordinated Jump funders |
 | **Duration** | ~17 hours (08:00 UTC → 01:00 UTC Dec 4) |
-| **Chains** | Ethereum mainnet |
+| **Chain** | Ethereum mainnet |
 
 ---
 
-## What Happened
+## What Happened This Day
 
 On December 3, 2017, two events occurred **simultaneously** from the same operator:
 
 1. **ADX ICO** — 298 wallets deposited 9,824 ETH into `0xfe9e8709` over 17 hours
 2. **Jump Crypto Genesis Funder** — 10 of those same wallets also seeded Jump Crypto infrastructure with ~$1.03M ETH on the same day
 
-This is not coincidence. The dual coordination on the same day by overlapping wallet sets proves a single operator controlled both operations.
+The dual coordination on the same day by overlapping wallet sets proves a single operator controlled both operations. This is the moment the network was **capitalized at scale** — not necessarily when it began.
 
 ---
 
@@ -36,8 +37,8 @@ This is not coincidence. The dual coordination on the same day by overlapping wa
 
 | Role | Address | Amount | Status (2026) |
 |------|---------|--------|---------------|
-| ICO Root / Genesis Node | `0xfe9e8709d3215310075d67e3ed32a380ccf451c8` | 9,824 ETH received | NODE_078 |
-| Branch 1 — Largest Depositor | `0x82808df4...` | 749.99 ETH | Drained. SHIB whale 2021 |
+| ICO Root / NODE_078 | `0xfe9e8709d3215310075d67e3ed32a380ccf451c8` | 9,824 ETH received | ACTIVE |
+| Branch 1 | `0x82808df4...` | 749.99 ETH | Drained. SHIB whale 2021 |
 | Branch 2 | `0x8c2f96c6...` | 399.99 ETH | Active. 4 ETH relay pattern 2023 |
 | Branch 3 | `0x5cca3117...` | 361.70 ETH | Active. CoinEx → BHW14 confirmed |
 | Branch 4 | `0x2dc072e1...` | 249.99 ETH | Active. USDT → Binance 2021 |
@@ -61,29 +62,30 @@ This is not coincidence. The dual coordination on the same day by overlapping wa
 ## Connection to Broader Network
 
 ```
-[ADX ICO — 298 wallets]
+[Operator — active since 2015, Poloniex Block 46,468]
         ↓
-  NODE_078 (0xfe9e8709)  ←── Genesis Node
-        ↓                         ↓
-  ADX token distribution    Jump Crypto Genesis Funder
-  (503 ERC-20 transfers)    (10 cross-wallets, $1.03M)
+[2016 — Genesis Kraken HW1 contact established]
         ↓
-  35 days later → Jan 7, 2018
+[2017-12-03 — ADX ICO raises $4.9M + Jump Crypto seeded same day]
+  NODE_078 (0xfe9e8709) ← Capital accumulation node
+        ↓
+[35 days later — January 7, 2018]
   NODE_078 → 0x0681d8db (Controller Seeder)
   Jump Crypto Gnosis Multisig distributes to 8+ wallets
         ↓
-  THE RED WEB GOES LIVE
+  NETWORK GOES FULLY OPERATIONAL
 ```
 
 ---
 
 ## What This Proves
 
-- Single operator controlled both the ADX ICO fundraise and Jump Crypto seeding
-- The ICO was used as a **fundraising mechanism** for network infrastructure
-- Capital raised in 2017 directly funded the laundry machine still operating in 2026
+- The operator used the ADX ICO as a **public fundraising vehicle** to capitalize private infrastructure
+- The same wallets participating in a "legitimate" ICO were simultaneously seeding laundering infrastructure
+- Capital raised here funded the machine still operating in 2026
 
 ---
 
-→ **Next event:** [2018-01-07 — Red Web Goes Live](../../2018/01_january/07/2018-01-07_RED_WEB_GOES_LIVE.md)
-→ [Timeline Index](../../INDEX.md) | [NODE_078 Profile](../../../nodes/NODE_078/) | [Evidence](../../../evidence/)
+→ **Previous:** [2016 — Genesis Kraken HW1](../../2016/2016_GENESIS_KRAKEN_HW1.md)
+→ **Next:** [2018-01-07 — Red Web Goes Live](../../2018/01_january/07/2018-01-07_RED_WEB_GOES_LIVE.md)
+→ [Timeline Index](../../INDEX.md) | [NODE_078 Profile](../../../2017/December/NODE_078_ADX_ICO_ROOT_0xfe9e8709.md) | [Evidence](../../../evidence/)
