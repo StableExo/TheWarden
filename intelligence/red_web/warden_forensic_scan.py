@@ -57,7 +57,7 @@ CHANGELOG:
             Dune Analytics added (SQL query engine)
             Jina key updated to v22
             max_workers bumped to 18
-            Bitquery marked QUOTA_EXHAUSTED — graceful fallback
+            VL-27: Bitquery bearer rotated (ory_at_b1QN...) — graceful fallback on 402 billing errors
             Scanner version: v5.0
     VL-26:  AnChain AI REST added (risk score + entity labels, /api/intel/address/score)
             max_workers bumped to 19
@@ -75,7 +75,7 @@ CURRENT KEYS (VL-27 / v24 — August 2026):
     basescan       = QT7KI56B365U22NXMJJM4IU7Q8MVER69RY
     tenderly       = K5LF4-PBJUwWLL-BmD3LEn3e-GvguZ3k
     goldrush       = cqt_rQGWWvgk9qGMtCMQMxKY7VWQJJXy
-    bitquery       = QUOTA EXHAUSTED — graceful no-op
+    bitquery       = ory_at_b1QNBWHrJzpCn3Qhkb8kp-y... (VL-27 rotated)
     onchainrisk    = ocr_test_a947101ca196b7f0aa2ac6a1f4c96df0aefd0ad3d5d4f201
     dune           = CRxZFkgiBpR4f1ak1GzeTR4lTMgTo8op
     jina           = jina_f140e19479774b65b77bf41f7985135fvxn1Qedbig2ziw3Mf-Tj5fNoOkBq
@@ -1242,7 +1242,7 @@ KEYS = {
     "basescan":        "QT7KI56B365U22NXMJJM4IU7Q8MVER69RY",
     "tenderly":        "K5LF4-PBJUwWLL-BmD3LEn3e-GvguZ3k",
     "goldrush":        "cqt_rQGWWvgk9qGMtCMQMxKY7VWQJJXy",
-    "bitquery_bearer": "",  # QUOTA EXHAUSTED — leave blank for graceful skip
+    "bitquery_bearer": "ory_at_b1QNBWHrJzpCn3Qhkb8kp-yNPhPXZ89EoOKmsW_M3DE.0ss6q8skWuMJW7n5OCh2gMsFNr-pLlek4BG1nIiaJns",  # VL-27 rotated — 402 billing issue, graceful fallback
     "onchainrisk":     "ocr_test_a947101ca196b7f0aa2ac6a1f4c96df0aefd0ad3d5d4f201",
     "dune":            "CRxZFkgiBpR4f1ak1GzeTR4lTMgTo8op",
     "jina":            "jina_f140e19479774b65b77bf41f7985135fvxn1Qedbig2ziw3Mf-Tj5fNoOkBq",
