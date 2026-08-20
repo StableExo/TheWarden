@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-VL-25 v5.0 — 18/18 TOOLS ARMED AND FIRING IN PARALLEL
+VL-26 v5.1 — 19/19 TOOLS ARMED AND FIRING IN PARALLEL
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -25,11 +25,12 @@ TOOL REGISTRY:
     Bitcoin      mempool.space/api             BTC address lookup (keyless) [v5.0 NEW]
     Dune         api.dune.com/api/v1           SQL analytics                [v5.0 NEW]
     Jina         r.jina.ai                     web intelligence             [v5.0 NEW]
+    AnChain AI   api.anchainai.com             risk score + entity labels   [v5.1 NEW]
 
-KEYS dict (v5.0 / VL-25):
+KEYS dict (v5.1 / VL-26):
     arkham, chainbase, moralis, nansen, etherscan, goplus_key, goplus_secret,
     tenderly, quicknode_http, basescan, goldrush, bitquery_bearer,
-    onchainrisk, chainabuse, dune, jina, bicscan, zerion
+    onchainrisk, chainabuse, dune, jina, bicscan, zerion, anchain
 
 USAGE:
     report = scan("0xADDRESS", chains=[1, 8453, 56, 137, 42161], keys=KEYS)
@@ -57,6 +58,9 @@ CHANGELOG:
             max_workers bumped to 18
             Bitquery marked QUOTA_EXHAUSTED — graceful fallback
             Scanner version: v5.0
+    VL-26:  AnChain AI REST added (risk score + entity labels, /api/intel/address/score)
+            max_workers bumped to 19
+            Scanner version: v5.1
 
 CURRENT KEYS (VL-25 / v22 — August 2026):
     arkham         = 77d24c4d-6b2b-471a-88b6-9e6e75ba7358
@@ -77,6 +81,7 @@ CURRENT KEYS (VL-25 / v22 — August 2026):
     bicscan        = (vaulted: bicscan/api_key)
     zerion         = (vaulted: zerion/api_key)
     chainabuse     = (register free at chainabuse.com)
+    anchain        = 3c083Az1ZJP2_5QVT4mpnNOeMyQXqBhMoRwjPBocyCgTFKUdx1LNus91Sw.yJx5H2q3tEo.C3wLQQ
 ══════════════════════════════════════════════════════════════════════════
 """
 
@@ -717,8 +722,96 @@ def _jina_rest(address, keys):
         return {"status":"error","error":str(ex)[:120]}
 
 
+def _anchain_rest(address, keys):
+    """AnChain AI — AI/ML risk score + entity labels + global sanctions.
+    Endpoints (GET):
+      /api/intel/address/score?proto=ETH&address={addr}
+      /api/intel/address/label?proto=ETH&address={addr}
+      /api/sanctions/global/address?address={addr}
+    Auth: x-api-key header
+    Covers: OFAC + EU + UK + Canada + AU + CH + IL + JP + UN + SA + Zambia (11 jurisdictions)
+    Free tier: 1k credits, 6 req/min.
+    Response schema: {"status":200,"data":{addr:{"self":{"category":[...],"detail":[],"information":[]},
+                     "osint":[],"is_address_valid":bool,"risk":{"score":int,"level":int,"breakdown":{...}}}}}
+    """
+    key = keys.get("anchain", "")
+    if not key:
+        return {"status": "no_key", "note": "Add anchain key to KEYS"}
+
+    hdrs = {"x-api-key": key, "Accept": "application/json"}
+    addr_param = address  # preserve original case for AnChain
+
+    def _level(s):
+        if s is None: return "unknown"
+        try: s = float(s)
+        except: return "unknown"
+        if s >= 75: return "🔴 HIGH RISK"
+        if s >= 50: return "🟠 MEDIUM RISK"
+        if s >= 25: return "🟡 LOW RISK"
+        return "🟢 CLEAN"
+
+    try:
+        # Score + category
+        r_score = requests.get(
+            "https://api.anchainai.com/api/intel/address/score",
+            headers=hdrs,
+            params={"proto": "ETH", "address": addr_param},
+            timeout=20,
+        )
+
+        if r_score.status_code == 401:
+            return {"status": "auth_error", "note": "AnChain key rejected"}
+        if r_score.status_code == 402:
+            return {"status": "quota_exhausted", "note": "AnChain free credits exhausted"}
+        if r_score.status_code == 429:
+            return {"status": "rate_limited", "note": "AnChain rate limit — 6 req/min"}
+        if r_score.status_code == 403:
+            return {"status": "tier_limited", "note": "AnChain — upgrade plan for this endpoint"}
+        if not r_score.ok:
+            return {"status": "error", "code": r_score.status_code, "body": r_score.text[:200]}
+
+        score_data  = r_score.json().get("data", {}).get(addr_param, {})
+        risk        = score_data.get("risk", {})
+        score       = risk.get("score")
+        level_int   = risk.get("level")
+        categories  = score_data.get("self", {}).get("category", [])
+        detail      = score_data.get("self", {}).get("detail", [])
+        is_valid    = score_data.get("is_address_valid", True)
+        osint       = score_data.get("osint", [])
+
+        # Global sanctions check
+        r_sanc = requests.get(
+            "https://api.anchainai.com/api/sanctions/global/address",
+            headers=hdrs,
+            params={"address": addr_param},
+            timeout=20,
+        )
+        sanction_hits = 0
+        sanction_data = []
+        if r_sanc.ok:
+            sd = r_sanc.json().get("data", {})
+            sanction_hits = sd.get("total", 0)
+            sanction_data = sd.get("data", [])[:3]
+
+        return {
+            "status":         "ok",
+            "risk_score":     score,
+            "risk_level":     _level(score),
+            "risk_level_int": level_int,
+            "categories":     categories,
+            "detail":         detail,
+            "is_valid":       is_valid,
+            "osint":          osint[:3],
+            "sanction_hits":  sanction_hits,
+            "sanctions":      sanction_data,
+        }
+
+    except Exception as ex:
+        return {"status": "error", "error": str(ex)[:120]}
+
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  MAIN — ALL 18 TOOLS IN PARALLEL
+#  MAIN — ALL 19 TOOLS IN PARALLEL
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def scan(address, chains=None, keys=None):
@@ -733,7 +826,7 @@ def scan(address, chains=None, keys=None):
         print(f"[TheWarden] Mode: Bitcoin address")
     else:
         print(f"[TheWarden] Chains: {[CHAIN_NAMES.get(c,c) for c in chains]}")
-    print(f"[TheWarden] Firing 18 tools in parallel...")
+    print(f"[TheWarden] Firing 19 tools in parallel...")
     t0 = time.time()
 
     results  = {}
@@ -751,7 +844,7 @@ def scan(address, chains=None, keys=None):
             results[name] = {"error": str(e)[:80]}
             print(f"[TheWarden]   {name:<14} ❌  {str(e)[:50]}")
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=18) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=19) as pool:
         futures = []
 
         if not is_btc:
@@ -772,6 +865,7 @@ def scan(address, chains=None, keys=None):
                 pool.submit(run,"zerion",      _zerion_rest,      address, keys),
                 pool.submit(run,"dune",        _dune_rest,        address, keys),
                 pool.submit(run,"jina",        _jina_rest,        address, keys),
+                pool.submit(run,"anchain",     _anchain_rest,     address, keys),
             ]
         else:
             # BTC mode — only applicable tools
@@ -784,7 +878,7 @@ def scan(address, chains=None, keys=None):
 
     elapsed = round(time.time()-t0, 2)
     fired   = len(tool_log)
-    total   = 16 if not is_btc else 2
+    total   = 17 if not is_btc else 2
     print(f"[TheWarden] ✅ Complete in {elapsed}s — {fired}/{total} tools returned data")
 
     results["meta"] = {
@@ -797,7 +891,7 @@ def scan(address, chains=None, keys=None):
         "mcp_stack":   [t for t in tool_log if t in MCP_TOOLS],
         "rest_stack":  [t for t in tool_log if t not in MCP_TOOLS],
         "scanned_at":  datetime.now(timezone.utc).isoformat(),
-        "scanner_ver": "VL-25 v5.0",
+        "scanner_ver": "VL-26 v5.1",
     }
     return results
 
@@ -1019,6 +1113,32 @@ def print_report(report):
         elif status=="timeout": print(f"  ⏳ {du.get('note','Query still running')}")
         else:                   print(f"  ❌ {du}")
 
+        # AnChain AI
+        ac = report.get("anchain",{})
+        section("ANCHAIN AI — Risk Score + Entity Labels + Multi-Jurisdiction Sanctions  [v5.1]")
+        status = ac.get("status","?")
+        if   status=="no_key":         print(f"  ⚪ {ac.get('note','')}")
+        elif status=="auth_error":     print(f"  🔑 {ac.get('note','')}")
+        elif status=="quota_exhausted":print(f"  💳 {ac.get('note','')}")
+        elif status=="tier_limited":   print(f"  🔒 {ac.get('note','')}")
+        elif status=="error":          print(f"  ❌ {ac.get('error', ac.get('body',''))[:120]}")
+        elif status=="ok":
+            score = ac.get("risk_score")
+            level = ac.get("risk_level","?")
+            row("Risk Score:",    f"{score}/100  {level}" if score is not None else "N/A")
+            row("Sanctions Hits:",f"🔴 {ac.get('sanction_hits')} MATCH(ES)" if ac.get("sanction_hits") else "✅ 0 — Global Clear")
+            cats = ac.get("categories",[])
+            if cats: row("Categories:",  str(cats))
+            detail = ac.get("detail",[])
+            if detail: row("Detail:", str(detail))
+            osint = ac.get("osint",[])
+            if osint: row("OSINT:", str(osint)[:80])
+            sancs = ac.get("sanctions",[])
+            if sancs:
+                for s in sancs: print(f"    ⚠️  {str(s)[:100]}")
+        else:
+            print(f"  {ac}")
+
         # Jina
         ji = report.get("jina",{})
         section("JINA — Web Intelligence  [v5.0]")
@@ -1041,7 +1161,7 @@ def print_report(report):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  DEFAULT KEYS — VL-25 v22
+#  DEFAULT KEYS — VL-26 v5.1
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 KEYS = {
@@ -1061,9 +1181,11 @@ KEYS = {
     "goplus_key":      "RBTk9aFqgDwbHPq3juME",
     "goplus_secret":   "fEVawfkqNSeFu2Wz7WuFsfeTrHKP00Jn",
     "chainabuse":      "",  # register at chainabuse.com
-    # v5.0 new keys — fill from vault:
+    # v5.0 new keys:
     "bicscan":         "23a6a7cd749b42ad08ef39f44af9f2cde4689cebae73287b03ef8cc0afbd1162",  # vaulted: bicscan/api_key
     "zerion":          "zk_4ec4a414e42e4d51bd386205c84f62dc",  # vaulted: zerion/api_key
+    # v5.1 new keys:
+    "anchain":         "3c083Az1ZJP2_5QVT4mpnNOeMyQXqBhMoRwjPBocyCgTFKUdx1LNus91Sw.yJx5H2q3tEo.C3wLQQ",
 }
 
 
