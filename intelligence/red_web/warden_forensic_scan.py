@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-VL-28 v5.3 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
+VL-28 v5.4 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -25,10 +25,10 @@ TOOL REGISTRY:
     Bitcoin      mempool.space/api             BTC address lookup (keyless) [v5.0 NEW]
     Dune         api.dune.com/api/v1           SQL analytics                [v5.0 NEW]
     Jina         r.jina.ai                     web intelligence             [v5.0 NEW]
-    AnChain AI   api.anchainai.com             risk score + entity labels + tx graph  [v5.3]
+    AnChain AI   api.anchainai.com             score + attribution + suspicious-activities  [v5.4]
     TRM Labs     api.trmlabs.com               sanctions screening (keyless free) [v5.2 NEW]
 
-KEYS dict (v5.3 / VL-28):
+KEYS dict (v5.4 / VL-28):
     arkham, chainbase, moralis, nansen, etherscan, goplus_key, goplus_secret,
     tenderly, quicknode_http, basescan, goldrush, bitquery_bearer,
     onchainrisk, chainabuse, dune, jina, bicscan, zerion, anchain, trm
@@ -69,6 +69,11 @@ CHANGELOG:
             Version strings updated to v5.3
             tools_total corrected to 20 for EVM
             Scanner version: v5.3
+    VL-28 v5.4: AnChain graph endpoint corrected — requires TX HASH not address (from OpenAPI spec)
+            AnChain address/stats, attribution, suspicious-activities wired (3 new AnChain endpoints)
+            Arkham REST upgraded: counterparties endpoint added, transfers use /base= param, balance lookup added
+            Arkham entity names now shown on transfers (from_entity, to_entity)
+            Scanner version: v5.4
 
 CURRENT KEYS (VL-28 / v25 — August 2026):
     arkham         = 77d24c4d-6b2b-471a-88b6-9e6e75ba7358
@@ -218,10 +223,11 @@ def _arkham_rest(address, keys):
         out["entity"] = f"error:{ex}"
     try:
         t = requests.get(
-            f"https://api.arkm.com/transfers?address={address}&limit=10&sortKey=time&sortDir=desc",
+            f"https://api.arkm.com/transfers?base={address}&limit=20&sortKey=time&sortDir=desc",
             headers={"API-Key":apikey},timeout=20)
-        transfers = t.json().get("transfers",[]) if t.ok else []
-        out["transfer_count"] = len(transfers)
+        tdata = t.json() if t.ok else {}
+        transfers = tdata.get("transfers",[])
+        out["transfer_count"] = tdata.get("count", len(transfers))
         out["transfers"] = []
         for tr in transfers[:10]:
             if not isinstance(tr, dict):
@@ -232,7 +238,9 @@ def _arkham_rest(address, keys):
             out["transfers"].append({
                 "time":   (tr.get("blockTimestamp") or "")[:10],
                 "from":   (fa.get("address") or "?")[:22],
+                "from_entity": (fa.get("arkhamEntity") or {}).get("name","?")[:20],
                 "to":     (ta.get("address") or "?")[:22],
+                "to_entity": (ta.get("arkhamEntity") or {}).get("name","?")[:20],
                 "amount": str(tr.get("unitValue") or "?")[:14],
                 "token":  str(tok.get("symbol") or "ETH")[:8],
                 "chain":  str(fa.get("chain") or "?")[:8],
@@ -240,6 +248,58 @@ def _arkham_rest(address, keys):
     except Exception as ex:
         out["transfers"] = []
         out["transfer_error"] = str(ex)[:60]
+
+    # Counterparties — who they transacted with most (by USD volume)
+    try:
+        cp = requests.get(
+            f"https://api.arkm.com/counterparties/address/{address}",
+            headers={"API-Key":apikey},
+            params={"limit":10},
+            timeout=20)
+        if cp.ok:
+            cp_data = cp.json()
+            counterparties = []
+            for chain_cps in cp_data.values():
+                if not isinstance(chain_cps, list):
+                    continue
+                for entry in chain_cps[:5]:
+                    addr_info = entry.get("address",{})
+                    entity    = addr_info.get("arkhamEntity",{}) or {}
+                    label     = addr_info.get("arkhamLabel",{}) or {}
+                    counterparties.append({
+                        "address": (addr_info.get("address","?") or "?")[:22],
+                        "entity":  entity.get("name","Unknown")[:25],
+                        "label":   label.get("name","")[:20],
+                        "usd":     round(entry.get("usd",0),2),
+                        "tx_count":entry.get("transactionCount",0),
+                        "flow":    entry.get("flow","?"),
+                        "chain":   (entry.get("chains",["?"])[0] if entry.get("chains") else "?"),
+                    })
+            out["counterparties"] = sorted(counterparties, key=lambda x: x["usd"], reverse=True)[:8]
+        else:
+            out["counterparties"] = []
+            out["counterparty_note"] = f"HTTP {cp.status_code}"
+    except Exception as ex:
+        out["counterparties"] = []
+        out["counterparty_error"] = str(ex)[:60]
+
+    # Balance check via Arkham
+    try:
+        bal = requests.get(
+            f"https://api.arkm.com/balances/address/{address}",
+            headers={"API-Key":apikey},timeout=20)
+        if bal.ok:
+            bd = bal.json()
+            chains_bal = bd if isinstance(bd, dict) else {}
+            out["balances"] = {}
+            for chain, tokens in chains_bal.items():
+                if isinstance(tokens, list) and tokens:
+                    total_usd = sum(float(t.get("usdValue",0) or 0) for t in tokens)
+                    if total_usd > 0:
+                        out["balances"][chain] = round(total_usd,2)
+    except Exception as ex:
+        out["balance_error"] = str(ex)[:60]
+
     return out
 
 
@@ -810,11 +870,15 @@ def _trm_rest(address, keys):
 
 
 def _anchain_rest(address, keys):
-    """AnChain AI — AI/ML risk score + entity labels + global sanctions.
+    """AnChain AI — risk score + entity labels + sanctions + stats + attribution + suspicious activities.
     Endpoints (GET):
-      /api/intel/address/score?proto=ETH&address={addr}
-      /api/intel/address/label?proto=ETH&address={addr}
-      /api/sanctions/global/address?address={addr}
+      /api/intel/address/score?proto=ETH&address={addr}          — 50 credits
+      /api/intel/address/label?proto=ETH&address={addr}          — 50 credits
+      /api/sanctions/global/address?address={addr}               — 50 credits
+      /api/analytics/address/stats?proto=eth&address={addr}      — 100 credits (VL-28)
+      /api/analytics/address/attribution?proto=eth&address={addr}— 200 credits (VL-28)
+      /api/intel/address/suspicious-activities?proto=eth&address={addr} — 50 credits (VL-28)
+      /api/analytics/transaction/graph?proto=eth&hash={txhash}   — 100 credits (needs TX HASH)
     Auth: x-api-key header
     Covers: OFAC + EU + UK + Canada + AU + CH + IL + JP + UN + SA + Zambia (11 jurisdictions)
     Free tier: 1k credits, 6 req/min.
@@ -880,36 +944,85 @@ def _anchain_rest(address, keys):
             sanction_hits = sd.get("total", 0)
             sanction_data = sd.get("data", [])[:3]
 
-        # Transaction graph — flow mapping (VL-28)
-        graph_data = {}
-        graph_note = ""
+        # Address stats — volume, frequency, behavioral patterns (100 credits, VL-28)
+        addr_stats = {}
         try:
-            r_graph = requests.get(
-                "https://api.anchainai.com/api/analytics/transaction/graph",
+            r_stats = requests.get(
+                "https://api.anchainai.com/api/analytics/address/stats",
                 headers=hdrs,
-                params={"proto": "ETH", "address": addr_param, "depth": 2, "limit": 20},
-                timeout=25,
+                params={"proto": "eth", "address": addr_param},
+                timeout=20,
             )
-            if r_graph.ok:
-                gd = r_graph.json().get("data", {})
-                nodes = gd.get("nodes", [])
-                edges = gd.get("edges", [])
-                graph_data = {
-                    "node_count": len(nodes),
-                    "edge_count": len(edges),
-                    "nodes": nodes[:5],   # top 5 nodes by exposure
-                    "edges": edges[:5],
+            if r_stats.ok:
+                sd = r_stats.json().get("data", {}).get(addr_param, {}).get("stats", {})
+                addr_stats = {
+                    "balance":              sd.get("balance"),
+                    "balance_usd":          sd.get("balance_usd"),
+                    "on_chain_transfer24h": sd.get("on_chain_transfer24h"),
+                    "on_chain_transfer24h_usd": sd.get("on_chain_transfer24h_usd"),
+                    "token_balance":        sd.get("token_balance", [])[:5],
                 }
-            elif r_graph.status_code == 402:
-                graph_note = "graph: quota exhausted"
-            elif r_graph.status_code == 403:
-                graph_note = "graph: paid tier required"
-            elif r_graph.status_code == 404:
-                graph_note = "graph: endpoint not found — check AnChain API docs"
-            else:
-                graph_note = f"graph: HTTP {r_graph.status_code}"
-        except Exception as eg:
-            graph_note = f"graph: {str(eg)[:80]}"
+            elif r_stats.status_code == 402:
+                addr_stats = {"note": "stats: quota exhausted (100 credits)"}
+            elif r_stats.status_code == 403:
+                addr_stats = {"note": "stats: paid tier required"}
+        except Exception as es:
+            addr_stats = {"note": f"stats error: {str(es)[:60]}"}
+
+        # Address attribution — inflow/outflow entity breakdown (200 credits, VL-28)
+        attribution = {}
+        try:
+            r_attr = requests.get(
+                "https://api.anchainai.com/api/analytics/address/attribution",
+                headers=hdrs,
+                params={"proto": "eth", "address": addr_param},
+                timeout=20,
+            )
+            if r_attr.ok:
+                ad = r_attr.json().get("data", {})
+                summary = ad.get("attribution", {}).get("summary", {})
+                attribution = {
+                    "risk_score":    ad.get("risk_score"),
+                    "risk_level":    ad.get("risk_level"),
+                    "txns_total":    summary.get("txns_total", 0),
+                    "inbound_usd":   summary.get("inbound", {}).get("value_usd", 0),
+                    "outbound_usd":  summary.get("outbound", {}).get("value_usd", 0),
+                    "inbound_cats":  summary.get("inbound", {}).get("categories", {}),
+                    "outbound_cats": summary.get("outbound", {}).get("categories", {}),
+                    "time_from":     summary.get("time_from", "")[:10],
+                    "time_to":       summary.get("time_to", "")[:10],
+                }
+            elif r_attr.status_code == 402:
+                attribution = {"note": "attribution: quota exhausted (200 credits)"}
+            elif r_attr.status_code == 403:
+                attribution = {"note": "attribution: paid tier required"}
+        except Exception as ea:
+            attribution = {"note": f"attribution error: {str(ea)[:60]}"}
+
+        # Suspicious activities (50 credits, VL-28)
+        suspicious = []
+        susp_note = ""
+        try:
+            r_susp = requests.get(
+                "https://api.anchainai.com/api/intel/address/suspicious-activities",
+                headers=hdrs,
+                params={"proto": "eth", "address": addr_param},
+                timeout=20,
+            )
+            if r_susp.ok:
+                act = r_susp.json().get("data", {}).get(addr_param, {}).get("activity", {})
+                suspicious = act.get("suspicious_activity", [])[:5]
+                if not suspicious:
+                    susp_note = "None — address clean"
+            elif r_susp.status_code == 402:
+                susp_note = "suspicious: quota exhausted"
+            elif r_susp.status_code == 403:
+                susp_note = "suspicious: paid tier required"
+        except Exception as esu:
+            susp_note = f"suspicious error: {str(esu)[:60]}"
+
+        # NOTE: /api/analytics/transaction/graph requires a TX HASH (not address).
+        # Call it after finding a relevant tx hash in scan results.
 
         return {
             "status":         "ok",
@@ -922,8 +1035,11 @@ def _anchain_rest(address, keys):
             "osint":          osint[:3],
             "sanction_hits":  sanction_hits,
             "sanctions":      sanction_data,
-            "tx_graph":       graph_data,
-            "graph_note":     graph_note,
+            "addr_stats":     addr_stats,
+            "attribution":    attribution,
+            "suspicious":     suspicious,
+            "susp_note":      susp_note,
+            "tx_graph_note":  "graph endpoint needs a TX HASH — call /api/analytics/transaction/graph?proto=eth&hash=<txhash>",
         }
 
     except Exception as ex:
@@ -1012,7 +1128,7 @@ def scan(address, chains=None, keys=None):
         "mcp_stack":   [t for t in tool_log if t in MCP_TOOLS],
         "rest_stack":  [t for t in tool_log if t not in MCP_TOOLS],
         "scanned_at":  datetime.now(timezone.utc).isoformat(),
-        "scanner_ver": "VL-28 v5.3",
+        "scanner_ver": "VL-28 v5.4",
     }
     return results
 
@@ -1249,7 +1365,7 @@ def print_report(report):
 
         # AnChain AI
         ac = report.get("anchain",{})
-        section("ANCHAIN AI — Risk Score + Entity Labels + Sanctions + Tx Graph  [v5.3]")
+        section("ANCHAIN AI — Risk Score + Attribution + Suspicious Activities  [v5.4]")
         status = ac.get("status","?")
         if   status=="no_key":         print(f"  ⚪ {ac.get('note','')}")
         elif status=="auth_error":     print(f"  🔑 {ac.get('note','')}")
@@ -1270,19 +1386,51 @@ def print_report(report):
             sancs = ac.get("sanctions",[])
             if sancs:
                 for s in sancs: print(f"    ⚠️  {str(s)[:100]}")
-            # Transaction graph  [v5.3]
-            graph = ac.get("tx_graph",{})
-            gnote = ac.get("graph_note","")
-            if graph:
-                row("Tx Graph Nodes:", str(graph.get("node_count","?")))
-                row("Tx Graph Edges:", str(graph.get("edge_count","?")))
-                nodes = graph.get("nodes",[])
-                if nodes:
-                    print("  Top graph nodes:")
-                    for nd in nodes[:5]:
-                        print(f"    {str(nd)[:120]}")
-            elif gnote:
-                row("Tx Graph:", gnote)
+            # Address stats  [v5.4]
+            astats = ac.get("addr_stats",{})
+            if astats and not astats.get("note"):
+                bal_usd = astats.get("balance_usd",0) or 0
+                transfer24 = astats.get("on_chain_transfer24h_usd",0) or 0
+                row("Balance (AnChain):", f"${bal_usd:,.2f} USD")
+                if transfer24 and transfer24 != -1:
+                    row("24h Transfer Vol:", f"${transfer24:,.2f} USD")
+                toks = astats.get("token_balance",[])
+                if toks:
+                    for tk in toks[:3]:
+                        sym = tk.get("symbol","?")
+                        val = tk.get("value_usd",0) or 0
+                        if val > 0:
+                            print(f"    {sym}: ${val:,.2f}")
+            elif astats.get("note"):
+                row("Stats:", astats["note"])
+
+            # Attribution [v5.4]
+            attr = ac.get("attribution",{})
+            if attr and not attr.get("note"):
+                row("Attribution Txns:", str(attr.get("txns_total",0)))
+                row("Inbound USD:",  f"${attr.get('inbound_usd',0):,.2f}")
+                row("Outbound USD:", f"${attr.get('outbound_usd',0):,.2f}")
+                in_cats  = attr.get("inbound_cats",{})
+                out_cats = attr.get("outbound_cats",{})
+                if in_cats:  row("Inbound from:",  str(in_cats)[:80])
+                if out_cats: row("Outbound to:",   str(out_cats)[:80])
+                row("Period:", f"{attr.get('time_from','?')} → {attr.get('time_to','?')}")
+            elif attr.get("note"):
+                row("Attribution:", attr["note"])
+
+            # Suspicious activities [v5.4]
+            susp  = ac.get("suspicious",[])
+            snote = ac.get("susp_note","")
+            if susp:
+                print("  ⚠️  Suspicious activities:")
+                for s in susp: print(f"    {str(s)[:120]}")
+            elif snote:
+                row("Suspicious:", snote)
+
+            # Tx graph note
+            gnote = ac.get("tx_graph_note","")
+            if gnote:
+                row("Tx Graph:", "⚡ Pass a TX HASH to /api/analytics/transaction/graph")
         else:
             print(f"  {ac}")
 
@@ -1308,7 +1456,7 @@ def print_report(report):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  DEFAULT KEYS — VL-28 v5.3
+#  DEFAULT KEYS — VL-28 v5.4
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 KEYS = {
@@ -1344,4 +1492,5 @@ if __name__ == "__main__":
     target = sys.argv[1] if len(sys.argv) > 1 else "0x70a3df699512f39C682F94fad498454C90B8C219"
     report = scan(target, keys=KEYS)
     print_report(report)
+
 
