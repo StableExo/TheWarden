@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-VL-26 v5.2 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
+VL-28 v5.3 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -25,10 +25,10 @@ TOOL REGISTRY:
     Bitcoin      mempool.space/api             BTC address lookup (keyless) [v5.0 NEW]
     Dune         api.dune.com/api/v1           SQL analytics                [v5.0 NEW]
     Jina         r.jina.ai                     web intelligence             [v5.0 NEW]
-    AnChain AI   api.anchainai.com             risk score + entity labels   [v5.1 NEW]
+    AnChain AI   api.anchainai.com             risk score + entity labels + tx graph  [v5.3]
     TRM Labs     api.trmlabs.com               sanctions screening (keyless free) [v5.2 NEW]
 
-KEYS dict (v5.2 / VL-26):
+KEYS dict (v5.3 / VL-28):
     arkham, chainbase, moralis, nansen, etherscan, goplus_key, goplus_secret,
     tenderly, quicknode_http, basescan, goldrush, bitquery_bearer,
     onchainrisk, chainabuse, dune, jina, bicscan, zerion, anchain, trm
@@ -65,8 +65,12 @@ CHANGELOG:
             TRM Labs Sanctions REST added (keyless free, POST /public/v1/sanctions/screening)
             max_workers bumped to 20
             Scanner version: v5.2
+    VL-28:  AnChain transaction graph added (/api/analytics/transaction/graph)
+            Version strings updated to v5.3
+            tools_total corrected to 20 for EVM
+            Scanner version: v5.3
 
-CURRENT KEYS (VL-27 / v24 — August 2026):
+CURRENT KEYS (VL-28 / v25 — August 2026):
     arkham         = 77d24c4d-6b2b-471a-88b6-9e6e75ba7358
     chainbase      = 3EEEM9sRu2rzYSGX1GCR1Jc7X8i
     nansen         = nsn_32d50c7e1dec90ec0ee4cfca4f5c29f9
@@ -876,6 +880,37 @@ def _anchain_rest(address, keys):
             sanction_hits = sd.get("total", 0)
             sanction_data = sd.get("data", [])[:3]
 
+        # Transaction graph — flow mapping (VL-28)
+        graph_data = {}
+        graph_note = ""
+        try:
+            r_graph = requests.get(
+                "https://api.anchainai.com/api/analytics/transaction/graph",
+                headers=hdrs,
+                params={"proto": "ETH", "address": addr_param, "depth": 2, "limit": 20},
+                timeout=25,
+            )
+            if r_graph.ok:
+                gd = r_graph.json().get("data", {})
+                nodes = gd.get("nodes", [])
+                edges = gd.get("edges", [])
+                graph_data = {
+                    "node_count": len(nodes),
+                    "edge_count": len(edges),
+                    "nodes": nodes[:5],   # top 5 nodes by exposure
+                    "edges": edges[:5],
+                }
+            elif r_graph.status_code == 402:
+                graph_note = "graph: quota exhausted"
+            elif r_graph.status_code == 403:
+                graph_note = "graph: paid tier required"
+            elif r_graph.status_code == 404:
+                graph_note = "graph: endpoint not found — check AnChain API docs"
+            else:
+                graph_note = f"graph: HTTP {r_graph.status_code}"
+        except Exception as eg:
+            graph_note = f"graph: {str(eg)[:80]}"
+
         return {
             "status":         "ok",
             "risk_score":     score,
@@ -887,6 +922,8 @@ def _anchain_rest(address, keys):
             "osint":          osint[:3],
             "sanction_hits":  sanction_hits,
             "sanctions":      sanction_data,
+            "tx_graph":       graph_data,
+            "graph_note":     graph_note,
         }
 
     except Exception as ex:
@@ -894,7 +931,7 @@ def _anchain_rest(address, keys):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  MAIN — ALL 19 TOOLS IN PARALLEL
+#  MAIN — ALL 20 TOOLS IN PARALLEL
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def scan(address, chains=None, keys=None):
@@ -962,7 +999,7 @@ def scan(address, chains=None, keys=None):
 
     elapsed = round(time.time()-t0, 2)
     fired   = len(tool_log)
-    total   = 18 if not is_btc else 2
+    total   = 20 if not is_btc else 2
     print(f"[TheWarden] ✅ Complete in {elapsed}s — {fired}/{total} tools returned data")
 
     results["meta"] = {
@@ -975,7 +1012,7 @@ def scan(address, chains=None, keys=None):
         "mcp_stack":   [t for t in tool_log if t in MCP_TOOLS],
         "rest_stack":  [t for t in tool_log if t not in MCP_TOOLS],
         "scanned_at":  datetime.now(timezone.utc).isoformat(),
-        "scanner_ver": "VL-26 v5.2",
+        "scanner_ver": "VL-28 v5.3",
     }
     return results
 
@@ -1212,7 +1249,7 @@ def print_report(report):
 
         # AnChain AI
         ac = report.get("anchain",{})
-        section("ANCHAIN AI — Risk Score + Entity Labels + Multi-Jurisdiction Sanctions  [v5.1]")
+        section("ANCHAIN AI — Risk Score + Entity Labels + Sanctions + Tx Graph  [v5.3]")
         status = ac.get("status","?")
         if   status=="no_key":         print(f"  ⚪ {ac.get('note','')}")
         elif status=="auth_error":     print(f"  🔑 {ac.get('note','')}")
@@ -1233,6 +1270,19 @@ def print_report(report):
             sancs = ac.get("sanctions",[])
             if sancs:
                 for s in sancs: print(f"    ⚠️  {str(s)[:100]}")
+            # Transaction graph  [v5.3]
+            graph = ac.get("tx_graph",{})
+            gnote = ac.get("graph_note","")
+            if graph:
+                row("Tx Graph Nodes:", str(graph.get("node_count","?")))
+                row("Tx Graph Edges:", str(graph.get("edge_count","?")))
+                nodes = graph.get("nodes",[])
+                if nodes:
+                    print("  Top graph nodes:")
+                    for nd in nodes[:5]:
+                        print(f"    {str(nd)[:120]}")
+            elif gnote:
+                row("Tx Graph:", gnote)
         else:
             print(f"  {ac}")
 
@@ -1258,7 +1308,7 @@ def print_report(report):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  DEFAULT KEYS — VL-26 v5.2
+#  DEFAULT KEYS — VL-28 v5.3
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 KEYS = {
@@ -1294,3 +1344,4 @@ if __name__ == "__main__":
     target = sys.argv[1] if len(sys.argv) > 1 else "0x70a3df699512f39C682F94fad498454C90B8C219"
     report = scan(target, keys=KEYS)
     print_report(report)
+
