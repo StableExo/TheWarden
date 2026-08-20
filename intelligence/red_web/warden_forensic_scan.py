@@ -66,7 +66,7 @@ CHANGELOG:
             max_workers bumped to 20
             Scanner version: v5.2
 
-CURRENT KEYS (VL-25 / v22 — August 2026):
+CURRENT KEYS (VL-27 / v24 — August 2026):
     arkham         = 77d24c4d-6b2b-471a-88b6-9e6e75ba7358
     chainbase      = 3EEEM9sRu2rzYSGX1GCR1Jc7X8i
     nansen         = nsn_32d50c7e1dec90ec0ee4cfca4f5c29f9
@@ -77,7 +77,7 @@ CURRENT KEYS (VL-25 / v22 — August 2026):
     goldrush       = cqt_rQGWWvgk9qGMtCMQMxKY7VWQJJXy
     bitquery       = QUOTA EXHAUSTED — graceful no-op
     onchainrisk    = ocr_test_a947101ca196b7f0aa2ac6a1f4c96df0aefd0ad3d5d4f201
-    dune           = GVOHP0x8RyZbW3dAxcLMbVDH36vFzIuf
+    dune           = CRxZFkgiBpR4f1ak1GzeTR4lTMgTo8op
     jina           = jina_f140e19479774b65b77bf41f7985135fvxn1Qedbig2ziw3Mf-Tj5fNoOkBq
     quicknode_http = https://purple-hidden-general.ethereum-mainnet.quiknode.pro/8d8e8ffb350c39346213f1e647de678338c31644/
     goplus_key     = RBTk9aFqgDwbHPq3juME
@@ -1244,7 +1244,7 @@ KEYS = {
     "goldrush":        "cqt_rQGWWvgk9qGMtCMQMxKY7VWQJJXy",
     "bitquery_bearer": "",  # QUOTA EXHAUSTED — leave blank for graceful skip
     "onchainrisk":     "ocr_test_a947101ca196b7f0aa2ac6a1f4c96df0aefd0ad3d5d4f201",
-    "dune":            "GVOHP0x8RyZbW3dAxcLMbVDH36vFzIuf",
+    "dune":            "CRxZFkgiBpR4f1ak1GzeTR4lTMgTo8op",
     "jina":            "jina_f140e19479774b65b77bf41f7985135fvxn1Qedbig2ziw3Mf-Tj5fNoOkBq",
     "quicknode_http":  "https://purple-hidden-general.ethereum-mainnet.quiknode.pro/8d8e8ffb350c39346213f1e647de678338c31644/",
     "goplus_key":      "RBTk9aFqgDwbHPq3juME",
