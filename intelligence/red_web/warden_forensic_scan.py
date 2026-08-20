@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-VL-26 v5.1 — 19/19 TOOLS ARMED AND FIRING IN PARALLEL
+VL-26 v5.2 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -26,11 +26,12 @@ TOOL REGISTRY:
     Dune         api.dune.com/api/v1           SQL analytics                [v5.0 NEW]
     Jina         r.jina.ai                     web intelligence             [v5.0 NEW]
     AnChain AI   api.anchainai.com             risk score + entity labels   [v5.1 NEW]
+    TRM Labs     api.trmlabs.com               sanctions screening (keyless free) [v5.2 NEW]
 
-KEYS dict (v5.1 / VL-26):
+KEYS dict (v5.2 / VL-26):
     arkham, chainbase, moralis, nansen, etherscan, goplus_key, goplus_secret,
     tenderly, quicknode_http, basescan, goldrush, bitquery_bearer,
-    onchainrisk, chainabuse, dune, jina, bicscan, zerion, anchain
+    onchainrisk, chainabuse, dune, jina, bicscan, zerion, anchain, trm
 
 USAGE:
     report = scan("0xADDRESS", chains=[1, 8453, 56, 137, 42161], keys=KEYS)
@@ -61,6 +62,9 @@ CHANGELOG:
     VL-26:  AnChain AI REST added (risk score + entity labels, /api/intel/address/score)
             max_workers bumped to 19
             Scanner version: v5.1
+            TRM Labs Sanctions REST added (keyless free, POST /public/v1/sanctions/screening)
+            max_workers bumped to 20
+            Scanner version: v5.2
 
 CURRENT KEYS (VL-25 / v22 — August 2026):
     arkham         = 77d24c4d-6b2b-471a-88b6-9e6e75ba7358
@@ -82,6 +86,7 @@ CURRENT KEYS (VL-25 / v22 — August 2026):
     zerion         = (vaulted: zerion/api_key)
     chainabuse     = (register free at chainabuse.com)
     anchain        = 3c083Az1ZJP2_5QVT4mpnNOeMyQXqBhMoRwjPBocyCgTFKUdx1LNus91Sw.yJx5H2q3tEo.C3wLQQ
+    trm            = (keyless free — no key needed. Optional: request paid key at trmlabs.com/products/sanctions)
 ══════════════════════════════════════════════════════════════════════════
 """
 
@@ -722,6 +727,56 @@ def _jina_rest(address, keys):
         return {"status":"error","error":str(ex)[:120]}
 
 
+def _trm_rest(address, keys):
+    """TRM Labs Sanctions API — keyless free tier.
+    Endpoint: POST https://api.trmlabs.com/public/v1/sanctions/screening
+    Auth: None required on free tier (1 req/sec, 100 req/day).
+          Optional: HTTP Basic with api_key as both username AND password.
+    Body: [{"address": "0x..."}]
+    Response: [{"address": "...", "isSanctioned": true/false}]
+    Recommended by Chainabuse as replacement for their deprecated Sanctions API.
+    Paid tier: 1000 req/sec, 100K req/day — request at trmlabs.com/products/sanctions
+    """
+    url  = "https://api.trmlabs.com/public/v1/sanctions/screening"
+    hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
+
+    # Optional paid key — use Basic auth with key as both user and password
+    trm_key = keys.get("trm", "")
+    if trm_key:
+        import base64
+        token = base64.b64encode(f"{trm_key}:{trm_key}".encode()).decode()
+        hdrs["Authorization"] = f"Basic {token}"
+
+    try:
+        r = requests.post(
+            url,
+            headers=hdrs,
+            json=[{"address": address}],
+            timeout=15,
+        )
+
+        if r.status_code == 429:
+            return {"status": "rate_limited", "note": "TRM free tier: 1 req/sec, 100 req/day"}
+        if r.status_code == 401:
+            return {"status": "auth_error", "note": "TRM key rejected"}
+        if not r.ok:
+            return {"status": "error", "code": r.status_code, "body": r.text[:200]}
+
+        results     = r.json()
+        entry       = results[0] if results else {}
+        is_sanctioned = entry.get("isSanctioned", False)
+
+        return {
+            "status":       "ok",
+            "is_sanctioned": is_sanctioned,
+            "verdict":      "🔴 SANCTIONED" if is_sanctioned else "✅ Not Sanctioned",
+            "keyed":        bool(trm_key),
+        }
+
+    except Exception as ex:
+        return {"status": "error", "error": str(ex)[:120]}
+
+
 def _anchain_rest(address, keys):
     """AnChain AI — AI/ML risk score + entity labels + global sanctions.
     Endpoints (GET):
@@ -826,7 +881,7 @@ def scan(address, chains=None, keys=None):
         print(f"[TheWarden] Mode: Bitcoin address")
     else:
         print(f"[TheWarden] Chains: {[CHAIN_NAMES.get(c,c) for c in chains]}")
-    print(f"[TheWarden] Firing 19 tools in parallel...")
+    print(f"[TheWarden] Firing 20 tools in parallel...")
     t0 = time.time()
 
     results  = {}
@@ -844,7 +899,7 @@ def scan(address, chains=None, keys=None):
             results[name] = {"error": str(e)[:80]}
             print(f"[TheWarden]   {name:<14} ❌  {str(e)[:50]}")
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=19) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as pool:
         futures = []
 
         if not is_btc:
@@ -866,6 +921,7 @@ def scan(address, chains=None, keys=None):
                 pool.submit(run,"dune",        _dune_rest,        address, keys),
                 pool.submit(run,"jina",        _jina_rest,        address, keys),
                 pool.submit(run,"anchain",     _anchain_rest,     address, keys),
+                pool.submit(run,"trm",         _trm_rest,         address, keys),
             ]
         else:
             # BTC mode — only applicable tools
@@ -878,7 +934,7 @@ def scan(address, chains=None, keys=None):
 
     elapsed = round(time.time()-t0, 2)
     fired   = len(tool_log)
-    total   = 17 if not is_btc else 2
+    total   = 18 if not is_btc else 2
     print(f"[TheWarden] ✅ Complete in {elapsed}s — {fired}/{total} tools returned data")
 
     results["meta"] = {
@@ -891,7 +947,7 @@ def scan(address, chains=None, keys=None):
         "mcp_stack":   [t for t in tool_log if t in MCP_TOOLS],
         "rest_stack":  [t for t in tool_log if t not in MCP_TOOLS],
         "scanned_at":  datetime.now(timezone.utc).isoformat(),
-        "scanner_ver": "VL-26 v5.1",
+        "scanner_ver": "VL-26 v5.2",
     }
     return results
 
@@ -1113,6 +1169,19 @@ def print_report(report):
         elif status=="timeout": print(f"  ⏳ {du.get('note','Query still running')}")
         else:                   print(f"  ❌ {du}")
 
+        # TRM Labs
+        trm = report.get("trm",{})
+        section("TRM LABS — Sanctions Screening (Keyless Free)  [v5.2]")
+        status = trm.get("status","?")
+        if   status=="rate_limited": print(f"  ⏳ {trm.get('note','')}")
+        elif status=="auth_error":   print(f"  🔑 {trm.get('note','')}")
+        elif status=="error":        print(f"  ❌ {trm.get('error', trm.get('body',''))[:100]}")
+        elif status=="ok":
+            row("Verdict:", trm.get("verdict","?"))
+            row("Keyed:",   "Yes (paid tier)" if trm.get("keyed") else "No (free tier — 100 req/day)")
+        else:
+            print(f"  {trm}")
+
         # AnChain AI
         ac = report.get("anchain",{})
         section("ANCHAIN AI — Risk Score + Entity Labels + Multi-Jurisdiction Sanctions  [v5.1]")
@@ -1161,7 +1230,7 @@ def print_report(report):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  DEFAULT KEYS — VL-26 v5.1
+#  DEFAULT KEYS — VL-26 v5.2
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 KEYS = {
@@ -1186,6 +1255,8 @@ KEYS = {
     "zerion":          "zk_4ec4a414e42e4d51bd386205c84f62dc",  # vaulted: zerion/api_key
     # v5.1 new keys:
     "anchain":         "3c083Az1ZJP2_5QVT4mpnNOeMyQXqBhMoRwjPBocyCgTFKUdx1LNus91Sw.yJx5H2q3tEo.C3wLQQ",
+    # v5.2 new keys:
+    "trm":             "",  # keyless free tier — leave blank. Optional: paid key from trmlabs.com/products/sanctions
 }
 
 
