@@ -653,7 +653,7 @@ def _dune_rest(address, keys):
     if not key:
         return {"status":"no_key","note":"Add dune key to KEYS"}
 
-    hdrs = {"X-Dune-API-Key": key, "Content-Type": "application/json"}
+    hdrs = {"X-Dune-API-Key": key, "Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
 
     try:
         # Use Dune MCP — list tools first to verify connection
@@ -666,7 +666,17 @@ def _dune_rest(address, keys):
         if not r.ok:
             return {"status":"error","code":r.status_code,"note":r.text[:100]}
 
-        tools = r.json().get("result",{}).get("tools",[])
+        # Parse SSE response: extract data: lines
+        raw = r.text
+        data_json = {}
+        for line in raw.split("\n"):
+            if line.startswith("data: "):
+                try:
+                    data_json = json.loads(line[6:])
+                    break
+                except:
+                    pass
+        tools = data_json.get("result",{}).get("tools",[])
         tool_names = [t.get("name","") for t in tools]
 
         # Call get_address_labels if available
