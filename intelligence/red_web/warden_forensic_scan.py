@@ -343,12 +343,30 @@ def _quicknode_rpc(address, keys):
 
 
 def _bitquery_rest(address, keys):
-    """Bitquery — QUOTA EXHAUSTED on free tier, graceful no-op."""
+    """Bitquery — EAP streaming endpoint. Tokens rotated VL-27. Graceful on 402 billing."""
     bearer = keys.get("bitquery_bearer","")
     if not bearer:
         return {"status":"no_key","note":"No bitquery_bearer in keys"}
-    # Free tier quota exhausted as of VL-25 — return graceful message
-    return {"status":"quota_exhausted","note":"Bitquery free quota exhausted — upgrade plan or rotate bearer"}
+    gql = (
+        "{ EVM(network: eth) { Transfers("
+        'where: {Transfer: {Receiver: {is: "ADDR"}}},'
+        " limit: {count: 10}) { Transfer { Amount Currency { Symbol }"
+        " Sender { Address } Receiver { Address } } Block { Time Number } } } }"
+    ).replace("ADDR", address)
+    try:
+        import requests as _req
+        r = _req.post("https://streaming.bitquery.io/eap",
+            json={"query": gql},
+            headers={"Authorization": f"Bearer {bearer}", "Content-Type": "application/json"},
+            timeout=15)
+        if r.status_code == 402:
+            return {"status":"billing_inactive","note":"Bitquery 402 — activate billing at bitquery.io"}
+        if r.status_code == 403:
+            return {"status":"access_denied","note":"Bitquery 403 — check token or account plan"}
+        r.raise_for_status()
+        return {"status":"ok","data": r.json()}
+    except Exception as e:
+        return {"status":"error","note":str(e)[:100]}
 
 
 def _goldrush_rest(address, chains, keys):
@@ -1242,7 +1260,8 @@ KEYS = {
     "basescan":        "QT7KI56B365U22NXMJJM4IU7Q8MVER69RY",
     "tenderly":        "K5LF4-PBJUwWLL-BmD3LEn3e-GvguZ3k",
     "goldrush":        "cqt_rQGWWvgk9qGMtCMQMxKY7VWQJJXy",
-    "bitquery_bearer": "ory_at_b1QNBWHrJzpCn3Qhkb8kp-yNPhPXZ89EoOKmsW_M3DE.0ss6q8skWuMJW7n5OCh2gMsFNr-pLlek4BG1nIiaJns",  # VL-27 rotated — 402 billing issue, graceful fallback
+    "bitquery_bearer": "ory_at_b1QNBWHrJzpCn3Qhkb8kp-yNPhPXZ89EoOKmsW_M3DE.0ss6q8skWuMJW7n5OCh2gMsFNr-pLlek4BG1nIiaJns",  # VL-27 EAP token
+    "bitquery_api":    "ory_at_JNz9H_Ksi6LS1t58gsGt59ApRwE5yyOCOo6anLCkLq0.aynL_IErCEdIjJImqD6XXa1VYqC4xorvWqbKtByj0T0",  # VL-27 usage/REST token
     "onchainrisk":     "ocr_test_a947101ca196b7f0aa2ac6a1f4c96df0aefd0ad3d5d4f201",
     "dune":            "CRxZFkgiBpR4f1ak1GzeTR4lTMgTo8op",
     "jina":            "jina_f140e19479774b65b77bf41f7985135fvxn1Qedbig2ziw3Mf-Tj5fNoOkBq",
