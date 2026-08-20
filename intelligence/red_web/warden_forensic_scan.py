@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-VL-28 v5.4 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
+VL-28 v5.5 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -28,7 +28,7 @@ TOOL REGISTRY:
     AnChain AI   api.anchainai.com             score + attribution + suspicious-activities  [v5.4]
     TRM Labs     api.trmlabs.com               sanctions screening (keyless free) [v5.2 NEW]
 
-KEYS dict (v5.4 / VL-28):
+KEYS dict (v5.5 / VL-28):
     arkham, chainbase, moralis, nansen, etherscan, goplus_key, goplus_secret,
     tenderly, quicknode_http, basescan, goldrush, bitquery_bearer,
     onchainrisk, chainabuse, dune, jina, bicscan, zerion, anchain, trm
@@ -74,6 +74,10 @@ CHANGELOG:
             Arkham REST upgraded: counterparties endpoint added, transfers use /base= param, balance lookup added
             Arkham entity names now shown on transfers (from_entity, to_entity)
             Scanner version: v5.4
+    VL-28 v5.5: Dune rewritten — REST submit+poll (no more SSE IncompleteRead)
+            ethereum.transactions bytearray literal fix (0x not quoted string)
+            get_address_labels via MCP (graceful empty = no label)
+            Scanner version: v5.5
 
 CURRENT KEYS (VL-28 / v25 — August 2026):
     arkham         = 77d24c4d-6b2b-471a-88b6-9e6e75ba7358
@@ -1128,7 +1132,7 @@ def scan(address, chains=None, keys=None):
         "mcp_stack":   [t for t in tool_log if t in MCP_TOOLS],
         "rest_stack":  [t for t in tool_log if t not in MCP_TOOLS],
         "scanned_at":  datetime.now(timezone.utc).isoformat(),
-        "scanner_ver": "VL-28 v5.4",
+        "scanner_ver": "VL-28 v5.5",
     }
     return results
 
@@ -1456,7 +1460,7 @@ def print_report(report):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  DEFAULT KEYS — VL-28 v5.4
+#  DEFAULT KEYS — VL-28 v5.5
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 KEYS = {
@@ -1492,5 +1496,6 @@ if __name__ == "__main__":
     target = sys.argv[1] if len(sys.argv) > 1 else "0x70a3df699512f39C682F94fad498454C90B8C219"
     report = scan(target, keys=KEYS)
     print_report(report)
+
 
 
