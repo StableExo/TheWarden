@@ -1344,15 +1344,24 @@ def print_report(report):
 
         # Dune
         du = report.get("dune",{})
-        section("DUNE ANALYTICS — SQL Intelligence  [v5.0]")
+        section("DUNE ANALYTICS — ETH Transactions + Labels  [v5.5]")
         status = du.get("status","?")
-        if   status=="no_key":  print(f"  ⚪ {du.get('note','')}")
-        elif status=="ok":
-            rows = du.get("rows",[])
-            print(f"  Query {du.get('query_id','?')} — {du.get('row_count',0)} rows")
-            for r in rows[:3]: print(f"    {str(r)[:100]}")
-        elif status=="timeout": print(f"  ⏳ {du.get('note','Query still running')}")
-        else:                   print(f"  ❌ {du}")
+        if status == "no_key":
+            print(f"  ⚪ {du.get('note','')}")
+        elif status == "error":
+            print(f"  ❌ {du.get('error','')}")
+        else:
+            label = du.get("dune_label","")
+            if label: row("Dune Label:", label[:120])
+            tx_count = du.get("tx_count")
+            if tx_count is not None:
+                evasion = " — ⚠️  EIP-7702 evasion confirmed" if tx_count == 0 else " found"
+                row("ETH Txs (Dune):", f"{tx_count}{evasion}")
+            txs = du.get("txs",[])
+            for tx in txs[:5]:
+                print(f"    {tx.get('time','')} | {tx.get('from','')[:18]} → {tx.get('to','')[:18]} | {tx.get('eth',0)} ETH")
+            note = du.get("tx_note","")
+            if note: print(f"  Note: {note}")
 
         # TRM Labs
         trm = report.get("trm",{})
