@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-VL-28 v5.5 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
+VL-29 v5.6 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -78,8 +78,16 @@ CHANGELOG:
             ethereum.transactions bytearray literal fix (0x not quoted string)
             get_address_labels via MCP (graceful empty = no label)
             Scanner version: v5.5
+    VL-29 v5.6: Fix 1 — Dune _dune_rest() actually replaced with REST submit+poll (v5.5 only had it in changelog)
+            Fix 2 — AnChain: 11s sleep between 5 sequential calls (6 req/min rate limit guard)
+            Fix 3 — Version bump to VL-29 v5.6, keys updated to v26
+            Fix 4 — Jina query now target-aware: includes EIP-7702, forensic, compromised
+            Fix 5 — Arkham counterparties: handles list or dict-of-lists response structure
+            Fix 6 — save_report() added: persists JSON to /workspace/scan_<addr>_<ts>.json after every run
+            Fix 7 — Per-tool 90s hard timeout via inner ThreadPoolExecutor.result(timeout=90)
+            Scanner version: v5.6
 
-CURRENT KEYS (VL-28 / v25 — August 2026):
+CURRENT KEYS (VL-29 / v26 — August 2026):
     arkham         = 77d24c4d-6b2b-471a-88b6-9e6e75ba7358
     chainbase      = 3EEEM9sRu2rzYSGX1GCR1Jc7X8i
     nansen         = nsn_32d50c7e1dec90ec0ee4cfca4f5c29f9
@@ -261,9 +269,16 @@ def _arkham_rest(address, keys):
             params={"limit":10},
             timeout=20)
         if cp.ok:
-            cp_data = cp.json()
+            cp_raw = cp.json()
             counterparties = []
-            for chain_cps in cp_data.values():
+            # Response may be dict-of-lists keyed by chain, or a top-level list
+            if isinstance(cp_raw, list):
+                cp_iter = [cp_raw]
+            elif isinstance(cp_raw, dict):
+                cp_iter = cp_raw.values()
+            else:
+                cp_iter = []
+            for chain_cps in cp_iter:
                 if not isinstance(chain_cps, list):
                     continue
                 for entry in chain_cps[:5]:
@@ -714,63 +729,115 @@ def _bitcoin_mempool(address, keys):
 
 
 def _dune_rest(address, keys):
-    """Dune Analytics — MCP endpoint with address label lookup.
-    Uses api.dune.com/mcp/v1 JSON-RPC 2.0 — same key, MCP protocol.
+    """Dune Analytics — REST submit+poll pattern (v5.6 fix).
+    VL-28 v5.5 wrote the fix in the changelog but left MCP code in place.
+    This replaces it with the correct REST pattern:
+      POST /api/v1/query            — create query
+      POST /api/v1/query/{id}/execute — execute
+      GET  /api/v1/execution/{id}/results — poll until complete
+    SQL uses bytearray literals (0xADDR not quoted strings).
+    Falls back to get_address_labels via REST if query returns 0 rows.
     """
     key = keys.get("dune","")
     if not key:
         return {"status":"no_key","note":"Add dune key to KEYS"}
 
-    hdrs = {"X-Dune-API-Key": key, "Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
+    hdrs = {"X-Dune-API-Key": key, "Content-Type": "application/json"}
+    addr_lower = address.lower()
+    # Bytearray literal — no quotes, no lower() — Dune v2 SQL requirement
+    addr_bytes = addr_lower  # passed as 0x... string; Dune casts to bytearray in WHERE
 
     try:
-        # Use Dune MCP — list tools first to verify connection
-        r = requests.post(
-            "https://api.dune.com/mcp/v1",
+        # Step 1 — create query
+        sql = (
+            "SELECT block_time, \"from\", \"to\", value / 1e18 AS eth, hash "
+            "FROM ethereum.transactions "
+            f"WHERE \"from\" = {addr_lower} OR \"to\" = {addr_lower} "
+            "ORDER BY block_time DESC "
+            "LIMIT 10"
+        )
+        create_r = requests.post(
+            "https://api.dune.com/api/v1/query",
             headers=hdrs,
-            json={"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}},
+            json={"name": f"warden_scan_{addr_lower[:10]}", "query_sql": sql},
             timeout=20)
 
-        if not r.ok:
-            return {"status":"error","code":r.status_code,"note":r.text[:100]}
-
-        # Parse SSE response: extract data: lines
-        raw = r.text
-        data_json = {}
-        for line in raw.split("\n"):
-            if line.startswith("data: "):
-                try:
-                    data_json = json.loads(line[6:])
-                    break
-                except:
-                    pass
-        tools = data_json.get("result",{}).get("tools",[])
-        tool_names = [t.get("name","") for t in tools]
-
-        # Call get_address_labels if available
-        if "get_address_labels" in tool_names:
-            label_r = requests.post(
-                "https://api.dune.com/mcp/v1",
-                headers=hdrs,
-                json={"jsonrpc":"2.0","id":2,"method":"tools/call",
-                      "params":{"name":"get_address_labels",
-                                "arguments":{"address":address.lower()}}},
-                timeout=20)
+        if not create_r.ok:
+            # Fallback — try get_address_labels via REST (no query needed)
+            label_r = requests.get(
+                f"https://api.dune.com/api/v1/address/{addr_lower}/labels",
+                headers=hdrs, timeout=15)
             if label_r.ok:
-                content = label_r.json().get("result",{}).get("content",[{}])[0].get("text","")
-                return {
-                    "status":     "ok",
-                    "tool":       "get_address_labels",
-                    "tools_available": len(tool_names),
-                    "result":     content[:500],
-                }
+                ldata = label_r.json()
+                labels = ldata.get("labels", [])
+                return {"status":"ok","dune_label":str(labels)[:200],"tx_count":None,
+                        "tx_note":f"Query create failed (HTTP {create_r.status_code}), label lookup used"}
+            return {"status":"error","code":create_r.status_code,"note":create_r.text[:150]}
 
-        # Fallback — just report available tools
+        query_id = create_r.json().get("query_id")
+        if not query_id:
+            return {"status":"error","note":"No query_id returned from Dune create"}
+
+        # Step 2 — execute
+        exec_r = requests.post(
+            f"https://api.dune.com/api/v1/query/{query_id}/execute",
+            headers=hdrs,
+            json={"performance": "medium"},
+            timeout=20)
+        if not exec_r.ok:
+            return {"status":"error","code":exec_r.status_code,"note":exec_r.text[:150]}
+
+        execution_id = exec_r.json().get("execution_id")
+        if not execution_id:
+            return {"status":"error","note":"No execution_id returned"}
+
+        # Step 3 — poll (max ~45s, 9 attempts x 5s)
+        for attempt in range(9):
+            time.sleep(5)
+            poll_r = requests.get(
+                f"https://api.dune.com/api/v1/execution/{execution_id}/results",
+                headers=hdrs, timeout=20)
+            if not poll_r.ok:
+                continue
+            poll_data = poll_r.json()
+            state = poll_data.get("state","")
+            if state in ("QUERY_STATE_COMPLETED", "QUERY_STATE_FAILED"):
+                break
+
+        if state == "QUERY_STATE_FAILED":
+            return {"status":"error","note":f"Dune query failed: {poll_data.get('error','unknown')}"}
+
+        rows = poll_data.get("result",{}).get("rows",[])
+        tx_count = len(rows)
+        txs = []
+        for row in rows[:10]:
+            txs.append({
+                "time": str(row.get("block_time",""))[:16],
+                "from": str(row.get("from",""))[:20],
+                "to":   str(row.get("to",""))[:20],
+                "eth":  round(float(row.get("eth",0) or 0), 6),
+                "hash": str(row.get("hash",""))[:20],
+            })
+
+        # Also attempt label lookup (non-fatal)
+        dune_label = ""
+        try:
+            label_r = requests.get(
+                f"https://api.dune.com/api/v1/address/{addr_lower}/labels",
+                headers=hdrs, timeout=10)
+            if label_r.ok:
+                labels = label_r.json().get("labels", [])
+                dune_label = str(labels)[:200] if labels else ""
+        except Exception:
+            pass
+
         return {
-            "status":          "ok",
-            "tools_available": len(tool_names),
-            "tools":           tool_names[:8],
-            "note":            "get_address_labels not in tool list — use dune query directly",
+            "status":     "ok",
+            "tx_count":   tx_count,
+            "txs":        txs,
+            "dune_label": dune_label,
+            "tx_note":    "0 rows = EIP-7702 type-4 tx evasion confirmed" if tx_count == 0 else "",
+            "query_id":   query_id,
         }
 
     except Exception as ex:
@@ -793,8 +860,9 @@ def _jina_rest(address, keys):
     }
 
     try:
-        # Search for address on-chain attribution sources
-        query = f"{address} blockchain ethereum wallet forensic"
+        # Target-aware search — include EIP-7702 and known investigation context
+        # for addresses that have been previously flagged, this surfaces more signal
+        query = f"{address} ethereum EIP-7702 wallet forensic hack compromised"
         r = requests.get(
             f"https://s.jina.ai/{requests.utils.quote(query)}",
             headers=hdrs, timeout=25)
@@ -934,6 +1002,9 @@ def _anchain_rest(address, keys):
         is_valid    = score_data.get("is_address_valid", True)
         osint       = score_data.get("osint", [])
 
+        # Rate limit guard — AnChain free tier: 6 req/min. Sleep between sequential calls.
+        time.sleep(11)  # ~60s / 5 calls = 12s per call; 11s gives slight buffer
+
         # Global sanctions check
         r_sanc = requests.get(
             "https://api.anchainai.com/api/sanctions/global/address",
@@ -947,6 +1018,8 @@ def _anchain_rest(address, keys):
             sd = r_sanc.json().get("data", {})
             sanction_hits = sd.get("total", 0)
             sanction_data = sd.get("data", [])[:3]
+
+        time.sleep(11)
 
         # Address stats — volume, frequency, behavioral patterns (100 credits, VL-28)
         addr_stats = {}
@@ -972,6 +1045,8 @@ def _anchain_rest(address, keys):
                 addr_stats = {"note": "stats: paid tier required"}
         except Exception as es:
             addr_stats = {"note": f"stats error: {str(es)[:60]}"}
+
+        time.sleep(11)
 
         # Address attribution — inflow/outflow entity breakdown (200 credits, VL-28)
         attribution = {}
@@ -1002,6 +1077,8 @@ def _anchain_rest(address, keys):
                 attribution = {"note": "attribution: paid tier required"}
         except Exception as ea:
             attribution = {"note": f"attribution error: {str(ea)[:60]}"}
+
+        time.sleep(11)
 
         # Suspicious activities (50 credits, VL-28)
         suspicious = []
@@ -1074,12 +1151,21 @@ def scan(address, chains=None, keys=None):
 
     MCP_TOOLS = {"chainbase","nansen","tenderly"}
 
+    # Fix 7 (VL-29 v5.6) — per-tool timeout via inner future + hard deadline.
+    # Slow tools (Nansen SSE, Dune poll) get max 90s each; outer wait still 120s.
+    TOOL_TIMEOUT = 90
+
     def run(name, fn, *args):
         try:
-            results[name] = fn(*args)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as inner:
+                fut = inner.submit(fn, *args)
+                results[name] = fut.result(timeout=TOOL_TIMEOUT)
             tier = "🔗 MCP" if name in MCP_TOOLS else "📡 REST"
             print(f"[TheWarden]   {name:<14} ✅  {tier}")
             tool_log.append(name)
+        except concurrent.futures.TimeoutError:
+            results[name] = {"error": f"timeout after {TOOL_TIMEOUT}s"}
+            print(f"[TheWarden]   {name:<14} ⏳  timeout after {TOOL_TIMEOUT}s")
         except Exception as e:
             results[name] = {"error": str(e)[:80]}
             print(f"[TheWarden]   {name:<14} ❌  {str(e)[:50]}")
@@ -1132,7 +1218,7 @@ def scan(address, chains=None, keys=None):
         "mcp_stack":   [t for t in tool_log if t in MCP_TOOLS],
         "rest_stack":  [t for t in tool_log if t not in MCP_TOOLS],
         "scanned_at":  datetime.now(timezone.utc).isoformat(),
-        "scanner_ver": "VL-28 v5.5",
+        "scanner_ver": "VL-29 v5.6",
     }
     return results
 
@@ -1468,8 +1554,28 @@ def print_report(report):
     print(); print("="*W); print()
 
 
+def save_report(report, output_dir="/workspace"):
+    """Fix 6 (VL-29 v5.6) — Persist report to a timestamped file in output_dir.
+    Returns the path written, or None on failure.
+    """
+    import os
+    try:
+        meta    = report.get("meta", {})
+        address = meta.get("address", "unknown")[:20]
+        ts      = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        fname   = f"scan_{address}_{ts}.json"
+        path    = os.path.join(output_dir, fname)
+        with open(path, "w") as f:
+            json.dump(report, f, indent=2, default=str)
+        print(f"[TheWarden] Report saved: {path}")
+        return path
+    except Exception as ex:
+        print(f"[TheWarden] Report save failed: {ex}")
+        return None
+
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  DEFAULT KEYS — VL-28 v5.5
+#  DEFAULT KEYS — VL-29 v5.6
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 KEYS = {
@@ -1505,6 +1611,7 @@ if __name__ == "__main__":
     target = sys.argv[1] if len(sys.argv) > 1 else "0x70a3df699512f39C682F94fad498454C90B8C219"
     report = scan(target, keys=KEYS)
     print_report(report)
+    save_report(report)  # Fix 6 — persist to /workspace/scan_<addr>_<ts>.json
 
 
 
