@@ -34,6 +34,7 @@ import { EthPoolScanner } from '../scanner/EthPoolScanner';
 import { FLASH_ABI, buildArbPath } from '../config/arb';
 import { ADDRESSES } from '../config/addresses';
 import { ETH_MAINNET } from '../config/network';
+import { coalitionManager } from '../coalition/CoalitionManager';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const PORT         = parseInt(process.env.PORT ?? '10000');
@@ -173,32 +174,15 @@ async function executeArb(
   }
   const nonce = localNonce;
 
-  // ── Tx 1: Arb tx — EOA calls FlashSwapV3 directly ───────────────────────
-  const arbTxHash = await walletClient.sendTransaction({
-    to:                  FLASH_SWAP,
-    data:                arbCalldata,
-    gas:                 300_000n,          // FlashSwapV3 ~150-250K gas measured
-    maxFeePerGas,
-    maxPriorityFeePerGas,
-    nonce:               Number(nonce),
-    account,
-    chain:               mainnet,
-  });
-  console.log(`[ARB] Arb tx signed: ${arbTxHash}`);
-
-  // ── Tx 2: Coinbase tip tx — pays builder for gas sponsorship ─────────────
-  // Tip = 10% of estimated profit (in ETH terms), floored at MIN_TIP_WEI
-  // Profit est: optimalBorrow * estimatedProfitBps / 10000 USDC → convert to ETH
-  const profitUSDC  = Number(actualBorrow) * opp.estimatedProfitBps / 10_000 / 1e6; // in USDC
-  const profitETH   = liveEthPriceUsd > 0 ? profitUSDC / liveEthPriceUsd : 0;
-  const tipWei      = profitETH > 0
+  // ── Profit estimate ───────────────────────────────────────────────────────
+  const profitUSDC = Number(actualBorrow) * opp.estimatedProfitBps / 10_000 / 1e6;
+  const profitETH  = liveEthPriceUsd > 0 ? profitUSDC / liveEthPriceUsd : 0;
+  const tipWei     = profitETH > 0
     ? BigInt(Math.max(Math.floor(profitETH * TIP_FRACTION * 1e18), Number(MIN_TIP_WEI)))
     : MIN_TIP_WEI;
   console.log(`[ARB] Profit est: ~$${profitUSDC.toFixed(4)} USDC | tip: ${Number(tipWei)/1e18} ETH`);
 
-  // Fan-out: submit to Quasar + Titan simultaneously
-  // We use eth_sendBundle raw tx flow — need signed raw txs, not tx hashes.
-  // Re-sign both txs as raw using signTransaction for bundle submission.
+  // ── Sign arb tx ───────────────────────────────────────────────────────────
   const rawArbTx = await account.signTransaction({
     to:                  FLASH_SWAP,
     data:                arbCalldata,
@@ -210,9 +194,31 @@ async function executeArb(
     type:                'eip1559',
   });
 
+  // ── Register warden arb as first coalition scout ──────────────────────────
+  // Tokens + pools from the opp so conflict detection works correctly
+  const oppTokens = [opp.buyPool.token0, opp.buyPool.token1].map((t: string) => t.toLowerCase());
+  const oppPools  = [opp.buyPool.address, opp.sellPool.address].map((p: string) => p.toLowerCase());
+  const blockNowMs = Date.now();
+  const expiresAt  = blockNowMs + 12_000; // expire after 1 block window
+
+  coalitionManager.registerWardenArb(
+    rawArbTx, profitUSDC, oppTokens, oppPools, tipWei, expiresAt
+  );
+
+  // ── Build coalition — merge warden arb + any pending scout bundles ────────
+  const coalition = coalitionManager.buildCoalition(blockNowMs);
+
+  if (coalition.accepted.length === 0) {
+    console.warn(`[ARB] Coalition empty after conflict filtering — aborting`);
+    localNonce = null;
+    return;
+  }
+
+  // ── Sign coinbase tip tx — sum of all coalition tips ──────────────────────
+  const coalitionTip = coalition.totalTipWei > 0n ? coalition.totalTipWei : MIN_TIP_WEI;
   const rawTipTx = await account.signTransaction({
     to:                  ETH_MAINNET.builders[0].coinbase as Address,  // quasarbuilder.eth
-    value:               tipWei,
+    value:               coalitionTip,
     gas:                 21_000n,
     maxFeePerGas,
     maxPriorityFeePerGas,
@@ -221,14 +227,17 @@ async function executeArb(
     type:                'eip1559',
   });
 
+  // Bundle: all coalition txs + single shared coinbase tip at the end
+  const bundleTxs = [...coalition.allSignedTxs, rawTipTx];
+
   const block = await client.getBlockNumber();
   const targetBlock = Number(block) + 1;
 
-  console.log(`[ARB] Submitting bundle to ${BUILDERS.length} builders | target block: ${targetBlock}`);
+  console.log(`[COALITION] Submitting: ${coalition.accepted.length} scouts | ${bundleTxs.length} txs | block ${targetBlock}`);
 
-  // Fan-out to all builders in parallel
+  // ── Fan-out to Quasar + Titan in parallel ────────────────────────────────
   const results = await Promise.all(
-    BUILDERS.map(b => submitBundle(b.rpc, b.name, [rawArbTx, rawTipTx], targetBlock))
+    BUILDERS.map(b => submitBundle(b.rpc, b.name, bundleTxs, targetBlock))
   );
 
   let anySuccess = false;
@@ -236,22 +245,21 @@ async function executeArb(
     const r = results[i];
     const b = BUILDERS[i];
     if (r.submitted) {
-      console.log(`[ARB ✅] ${b.name}: bundleHash=${r.bundleHash}`);
+      console.log(`[COALITION ✅] ${b.name}: bundleHash=${r.bundleHash}`);
       anySuccess = true;
     } else {
-      console.warn(`[ARB ⚠️] ${b.name}: ${r.error}`);
+      console.warn(`[COALITION ⚠️] ${b.name}: ${r.error}`);
     }
   }
 
   if (anySuccess) {
     fires++;
     lastFire = Date.now();
-    // Advance local nonce by 2 (arb tx + tip tx)
-    localNonce = nonce + 2n;
-    console.log(`[ARB] Bundle submitted! Local nonce now ${localNonce}`);
+    localNonce = nonce + 2n;  // arb tx + tip tx
+    coalitionManager.clearAccepted(coalition.accepted);
+    console.log(`[COALITION] Bundle landed! Scouts: ${coalition.accepted.map(s => s.scoutId).join(', ')}`);
   } else {
-    console.error(`[ARB ❌] All builders rejected bundle — not incrementing nonce`);
-    // Reset local nonce so next attempt re-reads from chain
+    console.error(`[COALITION ❌] All builders rejected — resetting nonce`);
     localNonce = null;
   }
 }
@@ -353,7 +361,50 @@ const srv = http.createServer((req, res) => {
       lastOpp,
       ethPriceUsd:  liveEthPriceUsd,
       minSpreadBps: MIN_PROFIT_BPS,
+      coalition:    coalitionManager.getStats(),
     }));
+    return;
+  }
+
+  // ── POST /bundle — External scout bundle submission ───────────────────────
+  // Scouts POST their signed raw txs here to join the coalition.
+  // Shape: { scoutId, signedTxs[], expectedProfit, tokenAddresses[], poolAddresses[], tipWei, expiresAt }
+  if (url.startsWith('/bundle') && req.method === 'POST') {
+    let body = '';
+    req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const parsed = JSON.parse(body);
+        const { scoutId, signedTxs, expectedProfit, tokenAddresses, poolAddresses, tipWei, expiresAt } = parsed;
+
+        // Validation
+        if (!scoutId || typeof scoutId !== 'string') {
+          res.writeHead(400); res.end(JSON.stringify({ error: 'scoutId required' })); return;
+        }
+        if (!Array.isArray(signedTxs) || signedTxs.length === 0) {
+          res.writeHead(400); res.end(JSON.stringify({ error: 'signedTxs[] required' })); return;
+        }
+        if (!Array.isArray(tokenAddresses) || !Array.isArray(poolAddresses)) {
+          res.writeHead(400); res.end(JSON.stringify({ error: 'tokenAddresses[] and poolAddresses[] required' })); return;
+        }
+
+        const bundleId = coalitionManager.submit({
+          scoutId,
+          signedTxs,
+          expectedProfit:  Number(expectedProfit ?? 0),
+          tokenAddresses:  tokenAddresses.map((a: string) => a.toLowerCase()),
+          poolAddresses:   poolAddresses.map((a: string) => a.toLowerCase()),
+          tipWei:          BigInt(tipWei ?? '10000000000000'),  // default 0.00001 ETH
+          expiresAt:       Number(expiresAt ?? Date.now() + 12_000),
+        });
+
+        res.writeHead(200);
+        res.end(JSON.stringify({ bundleId, status: 'accepted', message: 'Bundle queued for next coalition' }));
+      } catch (e: any) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: `Invalid JSON: ${e?.message}` }));
+      }
+    });
     return;
   }
 
