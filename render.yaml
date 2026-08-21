@@ -26,3 +26,29 @@ services:
         sync: false
     healthCheckPath: /health
     autoDeploy: true
+
+  # ── BlockBuilder (second arb instance) ─────────────────────────────────────
+  # VL-33: Changed from build-block.ts → arb-loop.ts (was mis-configured)
+  - type: web
+    name: thewarden-blockbuilder
+    runtime: node
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: npm install
+    startCommand: npx tsx ethereum-mainnet/scripts/arb-loop.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: ETH_PRIVATE_KEY
+        sync: false
+      - key: BUILDER_BLS_SK
+        sync: false
+      - key: THIRDWEB_CLIENT_ID
+        value: "0282b1b3ed884ef92509e46b8da1fad7"
+      - key: THIRDWEB_SECRET_KEY
+        sync: false
+    healthCheckPath: /health
+    autoDeploy: true
