@@ -432,7 +432,9 @@ const srv = http.createServer((req, res) => {
           initCode: '0x', callData: saCalldata2,
           callGasLimit: '0x186A0', verificationGasLimit: '0x186A0', preVerificationGas: '0xC350',
           maxFeePerGas: `0x${(gas2 * 2n).toString(16)}`, maxPriorityFeePerGas: '0x3B9ACA00',
-          paymasterAndData: '0x', signature: '0x',
+          paymasterAndData: '0x',
+          // FIX4 (GL-L53): stub sig required before pm_getPaymasterStubData — empty 0x causes Internal server error
+          signature: ('0x' + 'ff'.repeat(64) + '1c') as `0x${string}`,
         };
         const toC2 = (op: any) => ({ ...op, nonce: nonce2,
           callGasLimit: BigInt(op.callGasLimit), verificationGasLimit: BigInt(op.verificationGasLimit),
