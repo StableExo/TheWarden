@@ -443,7 +443,7 @@ const srv = http.createServer((req, res) => {
         });
         L('Step 1: pm_getPaymasterStubData...');
         const stubR = await fetch(BUNDLER_URL, { method:'POST', headers:hdrs2,
-          body: JSON.stringify({jsonrpc:'2.0',id:1,method:'pm_getPaymasterStubData',params:[userOp2,ENTRY_POINT_V06,{}]}),
+          body: JSON.stringify({jsonrpc:'2.0',id:1,method:'pm_getPaymasterStubData',params:[userOp2,ENTRY_POINT_V06,'0x1',{}]}),
           signal: AbortSignal.timeout(15000) });
         const stubJ2 = await stubR.json() as any;
         if (stubJ2.error) throw new Error(`Stub: ${JSON.stringify(stubJ2.error)}`);
@@ -454,7 +454,7 @@ const srv = http.createServer((req, res) => {
         L('Signed with stub');
         L('Step 3: pm_sponsorUserOperation...');
         const sponR = await fetch(BUNDLER_URL, { method:'POST', headers:hdrs2,
-          body: JSON.stringify({jsonrpc:'2.0',id:2,method:'pm_sponsorUserOperation',params:[userOp2,ENTRY_POINT_V06,{}]}),
+          body: JSON.stringify({jsonrpc:'2.0',id:2,method:'pm_sponsorUserOperation',params:[userOp2,ENTRY_POINT_V06,'0x1',{}]}),
           signal: AbortSignal.timeout(15000) });
         const sponJ2 = await sponR.json() as any;
         if (sponJ2.error) throw new Error(`Sponsor: ${JSON.stringify(sponJ2.error)}`);
