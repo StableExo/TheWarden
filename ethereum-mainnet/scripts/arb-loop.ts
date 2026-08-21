@@ -34,6 +34,11 @@ import { ETH_MAINNET } from '../config/network';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const PORT              = parseInt(process.env.PORT ?? '10000');
+const ARKHAM_KEY        = process.env.ARKHAM_KEY        ?? '';
+const ZERION_KEY        = process.env.ZERION_KEY        ?? '';
+const QN_HTTP_URL       = process.env.QN_HTTP_URL       ?? '';
+// Shared proxy secret — scanner must send this to authenticate /scan/proxy calls
+const PROXY_SECRET      = process.env.PROXY_SECRET      ?? 'warden-proxy-vl31';
 const EOA_PK            = process.env.ETH_PRIVATE_KEY as Hex;
 const THIRDWEB_CLIENT_ID = process.env.THIRDWEB_CLIENT_ID || '0282b1b3ed884ef92509e46b8da1fad7';
 const THIRDWEB_SECRET_KEY = process.env.THIRDWEB_SECRET_KEY || '';
@@ -341,9 +346,198 @@ const srv = http.createServer((req, res) => {
     return;
   }
 
+  // ── /scan/proxy — TLS-blocked forensic tool relay ────────────────────────
+  // Called by warden_forensic_scan.py for tools that 403/timeout from Vellum
+  // container: QuickNode RPC, Arkham REST, Zerion REST.
+  // Auth: X-Proxy-Secret header must match PROXY_SECRET env var.
+  if (url.startsWith('/scan/proxy') && req.method === 'POST') {
+    const secret = req.headers['x-proxy-secret'] ?? '';
+    if (secret !== PROXY_SECRET) {
+      res.writeHead(401);
+      res.end(JSON.stringify({ error: 'unauthorized' }));
+      return;
+    }
+
+    let body = '';
+    req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
+    req.on('end', async () => {
+      let address = '';
+      let tools: string[] = ['quicknode', 'arkham', 'zerion'];
+      try {
+        const parsed = JSON.parse(body);
+        address = (parsed.address ?? '').toLowerCase();
+        if (parsed.tools) tools = parsed.tools;
+      } catch {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: 'invalid JSON body' }));
+        return;
+      }
+
+      if (!address || !address.startsWith('0x')) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: 'address required (0x...)' }));
+        return;
+      }
+
+      const out: Record<string, unknown> = {};
+
+      await Promise.all(tools.map(async (tool) => {
+        try {
+          if (tool === 'quicknode') out.quicknode  = await proxyQuickNode(address);
+          if (tool === 'arkham')    out.arkham     = await proxyArkham(address);
+          if (tool === 'zerion')    out.zerion     = await proxyZerion(address);
+        } catch (e: any) {
+          out[tool] = { error: String(e?.message ?? e).slice(0, 120) };
+        }
+      }));
+
+      res.writeHead(200);
+      res.end(JSON.stringify({ status: 'ok', address, results: out }));
+    });
+    return;
+  }
+
   res.writeHead(404);
   res.end(JSON.stringify({ error: 'not found' }));
 });
+
+// ─── Proxy tool functions (run on Render, TLS unrestricted) ──────────────────
+
+async function proxyQuickNode(address: string): Promise<Record<string, unknown>> {
+  if (!QN_HTTP_URL) return { error: 'QN_HTTP_URL not set on Render' };
+  const rpc = async (method: string, params: unknown[]) => {
+    const r = await fetch(QN_HTTP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+      signal: AbortSignal.timeout(12000),
+    });
+    const j = await r.json() as any;
+    return j.result;
+  };
+  const [bal, nonce, code, block] = await Promise.all([
+    rpc('eth_getBalance',          [address, 'latest']),
+    rpc('eth_getTransactionCount', [address, 'latest']),
+    rpc('eth_getCode',             [address, 'latest']),
+    rpc('eth_blockNumber',         []),
+  ]);
+  return {
+    balance_eth:  bal   ? parseInt(bal,   16) / 1e18 : 0,
+    nonce:        nonce ? parseInt(nonce, 16)         : 0,
+    is_contract:  code  ? code.length > 4            : false,
+    latest_block: block ? parseInt(block, 16)         : 0,
+    source:       'render-proxy',
+  };
+}
+
+async function proxyArkham(address: string): Promise<Record<string, unknown>> {
+  if (!ARKHAM_KEY) return { error: 'ARKHAM_KEY not set on Render' };
+  const hdrs = { 'API-Key': ARKHAM_KEY, 'Accept': 'application/json' };
+  const out: Record<string, unknown> = {};
+
+  const [entityRes, transferRes, cpRes, balRes] = await Promise.allSettled([
+    fetch(`https://api.arkm.com/entity/${address}`,                                              { headers: hdrs, signal: AbortSignal.timeout(15000) }),
+    fetch(`https://api.arkm.com/transfers?base=${address}&limit=20&sortKey=time&sortDir=desc`,   { headers: hdrs, signal: AbortSignal.timeout(15000) }),
+    fetch(`https://api.arkm.com/counterparties/address/${address}?limit=10`,                     { headers: hdrs, signal: AbortSignal.timeout(15000) }),
+    fetch(`https://api.arkm.com/balances/address/${address}`,                                    { headers: hdrs, signal: AbortSignal.timeout(15000) }),
+  ]);
+
+  if (entityRes.status === 'fulfilled' && entityRes.value.ok) {
+    const ej = await entityRes.value.json() as any;
+    out.entity = ej?.name ?? ej?.entity?.name ?? 'Unknown / Unlabeled';
+  } else { out.entity = 'fetch_error'; }
+
+  if (transferRes.status === 'fulfilled' && transferRes.value.ok) {
+    const tj = await transferRes.value.json() as any;
+    const transfers = tj?.transfers ?? [];
+    out.transfer_count = tj?.count ?? transfers.length;
+    out.transfers = transfers.slice(0, 10).filter((tr: any) => typeof tr === 'object').map((tr: any) => ({
+      time:        String(tr.blockTimestamp ?? '').slice(0, 10),
+      from:        String(tr.fromAddress?.address ?? '?').slice(0, 22),
+      from_entity: String(tr.fromAddress?.arkhamEntity?.name ?? '?').slice(0, 20),
+      to:          String(tr.toAddress?.address ?? '?').slice(0, 22),
+      to_entity:   String(tr.toAddress?.arkhamEntity?.name ?? '?').slice(0, 20),
+      amount:      String(tr.unitValue ?? '?').slice(0, 14),
+      token:       String(tr.tokenAddress?.symbol ?? 'ETH').slice(0, 8),
+      chain:       String(tr.fromAddress?.chain ?? '?').slice(0, 8),
+    }));
+  } else { out.transfers = []; out.transfer_error = 'fetch_error'; }
+
+  if (cpRes.status === 'fulfilled' && cpRes.value.ok) {
+    const cpj = await cpRes.value.json() as any;
+    const cpIter: any[] = Array.isArray(cpj) ? [cpj] : Object.values(cpj ?? {});
+    const counterparties: unknown[] = [];
+    for (const chainCps of cpIter) {
+      if (!Array.isArray(chainCps)) continue;
+      for (const entry of chainCps.slice(0, 5)) {
+        const addrInfo = entry.address ?? {};
+        counterparties.push({
+          address: String(addrInfo.address ?? '?').slice(0, 22),
+          entity:  String(addrInfo.arkhamEntity?.name ?? 'Unknown').slice(0, 25),
+          usd:     Math.round((entry.usd ?? 0) * 100) / 100,
+          tx_count: entry.transactionCount ?? 0,
+          flow:    entry.flow ?? '?',
+        });
+      }
+    }
+    out.counterparties = counterparties.sort((a: any, b: any) => b.usd - a.usd).slice(0, 8);
+  } else { out.counterparties = []; }
+
+  if (balRes.status === 'fulfilled' && balRes.value.ok) {
+    const bj = await balRes.value.json() as any;
+    const balOut: Record<string, number> = {};
+    for (const [chain, tokens] of Object.entries(bj ?? {})) {
+      if (!Array.isArray(tokens)) continue;
+      const total = (tokens as any[]).reduce((s, t) => s + parseFloat(t?.usdValue ?? 0), 0);
+      if (total > 0) balOut[chain] = Math.round(total * 100) / 100;
+    }
+    out.balances = balOut;
+  }
+
+  out.source = 'render-proxy';
+  return out;
+}
+
+async function proxyZerion(address: string): Promise<Record<string, unknown>> {
+  if (!ZERION_KEY) return { error: 'ZERION_KEY not set on Render' };
+  const token = btoa(`${ZERION_KEY}:`);
+  const hdrs  = { 'Authorization': `Basic ${token}`, 'Accept': 'application/json' };
+  const addr  = address.toLowerCase();
+  const out: Record<string, unknown> = { status: 'ok', source: 'render-proxy' };
+
+  const [posRes, defiRes] = await Promise.allSettled([
+    fetch(`https://api.zerion.io/v1/wallets/${addr}/positions/?filter[position_types]=wallet&currency=usd&sort=value&page[size]=10`, { headers: hdrs, signal: AbortSignal.timeout(15000) }),
+    fetch(`https://api.zerion.io/v1/wallets/${addr}/positions/?filter[position_types]=deposited,borrowed,staked&currency=usd&page[size]=5`, { headers: hdrs, signal: AbortSignal.timeout(15000) }),
+  ]);
+
+  if (posRes.status === 'fulfilled' && posRes.value.ok) {
+    const pj = await posRes.value.json() as any;
+    const items: any[] = pj?.data ?? [];
+    let total = 0;
+    const positions = items.slice(0, 10).map((item: any) => {
+      const attr = item?.attributes ?? {};
+      const val  = parseFloat(attr.value ?? 0);
+      total += val;
+      return { symbol: attr.fungible_info?.symbol ?? '?', balance: attr.quantity?.float ?? 0, usd: Math.round(val * 100) / 100 };
+    });
+    out.total_usd  = Math.round(total * 100) / 100;
+    out.positions  = positions;
+    out.pos_count  = items.length;
+  } else {
+    out.positions_error = `HTTP ${(posRes as any)?.value?.status ?? 'fetch_error'}`;
+  }
+
+  if (defiRes.status === 'fulfilled' && defiRes.value.ok) {
+    const dj = await defiRes.value.json() as any;
+    out.defi_positions = (dj?.data ?? []).slice(0, 5).map((item: any) => ({
+      protocol: item?.relationships?.protocol?.data?.id ?? '?',
+      type:     item?.attributes?.position_type ?? '?',
+      usd:      Math.round(parseFloat(item?.attributes?.value ?? 0) * 100) / 100,
+    }));
+  }
+
+  return out;
+}
 
 srv.listen(PORT, () => {
   console.log(`[INF] ${new Date().toISOString()} TheWarden ARB ENGINE on port ${PORT} (VL-20)`);

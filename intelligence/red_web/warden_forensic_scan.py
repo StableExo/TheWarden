@@ -1128,6 +1128,63 @@ def _anchain_rest(address, keys):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  RENDER PROXY — VL-31
+#  QuickNode, Arkham, Zerion are TLS-blocked from the Vellum container.
+#  This function fires a single POST to the Render arb-loop service which
+#  runs those three tools natively (no egress restrictions) and returns
+#  combined JSON. Results are merged back into the main results dict so
+#  print_report() sees a complete 20-tool set.
+#
+#  Render endpoint: POST https://thewarden.onrender.com/scan/proxy
+#  Auth: X-Proxy-Secret header
+#  Body: {"address": "0x...", "tools": ["quicknode","arkham","zerion"]}
+#  Response: {"status":"ok","address":"0x...","results":{"quicknode":{...},"arkham":{...},"zerion":{...}}}
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RENDER_PROXY_URL    = "https://thewarden.onrender.com/scan/proxy"
+RENDER_PROXY_SECRET = "warden-proxy-vl31"
+
+
+def _render_proxy(address, keys, tools=None):
+    """Fire QuickNode + Arkham + Zerion via Render proxy (TLS-unrestricted).
+
+    Returns dict with keys: quicknode, arkham, zerion (each a sub-dict).
+    On any failure returns error stubs so the main scan keeps going.
+    """
+    if tools is None:
+        tools = ["quicknode", "arkham", "zerion"]
+
+    stub = {t: {"error": "render_proxy_not_reached"} for t in tools}
+
+    try:
+        r = requests.post(
+            RENDER_PROXY_URL,
+            headers={
+                "Content-Type":   "application/json",
+                "X-Proxy-Secret": RENDER_PROXY_SECRET,
+            },
+            json={"address": address, "tools": tools},
+            timeout=40,  # Render free tier may cold-start; 40s covers it
+        )
+        if r.status_code == 401:
+            return {t: {"error": "render_proxy_auth_failed — check PROXY_SECRET"} for t in tools}
+        if not r.ok:
+            return {t: {"error": f"render_proxy HTTP {r.status_code}: {r.text[:80]}"} for t in tools}
+
+        data    = r.json()
+        results = data.get("results", {})
+        out     = {}
+        for t in tools:
+            out[t] = results.get(t, {"error": f"render_proxy: '{t}' missing from response"})
+        return out
+
+    except requests.exceptions.Timeout:
+        return {t: {"error": "render_proxy timeout (40s) — Render may be cold-starting, retry"} for t in tools}
+    except Exception as ex:
+        return {t: {"error": f"render_proxy exception: {str(ex)[:100]}"} for t in tools}
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  MAIN — ALL 20 TOOLS IN PARALLEL
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1174,25 +1231,42 @@ def scan(address, chains=None, keys=None):
         futures = []
 
         if not is_btc:
+            # VL-31: QuickNode + Arkham + Zerion route through Render proxy (TLS blocked in container).
+            # _render_proxy() fires a single POST to thewarden.onrender.com/scan/proxy and
+            # merges all three results back in one shot. Runs as a parallel slot alongside
+            # the 15 container-native tools.
+            def run_render_proxy():
+                try:
+                    proxy_results = _render_proxy(address, keys)
+                    for tool_name, tool_result in proxy_results.items():
+                        results[tool_name] = tool_result
+                        tier = "🌐 PROXY"
+                        status = "✅" if not tool_result.get("error") else "⚠️ "
+                        print(f"[TheWarden]   {tool_name:<14} {status}  {tier}")
+                        tool_log.append(tool_name)
+                except Exception as ex:
+                    for t in ["quicknode","arkham","zerion"]:
+                        results[t] = {"error": f"render_proxy_run failed: {str(ex)[:80]}"}
+                    print(f"[TheWarden]   render_proxy   ❌  {str(ex)[:60]}")
+
             futures += [
                 pool.submit(run,"chainbase",   _chainbase_mcp,    address, chains, keys),
                 pool.submit(run,"nansen",      _nansen_mcp,       address, keys),
                 pool.submit(run,"tenderly",    _tenderly_mcp,     address, keys),
-                pool.submit(run,"arkham",      _arkham_rest,      address, keys),
                 pool.submit(run,"moralis",     _moralis_rest,     address, chains, keys),
                 pool.submit(run,"goplus",      _goplus_rest,      address, chains, keys),
                 pool.submit(run,"etherscan",   _etherscan_rest,   address, chains, keys),
-                pool.submit(run,"quicknode",   _quicknode_rpc,    address, keys),
                 pool.submit(run,"bitquery",    _bitquery_rest,    address, keys),
                 pool.submit(run,"goldrush",    _goldrush_rest,    address, chains, keys),
                 pool.submit(run,"onchainrisk", _onchainrisk_rest, address, keys),
                 pool.submit(run,"chainabuse",  _chainabuse_rest,  address, keys),
                 pool.submit(run,"bicscan",     _bicscan_rest,     address, keys),
-                pool.submit(run,"zerion",      _zerion_rest,      address, keys),
                 pool.submit(run,"dune",        _dune_rest,        address, keys),
                 pool.submit(run,"jina",        _jina_rest,        address, keys),
                 pool.submit(run,"anchain",     _anchain_rest,     address, keys),
                 pool.submit(run,"trm",         _trm_rest,         address, keys),
+                # Render proxy — fires QuickNode + Arkham + Zerion via thewarden.onrender.com
+                pool.submit(run_render_proxy),
             ]
         else:
             # BTC mode — only applicable tools
