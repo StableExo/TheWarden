@@ -580,6 +580,140 @@ async function proxyZerion(address: string): Promise<Record<string, unknown>> {
   return out;
 }
 
+// ── /test-userop — full end-to-end UserOp proof test (no arb, just proves the pipe works) ──
+// GET https://thewarden.onrender.com/test-userop
+// Sends a real UserOp with empty calldata through Pimlico → SmartAccount.
+// If it lands: nonce increments, we know the full pipe works. Safe — no flash loan, no arb.
+srv.on('request', (req: any, res: any) => {
+  if (req.url?.startsWith('/test-userop') && req.method === 'GET') {
+    res.setHeader('Content-Type', 'application/json');
+
+    (async () => {
+      const log: string[] = [];
+      const L = (s: string) => { console.log('[TEST-USEROP] ' + s); log.push(s); };
+
+      try {
+        if (!EOA_PK) throw new Error('ETH_PRIVATE_KEY not set in Render env');
+
+        const client = createPublicClient({ chain: mainnet, transport: viemHttp(ETH_MAINNET.rpc.http) });
+        const account = privateKeyToAccount(EOA_PK);
+        L(`Signer: ${account.address}`);
+
+        // Read current nonce from EntryPoint — EP getNonce(address, uint192)
+        const EP_NONCE_ABI = [{
+          name: 'getNonce', type: 'function',
+          inputs: [{ name: 'sender', type: 'address' }, { name: 'key', type: 'uint192' }],
+          outputs: [{ name: '', type: 'uint256' }],
+          stateMutability: 'view',
+        }] as const;
+        const nonce = await client.readContract({
+          address: ENTRY_POINT_V06, abi: EP_NONCE_ABI,
+          functionName: 'getNonce', args: [SMART_ACCOUNT, 0n],
+        }) as bigint;
+        L(`SmartAccount nonce: ${nonce}`);
+
+        // Empty calldata — SmartAccount.execute(address(0), 0, 0x) — harmless no-op
+        const saCalldata = encodeFunctionData({
+          abi: SIMPLE_ACCOUNT_ABI, functionName: 'execute',
+          args: ['0x0000000000000000000000000000000000000001' as Address, 0n, '0x' as `0x${string}`],
+        });
+        L(`Calldata built: ${saCalldata.slice(0, 20)}...`);
+
+        // Gas price
+        const gasRaw = await client.getGasPrice();
+        const gas = gasRaw > 0n ? gasRaw : 3_000_000_000n;
+        L(`Gas price: ${(Number(gas)/1e9).toFixed(2)} gwei`);
+
+        const hdrs: Record<string, string> = { 'Content-Type': 'application/json' };
+
+        let userOp: any = {
+          sender:               SMART_ACCOUNT,
+          nonce:                `0x${nonce.toString(16)}`,
+          initCode:             '0x',
+          callData:             saCalldata,
+          callGasLimit:         '0x186A0',
+          verificationGasLimit: '0x186A0',
+          preVerificationGas:   '0xC350',
+          maxFeePerGas:         `0x${(gas * 2n).toString(16)}`,
+          maxPriorityFeePerGas: '0x3B9ACA00',
+          paymasterAndData:     '0x',
+          signature:            '0x',
+        };
+
+        const toContract = (op: any) => ({
+          ...op, nonce,
+          callGasLimit:         BigInt(op.callGasLimit),
+          verificationGasLimit: BigInt(op.verificationGasLimit),
+          preVerificationGas:   BigInt(op.preVerificationGas),
+          maxFeePerGas:         BigInt(op.maxFeePerGas),
+          maxPriorityFeePerGas: BigInt(op.maxPriorityFeePerGas),
+        });
+
+        // Step 1: paymaster stub
+        L('Step 1: pm_getPaymasterStubData...');
+        const stubRes = await fetch(BUNDLER_URL, {
+          method: 'POST', headers: hdrs,
+          body: JSON.stringify({ jsonrpc:'2.0', id:1, method:'pm_getPaymasterStubData', params:[userOp, ENTRY_POINT_V06, {}] }),
+          signal: AbortSignal.timeout(15000),
+        });
+        const stubJ = await stubRes.json() as any;
+        if (stubJ.error) throw new Error(`Stub: ${JSON.stringify(stubJ.error)}`);
+        userOp.paymasterAndData = stubJ.result.paymasterAndData;
+        L(`Stub OK: ${String(userOp.paymasterAndData).slice(0,20)}...`);
+
+        // Step 2: sign with stub
+        const hash1 = await client.readContract({ address: ENTRY_POINT_V06, abi: EP_ABI, functionName: 'getUserOpHash', args: [toContract(userOp)] }) as `0x${string}`;
+        userOp.signature = await account.signMessage({ message: { raw: hash1 } });
+        L('Signed with stub');
+
+        // Step 3: sponsor
+        L('Step 3: pm_sponsorUserOperation...');
+        const sponsorRes = await fetch(BUNDLER_URL, {
+          method: 'POST', headers: hdrs,
+          body: JSON.stringify({ jsonrpc:'2.0', id:2, method:'pm_sponsorUserOperation', params:[userOp, ENTRY_POINT_V06, {}] }),
+          signal: AbortSignal.timeout(15000),
+        });
+        const sponsorJ = await sponsorRes.json() as any;
+        if (sponsorJ.error) throw new Error(`Sponsor: ${JSON.stringify(sponsorJ.error)}`);
+        Object.assign(userOp, {
+          paymasterAndData: sponsorJ.result.paymasterAndData,
+          ...(sponsorJ.result.callGasLimit         && { callGasLimit:         sponsorJ.result.callGasLimit }),
+          ...(sponsorJ.result.verificationGasLimit && { verificationGasLimit: sponsorJ.result.verificationGasLimit }),
+          ...(sponsorJ.result.preVerificationGas   && { preVerificationGas:   sponsorJ.result.preVerificationGas }),
+        });
+        L('Sponsored OK — gas: $0.00');
+
+        // Step 4: re-sign with final gas
+        const hash2 = await client.readContract({ address: ENTRY_POINT_V06, abi: EP_ABI, functionName: 'getUserOpHash', args: [toContract(userOp)] }) as `0x${string}`;
+        userOp.signature = await account.signMessage({ message: { raw: hash2 } });
+        L('Re-signed with final gas');
+
+        // Step 5: submit
+        L('Step 5: eth_sendUserOperation...');
+        const sendRes = await fetch(BUNDLER_URL, {
+          method: 'POST', headers: hdrs,
+          body: JSON.stringify({ jsonrpc:'2.0', id:3, method:'eth_sendUserOperation', params:[userOp, ENTRY_POINT_V06] }),
+          signal: AbortSignal.timeout(15000),
+        });
+        const sendJ = await sendRes.json() as any;
+        if (sendJ.error) throw new Error(`Submit: ${JSON.stringify(sendJ.error)}`);
+
+        const userOpHash = sendJ.result;
+        L(`SUBMITTED! UserOpHash: ${userOpHash}`);
+        L(`Track: https://jiffyscan.xyz/userOpHash/${userOpHash}`);
+
+        res.writeHead(200);
+        res.end(JSON.stringify({ status: 'submitted', userOpHash, track: `https://jiffyscan.xyz/userOpHash/${userOpHash}`, log }, null, 2));
+      } catch (e: any) {
+        L(`ERROR: ${e?.message}`);
+        res.writeHead(500);
+        res.end(JSON.stringify({ status: 'error', error: e?.message, log }, null, 2));
+      }
+    })();
+    return; // prevent fallthrough
+  }
+});
+
 srv.listen(PORT, () => {
   console.log(`[INF] ${new Date().toISOString()} TheWarden ARB ENGINE on port ${PORT} (VL-20)`);
   console.log(`[INF] ETH_PRIVATE_KEY: ${EOA_PK ? 'SET ✅' : 'NOT SET ❌ — cannot execute'}`);
