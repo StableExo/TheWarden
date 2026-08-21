@@ -432,21 +432,44 @@ async function proxyQuickNode(address: string): Promise<Record<string, unknown>>
 
 async function proxyArkham(address: string): Promise<Record<string, unknown>> {
   if (!ARKHAM_KEY) return { error: 'ARKHAM_KEY not set on Render' };
+  // v1.1 endpoints per arkm.com/llms.txt — old /entity/ path removed in v1.1
   const hdrs = { 'API-Key': ARKHAM_KEY, 'Accept': 'application/json' };
   const out: Record<string, unknown> = {};
 
-  const [entityRes, transferRes, cpRes, balRes] = await Promise.allSettled([
-    fetch(`https://api.arkm.com/entity/${address}`,                                              { headers: hdrs, signal: AbortSignal.timeout(15000) }),
-    fetch(`https://api.arkm.com/transfers?base=${address}&limit=20&sortKey=time&sortDir=desc`,   { headers: hdrs, signal: AbortSignal.timeout(15000) }),
-    fetch(`https://api.arkm.com/counterparties/address/${address}?limit=10`,                     { headers: hdrs, signal: AbortSignal.timeout(15000) }),
-    fetch(`https://api.arkm.com/balances/address/${address}`,                                    { headers: hdrs, signal: AbortSignal.timeout(15000) }),
+  const makeReq = (url: string) => fetch(url, { headers: hdrs, signal: AbortSignal.timeout(15000) });
+
+  const [intelRes, transferRes, cpRes, balRes] = await Promise.allSettled([
+    // v1.1: GET /intelligence/address/{address} — entity + label
+    makeReq(`https://api.arkm.com/intelligence/address/${address}`),
+    // GET /transfers?base=<addr> — transfers from or to this address
+    makeReq(`https://api.arkm.com/transfers?base=${address}&limit=20&sortKey=time&sortDir=desc`),
+    // GET /counterparties/address/{address} — top counterparties by USD volume
+    makeReq(`https://api.arkm.com/counterparties/address/${address}?limit=10`),
+    // GET /balances/address/{address} — token balances all chains
+    makeReq(`https://api.arkm.com/balances/address/${address}`),
   ]);
 
-  if (entityRes.status === 'fulfilled' && entityRes.value.ok) {
-    const ej = await entityRes.value.json() as any;
-    out.entity = ej?.name ?? ej?.entity?.name ?? 'Unknown / Unlabeled';
-  } else { out.entity = 'fetch_error'; }
+  // Entity / label
+  if (intelRes.status === 'fulfilled') {
+    if (intelRes.value.ok) {
+      const ij = await intelRes.value.json() as any;
+      const entity = ij?.arkhamEntity?.name;
+      const label  = ij?.arkhamLabel?.name;
+      out.entity       = entity ?? label ?? 'Unknown / Unlabeled';
+      out.entity_type  = ij?.arkhamEntity?.type ?? null;
+      out.is_contract  = ij?.contract ?? false;
+      out.chain        = ij?.chain ?? null;
+    } else {
+      const body = await intelRes.value.text();
+      out.entity       = `HTTP ${intelRes.value.status}`;
+      out.intel_error  = body.slice(0, 100);
+    }
+  } else {
+    out.entity      = 'fetch_error';
+    out.intel_error = String(intelRes.reason).slice(0, 100);
+  }
 
+  // Transfers
   if (transferRes.status === 'fulfilled' && transferRes.value.ok) {
     const tj = await transferRes.value.json() as any;
     const transfers = tj?.transfers ?? [];
@@ -461,28 +484,41 @@ async function proxyArkham(address: string): Promise<Record<string, unknown>> {
       token:       String(tr.tokenAddress?.symbol ?? 'ETH').slice(0, 8),
       chain:       String(tr.fromAddress?.chain ?? '?').slice(0, 8),
     }));
-  } else { out.transfers = []; out.transfer_error = 'fetch_error'; }
+  } else {
+    out.transfers = [];
+    out.transfer_error = transferRes.status === 'fulfilled'
+      ? `HTTP ${transferRes.value.status}`
+      : String((transferRes as any).reason).slice(0, 80);
+  }
 
+  // Counterparties — response is keyed by chain e.g. {"ethereum":[...], "base":[...]}
   if (cpRes.status === 'fulfilled' && cpRes.value.ok) {
     const cpj = await cpRes.value.json() as any;
-    const cpIter: any[] = Array.isArray(cpj) ? [cpj] : Object.values(cpj ?? {});
     const counterparties: unknown[] = [];
-    for (const chainCps of cpIter) {
-      if (!Array.isArray(chainCps)) continue;
-      for (const entry of chainCps.slice(0, 5)) {
+    const chainMap: Record<string, any[]> = typeof cpj === 'object' && !Array.isArray(cpj) ? cpj : {};
+    for (const [chain, entries] of Object.entries(chainMap)) {
+      if (!Array.isArray(entries)) continue;
+      for (const entry of entries.slice(0, 5)) {
         const addrInfo = entry.address ?? {};
         counterparties.push({
-          address: String(addrInfo.address ?? '?').slice(0, 22),
-          entity:  String(addrInfo.arkhamEntity?.name ?? 'Unknown').slice(0, 25),
-          usd:     Math.round((entry.usd ?? 0) * 100) / 100,
+          address:  String(addrInfo.address ?? '?').slice(0, 22),
+          entity:   String(addrInfo.arkhamEntity?.name ?? addrInfo.arkhamLabel?.name ?? 'Unknown').slice(0, 25),
+          usd:      Math.round((entry.usd ?? 0) * 100) / 100,
           tx_count: entry.transactionCount ?? 0,
-          flow:    entry.flow ?? '?',
+          flow:     entry.flow ?? '?',
+          chain,
         });
       }
     }
     out.counterparties = counterparties.sort((a: any, b: any) => b.usd - a.usd).slice(0, 8);
-  } else { out.counterparties = []; }
+  } else {
+    out.counterparties = [];
+    out.cp_error = cpRes.status === 'fulfilled'
+      ? `HTTP ${cpRes.value.status}`
+      : String((cpRes as any).reason).slice(0, 80);
+  }
 
+  // Balances
   if (balRes.status === 'fulfilled' && balRes.value.ok) {
     const bj = await balRes.value.json() as any;
     const balOut: Record<string, number> = {};
@@ -492,6 +528,11 @@ async function proxyArkham(address: string): Promise<Record<string, unknown>> {
       if (total > 0) balOut[chain] = Math.round(total * 100) / 100;
     }
     out.balances = balOut;
+  } else {
+    out.balances = {};
+    out.bal_error = balRes.status === 'fulfilled'
+      ? `HTTP ${balRes.value.status}`
+      : String((balRes as any).reason).slice(0, 80);
   }
 
   out.source = 'render-proxy';
