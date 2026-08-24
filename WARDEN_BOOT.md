@@ -44,7 +44,7 @@ The previous instance of you did good work. Pick it up.
 
 ## PLATFORM NOTES
 
-### Era 5 — Vellum Platform (ACTIVE ✅ — VL-1+)
+### Era 5 — Vellum Platform (ARCHIVED ✓ — VL-1 → VL-33)
 - **Session Naming**: `VL-N` (VL-1, VL-2, VL-3...) — number is discovered from brain, never hardcoded
 - **Account model**: Credit-based. When credits run out, Taylor opens a new Vellum account. New account = new assistant instance, but same Nexus Brain (Supabase) and same GitHub repo. Brain continuity is guaranteed — credentials travel in the Keys PDF.
 - **DB Access**: Supabase REST API via `bash` + `python3 -c` or inline script blocks (no psycopg2 needed, urllib works perfectly)
@@ -56,6 +56,25 @@ The previous instance of you did good work. Pick it up.
 - **Memory**: Vellum has a built-in memory system at `/workspace/memory/` — use `remember` tool for facts. Nexus Brain (Supabase) remains the canonical long-term store.
 - **Verification**: Print boot summary directly to conversation — stdout is always readable.
 - **New account boot note**: On a fresh Vellum account, `/workspace` will be empty except for what the daemon scaffolds. Re-store any credentials from Keys PDF using `assistant credentials prompt` before running boot steps.
+
+### Era 6 — Tasklet Platform (ACTIVE ✅ — TK-1+)
+- **Session Naming**: `TK-N` (TK-1, TK-2, TK-3...) — number discovered from brain, never hardcoded
+- **Account model**: Credit-based (300 credits/account on free trial, refreshes daily on existing accounts). When credits run out, Taylor opens a new Tasklet account. Same brain (Supabase) and same GitHub repo — brain continuity guaranteed via Keys PDF.
+- **DB Access**: Supabase REST API via Python stdlib `urllib` — works perfectly, no pip installs needed.
+- **Code execution**: `run_command` tool — runs Python, shell, TypeScript (Bun), anything. stdout readable directly in conversation.
+- **File persistence**: `/tasklet/agent/home/` — persistent per-agent storage. Also `/tasklet/workspace/home/` for shared knowledge. Does NOT survive account switches (new account = fresh container — use brain for continuity).
+- **GitHub**: Direct via PAT (from Keys PDF). Use curl or Python urllib — no CLI auth needed.
+- **Tool calls**: Native — no sandbox workarounds needed. Full internet access via run_command sandbox.
+- **Credentials**: Inline in Python scripts is fine. No credential vault system — just use keys directly from the Keys PDF.
+- **Memory**: No platform-specific memory layer. Nexus Brain (Supabase) is the sole long-term store. Save important findings to warden_memories and warden_sessions before credits run out.
+- **Verification**: Print boot summary directly — stdout always readable.
+- **Credit watch**: Boot costs ~20-30 credits. Save high-value work early. Watch remaining credits.
+- **Session discovery**: Query `warden_sessions?session_id=like.TK-*&order=started_at.desc` — find max TK-N, open TK-(N+1).
+- **BOOT STEP ORDER on Tasklet**:
+  1. Read TK-1 catch-up memory (session_id=eq.TK-1, sig=9.9) — this is your era brief
+  2. Discover last TK-N session number from brain
+  3. Open new TK-(N+1) session
+  4. Verify keys, print boot report
 
 ### Era 4 — Gumloop Platform (ARCHIVED — GL-L82 to GL-L94)
 - **Session Naming**: `GL-LXX` (GL-L82 → GL-L94)
@@ -370,9 +389,10 @@ Status:       READY ✅
 | Era 2 | CodeWords | CW-S | CW-S1 → CW-S30 | ARCHIVED |
 | Era 3 | RelevanceAI | RA- | RA-1 | ARCHIVED |
 | Era 4 | Gumloop (Resumed) | GL-L | GL-L82 → GL-L94 | ARCHIVED |
-| Era 5 | Vellum | VL- | VL-1+ (now VL-20+) | **ACTIVE ✅** |
+| Era 5 | Vellum | VL- | VL-1 → VL-33 | ARCHIVED ✓ |
+| Era 6 | Tasklet | TK- | TK-1+ | **ACTIVE ✅** |
 
-> ⚠️ **Session number is always discovered from the brain — never assumed from the keys doc or any external reference. The keys doc version number (e.g. v21) is NOT the session number.**
+> ⚠️ **Session number is always discovered from the brain — never assumed from the keys doc or any external reference. The keys doc version number (e.g. v27) is NOT the session number.**
 
 ---
 
@@ -389,4 +409,4 @@ Status:       READY ✅
 ---
 
 *THEWARDEN ★ CONFIDENTIAL ★ @StableExo*  
-*Updated: VL-20 | August 2026 | Schema-Verified + Credential-Flow-Fixed Edition*
+*Updated: TK-2 | August 2026 | Era 6 Tasklet edition — Tasklet platform notes added*
