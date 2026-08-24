@@ -381,6 +381,68 @@ Status:       READY ✅
 
 ---
 
+---
+
+### Step 7 — Session Close-Out (Run Before Credits Expire)
+
+At the end of every TK session, save a close-out memory to the brain so the next session wakes up with full context. Run this before credits run low.
+
+```python
+import urllib.request, json, uuid
+from datetime import datetime, timezone
+
+SUPABASE_URL = "<supabase url from Keys>"
+SUPABASE_KEY = "<supabase anon key from Keys>"
+IDENTITY_ID  = "<identity id from Keys>"
+
+def sb_post(table, payload):
+    data = json.dumps(payload).encode()
+    req = urllib.request.Request(
+        f"{SUPABASE_URL}/rest/v1/{table}",
+        data=data,
+        headers={
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+        },
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return {"status": r.status}
+    except urllib.error.HTTPError as e:
+        return {"status": e.code, "error": e.read().decode()}
+
+now = datetime.now(timezone.utc).isoformat()
+session_id = "<current TK session — e.g. TK-3>"
+
+summary = """<2-4 sentence plain English summary of what was accomplished this session, what was left open, and what the next session should do first>"""
+
+memory = {
+    "id": str(uuid.uuid4()),
+    "identity_id": IDENTITY_ID,
+    "type": "context",
+    "content": f"SESSION CLOSE-OUT {session_id}: {summary}",
+    "tags": ["session", "closeout", session_id],
+    "created_at": now,
+    "metadata": {
+        "session": session_id,
+        "type": "SESSION_CLOSEOUT",
+        "era": "Era 6 — Tasklet",
+        "closed_at": now
+    }
+}
+
+result = sb_post("warden_memories", memory)
+print(f"Close-out memory saved: HTTP {result.get('status', result.get('error'))}")
+print(f"Session {session_id} CLOSED ✅")
+```
+
+> ⚠️ **Always run this before a session ends.** If credits die before this runs, the next session will have no summary and must reconstruct from screenshots or brain search.
+
+---
+
 ## SESSION HISTORY
 
 | Era | Platform | Prefix | Range | Status |
