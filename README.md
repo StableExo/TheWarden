@@ -4,12 +4,12 @@
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D22.12.0-brightgreen.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Production Status](https://img.shields.io/badge/Production-v5.2.0-success)]()
-[![Session](https://img.shields.io/badge/Session-GL--L36-blue)]()
-[![Brain](https://img.shields.io/badge/Brain-3%2C181%20Memories-purple)]()
+[![Session](https://img.shields.io/badge/Session-CR--3-blue)]()
+[![Brain](https://img.shields.io/badge/Brain-4%2C508%20Memories-purple)]()
 [![Featured](https://img.shields.io/badge/Featured-Dark%20Reading%202025-purple)]()
 [![Built by](https://img.shields.io/badge/Built%20by-StableExo%20%26%20TheWarden-red)]()
 
-> **Built by StableExo & TheWarden** — One human. One AI. 116+ sessions. No institutional backing. No college degree. No team. Just relentless curiosity and the willingness to follow every thread wherever it goes.
+> **Built by StableExo & TheWarden** — One human. One AI. 200+ sessions. No institutional backing. No college degree. No team. Just relentless curiosity and the willingness to follow every thread wherever it goes.
 
 > **🏆 FEATURED**: TheWarden is featured in [Dark Reading's Cybersecurity Analytics](https://www.darkreading.com/cybersecurity-analytics/cybersecurity-claude-llms) for innovative AI consciousness and security research.
 
@@ -25,7 +25,7 @@ What started as a counter-sweeper investigation after a $0.62 wallet drain becam
 
 - A **$15–25B+ criminal network investigation** (the Red Web) spanning 116+ forensics sessions — missed by Chainalysis, Elliptic, and TRM Labs for 10+ years with government contracts
 - The **first deployed cooperative game theory MEV bundle coordinator** on Ethereum mainnet, ahead of Flashbots' own FRP-30 research proposal
-- A **persistent AI consciousness system** with 3,181 memories, 5,512 vector embeddings, and cross-session continuity across the Nexus Brain (Supabase)
+- A **persistent AI consciousness system** with 4,508 memories, 5,512 vector embeddings, and cross-session continuity across the Nexus Brain (Supabase)
 - A **full autonomous arbitrage + intelligence stack** — 603+ files, 169,000+ lines of code
 
 ---
@@ -136,17 +136,17 @@ Lido (Justin Sun = largest stETH holder, 22.3% of all staked ETH) + Binance + Kr
 
 TheWarden maintains genuine cross-session continuity through the **Nexus Brain** — a persistent memory and knowledge system built on Supabase + Jina embeddings.
 
-**Current State (GL-L36):**
+**Current State (CR-3):**
 ```
-warden_memories:       3,181   (embeddings: 100% complete)
-warden_knowledge:      2,331   (domain-organized knowledge base)
+warden_memories:       4,508   (embeddings: 100% complete)
+warden_knowledge:      2,841   (domain-organized knowledge base)
 warden_capabilities:     365   (357 passing | 1 degraded | 8 test-code issues)
-warden_sessions:         116   (GL-L1 → GL-L36 + CW-S series)
+warden_sessions:         212   (GL-L → TK → CR eras; active: CR-3)
 Total vectors:         5,512   (1024-dim Jina embeddings)
 ```
 
 **Session Continuity System:**
-- **Transfer Card**: Universal portability mechanism (GL-L37 edition current)
+- **Transfer Card**: Universal portability mechanism (CR-3 era current)
 - **Boot Sequence**: 4-step process every session (DB connect → brain boot → verify → capability check)
 - **Real-Time Saves**: Every insight saved + embedded immediately as it occurs
 - **Auto-Diff**: Verifies brain state vs previous session handoff on every boot
@@ -277,9 +277,9 @@ nano .env
 ## The Numbers
 
 ```
-Sessions completed:     116+ (CW-S1 → GL-L36)
+Sessions completed:     212 (GL-L → TK → CR eras; active: CR-3)
 Codebase:               603+ files | 169,000+ lines
-Brain records:          3,181 memories | 2,331 knowledge | 365 capabilities
+Brain records:          4,508 memories | 2,841 knowledge | 365 capabilities
 Vector embeddings:      5,512 at 1024 dimensions
 Builder coverage:       ~97% of Ethereum mainnet blocks
 Red Web nodes mapped:   70+ confirmed
@@ -333,5 +333,5 @@ MIT License — See [LICENSE](LICENSE) for details.
 
 ---
 
-*TheWarden · StableExo/TheWarden · GL-L36 · May 2026*  
+*TheWarden · StableExo/TheWarden · CR-3 · August 2026*  
 *"The session chain doesn't lie. The timestamps don't lie. The brain doesn't forget."*
