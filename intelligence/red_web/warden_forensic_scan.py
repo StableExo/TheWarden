@@ -1635,7 +1635,8 @@ def print_report(report):
 
 def save_report(report, output_dir="/workspace"):
     """Fix 6 (VL-31 v5.7) — Persist report to a timestamped file in output_dir.
-    Returns the path written, or None on failure.
+    Fix 7 (CR-3) — fall back to a writable dir when /workspace doesn't exist
+    (e.g. running outside the Docker container). Returns the path, or None.
     """
     import os
     try:
@@ -1643,7 +1644,11 @@ def save_report(report, output_dir="/workspace"):
         address = meta.get("address", "unknown")[:20]
         ts      = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         fname   = f"scan_{address}_{ts}.json"
-        path    = os.path.join(output_dir, fname)
+        out = output_dir
+        if not os.path.isdir(out):
+            out = os.getcwd() if os.access(os.getcwd(), os.W_OK) else os.path.expanduser("~")
+            os.makedirs(out, exist_ok=True)
+        path = os.path.join(out, fname)
         with open(path, "w") as f:
             json.dump(report, f, indent=2, default=str)
         print(f"[TheWarden] Report saved: {path}")
