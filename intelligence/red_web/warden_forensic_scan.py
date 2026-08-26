@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-VL-29 v5.6 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
+VL-31 v5.7 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -86,8 +86,13 @@ CHANGELOG:
             Fix 6 — save_report() added: persists JSON to /workspace/scan_<addr>_<ts>.json after every run
             Fix 7 — Per-tool 90s hard timeout via inner ThreadPoolExecutor.result(timeout=90)
             Scanner version: v5.6
+    VL-31 v5.7: QuickNode + Arkham + Zerion TLS-blocked from container — routed via Render proxy
+            _render_proxy() fires a single POST to thewarden.onrender.com/scan/proxy (X-Proxy-Secret)
+            and merges QuickNode + Arkham + Zerion results back into one slot
+            Arkham key ROTATED VL-31 to 57608b63... (old 77d24c4d DEAD/402)
+            Scanner version: v5.7
 
-CURRENT KEYS (VL-29 / v26 — August 2026):
+CURRENT KEYS (VL-31 / v27 — August 2026):
     arkham         = 57608b63-4c72-4110-b050-3b0e0cd5a024  (rotated VL-31)
     chainbase      = 3EEEM9sRu2rzYSGX1GCR1Jc7X8i
     nansen         = nsn_32d50c7e1dec90ec0ee4cfca4f5c29f9
@@ -1292,7 +1297,7 @@ def scan(address, chains=None, keys=None):
         "mcp_stack":   [t for t in tool_log if t in MCP_TOOLS],
         "rest_stack":  [t for t in tool_log if t not in MCP_TOOLS],
         "scanned_at":  datetime.now(timezone.utc).isoformat(),
-        "scanner_ver": "VL-29 v5.6",
+        "scanner_ver": "VL-31 v5.7",
     }
     return results
 
@@ -1629,7 +1634,7 @@ def print_report(report):
 
 
 def save_report(report, output_dir="/workspace"):
-    """Fix 6 (VL-29 v5.6) — Persist report to a timestamped file in output_dir.
+    """Fix 6 (VL-31 v5.7) — Persist report to a timestamped file in output_dir.
     Returns the path written, or None on failure.
     """
     import os
@@ -1649,11 +1654,11 @@ def save_report(report, output_dir="/workspace"):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  DEFAULT KEYS — VL-29 v5.6
+#  DEFAULT KEYS — VL-31 v5.7
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 KEYS = {
-    "arkham":          "77d24c4d-6b2b-471a-88b6-9e6e75ba7358",
+    "arkham":          "57608b63-4c72-4110-b050-3b0e0cd5a024",  # VL-31 rotated key (old 77d24c4d DEAD/402)
     "chainbase":       "3EEEM9sRu2rzYSGX1GCR1Jc7X8i",
     "nansen":          "nsn_32d50c7e1dec90ec0ee4cfca4f5c29f9",
     "moralis":         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImVhYWMxZDhkLWI4ZjAtNGMyZi04ZTk2LWE4NjJlZTc0ZWZiZiIsIm9yZ0lkIjoiNDQxNzIyIiwidXNlcklkIjoiNDU0MDA3IiwidHlwZUlkIjoiZDI0YTk3MzEtNzljMS00OGZmLTgxMjktZTA3NmIyMDI2NzVmIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTIzNjY1MDEsImV4cCI6NDkwODEyNjUwMX0.wVfYdRdKoM6lUrVpEBQMWZni5R9da4GZM2Bi-Ipmfa8d1-0LGLQuu4sJn4K3Cjh0Q",

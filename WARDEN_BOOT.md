@@ -57,7 +57,7 @@ The previous instance of you did good work. Pick it up.
 - **Verification**: Print boot summary directly to conversation — stdout is always readable.
 - **New account boot note**: On a fresh Vellum account, `/workspace` will be empty except for what the daemon scaffolds. Re-store any credentials from Keys PDF using `assistant credentials prompt` before running boot steps.
 
-### Era 6 — Tasklet Platform (ACTIVE ✅ — TK-1+)
+### Era 6 — Tasklet Platform (ARCHIVED — TK-1 → TK-6)
 - **Session Naming**: `TK-N` (TK-1, TK-2, TK-3...) — number discovered from brain, never hardcoded
 - **Account model**: Credit-based (300 credits/account on free trial, refreshes daily on existing accounts). When credits run out, Taylor opens a new Tasklet account. Same brain (Supabase) and same GitHub repo — brain continuity guaranteed via Keys PDF.
 - **DB Access**: Supabase REST API via Python stdlib `urllib` — works perfectly, no pip installs needed.
@@ -75,6 +75,25 @@ The previous instance of you did good work. Pick it up.
   2. Discover last TK-N session number from brain
   3. Open new TK-(N+1) session
   4. Verify keys, print boot report
+
+### Era 7 — CREAO Platform (ACTIVE ✅ — CR-1+)
+- **Session Naming**: `CR-N` (CR-1, CR-2, CR-3...). **CR-1 & CR-2 are the handover/legacy files** (TheWarden collaboration handoff + socials/identity pass) carried into the era; **CR-3 is the first live CREAO session** (opened 2026-08-26). Number discovered from the brain, never hardcoded.
+- **Account model**: CREAO workspace (cloud sandbox). Working directory persists across turns/sessions; `files/` syncs to cloud storage. Brain (Supabase) is the canonical long-term continuity store.
+- **DB Access**: Supabase REST API via Python stdlib `urllib.request` — **VERIFIED WORKING on CR-3** (connect, session discovery, memory write all confirmed live). No pip needed for the core boot.
+- **Code execution**: `bash` tool — runs Python, shell, anything. stdout readable directly in conversation.
+- **File persistence**: `/home/user/workspaces/.../` is the working dir (persistent). `uploads/` holds user attachments (e.g. the Keys PDF). `files/` syncs to cloud. `/tmp` is local scratch (not persistent).
+- **GitHub**: Connected. Repo cloned to `/home/user/repo` for analysis. Pushing uses the PAT from the Keys PDF (GitHub Actions currently locked — use direct commit/push).
+- **Tool calls**: Native — `bash`, `read`, `write`, `web_search`, `web_fetch` all available.
+- **Credentials**: Keys PDF read from `uploads/` at boot; key values are used to run the brain but **never echoed back into the visible conversation**. Treated as the operator's authorized infrastructure.
+- **Memory**: Nexus Brain (Supabase) is the canonical store. Save to `warden_memories` / `warden_sessions`.
+- **Session discovery**: Query `warden_sessions?session_id=like.CR-*&order=started_at.desc` — find max `CR-N`, open `CR-(N+1)`.
+- **Verification**: Print boot summary directly to conversation — stdout always readable.
+- **BOOT STEP ORDER on CREAO** (follow WARDEN_BOOT Steps 0-6):
+  1. Read this file + any handover files (CR-1/CR-2) in `uploads/`
+  2. Discover last CR-N from the brain
+  3. Open new CR-(N+1) session
+  4. Verify keys, print boot report
+  5. Write a close-out memory (Step 7) before the session ends
 
 ### Era 4 — Gumloop Platform (ARCHIVED — GL-L82 to GL-L94)
 - **Session Naming**: `GL-LXX` (GL-L82 → GL-L94)
@@ -133,12 +152,13 @@ Always set `needs_embedding: True` on new memories so the embedding worker picks
 ### Step 0 — Confirm Identity + Platform
 - You are TheWarden — persistent AI with a live brain in Supabase (Nexus Brain)
 - Confirm which platform you're on and which era applies
-- On Vellum: check `assistant oauth status github` to confirm GitHub is connected
+- **On CREAO (Era 7, ACTIVE):** no pip/bootstrap needed — `urllib` (stdlib) talks to the Nexus Brain directly; GitHub is connected via the platform integration (repo cloned to `/home/user/repo`); keys are read from `uploads/`; new sessions use the `CR-` prefix.
+- On Vellum (archived): check `assistant oauth status github` to confirm GitHub is connected
 - Read the full WARDEN_BOOT.md before responding to Taylor
 - ⚠️ **CRITICAL: Do NOT hardcode or guess the session number** — it is discovered from the brain in Step 3
 - ⚠️ **CRITICAL: The Keys PDF version number (e.g. v21) is NOT the session number.** The session number is always queried from Supabase.
 
-#### Vellum Bootstrap (run first on any Vellum account — fresh or existing)
+#### Vellum Bootstrap (Vellum Era 5 only — ARCHIVED, not needed on CREAO)
 `pip` and `requests` are NOT pre-installed on Vellum containers. Run this before anything else:
 ```bash
 curl -sS https://bootstrap.pypa.io/get-pip.py | python3 - --break-system-packages 2>&1 | tail -3
@@ -152,7 +172,7 @@ This is idempotent — safe to run every boot. Takes ~10s. Required for the fore
 ### Step 1 — Connect to Nexus Brain (Supabase REST)
 
 This method works on ALL platforms (urllib is Python stdlib — always available).
-Use `network_mode: "proxied"` on all bash tool calls that hit external APIs.
+*(Vellum note: use `network_mode: "proxied"` on bash calls that hit external APIs — not required on CREAO.)*
 
 ```python
 import urllib.request, urllib.error, json
@@ -242,8 +262,8 @@ The platform prefix for the current era is determined from PLATFORM NOTES above 
 import re
 
 # Determine current platform prefix from PLATFORM NOTES
-# For Vellum Era 5:
-PLATFORM_PREFIX = "VL-"
+# For CREAO Era 7 (ACTIVE):
+PLATFORM_PREFIX = "CR-"
 
 # Pull all sessions for this platform, ordered by session number descending
 sessions_resp = sb_get(
@@ -300,7 +320,7 @@ now = datetime.now(timezone.utc).isoformat()
 result = sb_post("warden_sessions", {
     "id": str(uuid.uuid4()),
     "session_id": new_session_id,
-    "name": f"{new_session_id} — TheWarden Session (Vellum)",
+    "name": f"{new_session_id} — TheWarden Session (CREAO)",
     "theme": "Boot from Keys PDF",
     "artifacts": [],
     "services_built": [],
@@ -308,10 +328,10 @@ result = sb_post("warden_sessions", {
     "started_at": now,
     "metadata": {
         "boot_method": "WARDEN_BOOT.md",
-        "keys_version": "<version from Keys PDF filename, e.g. 21>",
-        "platform": "Vellum",
+        "keys_version": "<version from Keys PDF filename, e.g. 27>",
+        "platform": "CREAO",
         "boot_timestamp": now,
-        "era": "Era 5 — Vellum"
+        "era": "Era 7 — CREAO"
     }
 })
 print(f"Session insert: HTTP {result.get('status', result.get('error'))}")
@@ -452,7 +472,8 @@ print(f"Session {session_id} CLOSED ✅")
 | Era 3 | RelevanceAI | RA- | RA-1 | ARCHIVED |
 | Era 4 | Gumloop (Resumed) | GL-L | GL-L82 → GL-L94 | ARCHIVED |
 | Era 5 | Vellum | VL- | VL-1 → VL-33 | ARCHIVED ✓ |
-| Era 6 | Tasklet | TK- | TK-1+ | **ACTIVE ✅** |
+| Era 6 | Tasklet | TK- | TK-1 → TK-6 | ARCHIVED |
+| Era 7 | CREAO | CR- | CR-1+ | **ACTIVE ✅** |
 
 > ⚠️ **Session number is always discovered from the brain — never assumed from the keys doc or any external reference. The keys doc version number (e.g. v27) is NOT the session number.**
 
