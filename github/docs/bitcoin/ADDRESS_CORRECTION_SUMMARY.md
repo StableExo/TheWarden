@@ -13,7 +13,7 @@ bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
 
 ### Correct Address (Now Updated)
 ```
-bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk
+bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk
 ```
 
 **Transaction Details:**
@@ -65,7 +65,7 @@ All Bitcoin puzzle solver scripts have been updated with the correct target addr
 
 ## Next Steps
 
-Now that all scripts have the correct target address, the same proven testing methodology can be applied to find the mnemonic for `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk`.
+Now that all scripts have the correct target address, the same proven testing methodology can be applied to find the mnemonic for `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk`.
 
 ### Recommended Approach
 
@@ -95,7 +95,7 @@ To verify the address is correct, check the blockchain:
 curl -s "https://blockchain.info/rawtx/2ef30328449d527c1052b74ce4249c90bf4886db3cebd9a2ce9071a4db23803a"
 
 # Or visit browser:
-https://www.blockchain.com/explorer/addresses/btc/bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk
+https://www.blockchain.com/explorer/addresses/btc/bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk
 ```
 
 ## Testing the Update

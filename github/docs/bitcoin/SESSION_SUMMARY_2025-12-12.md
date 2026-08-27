@@ -10,7 +10,7 @@
   - Elon Musk, Obama, Biden accounts compromised
   - "Send BTC, I'll double it" fraud
   - ~12-13 BTC scammed from victims
-- **Correct target**: `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk`
+- **Correct target**: `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk`
   - @hunghuatang's November 2024 puzzle on Threads
   - 0.08252025 BTC prize (~$9,312)
   - UNSOLVED as of Dec 11, 2025

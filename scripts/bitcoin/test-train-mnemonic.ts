@@ -21,7 +21,7 @@ const PUZZLE_NUMBERS = [
   2097152, 4194304, 8388608
 ];
 
-const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk';
+const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk';
 const MULTIPLIER = 80.18;
 
 /**

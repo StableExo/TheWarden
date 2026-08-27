@@ -4,7 +4,7 @@
 
 ## Source
 @hunghuatang's YouTube video for the Bitcoin puzzle challenge
-- Target address: `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk`
+- Target address: `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk`
 - Prize: 0.08252025 BTC (~$9,312)
 
 ## The Clue (Exact Quote from Video)
@@ -145,7 +145,7 @@ abstract abandon ability absorb accent ...
 ```
 
 **Test:** Generate addresses from this mnemonic with various passphrases and paths.
-**Expected result:** Should NOT match `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk`
+**Expected result:** Should NOT match `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk`
 
 #### Test 2: Try Reversed Order
 

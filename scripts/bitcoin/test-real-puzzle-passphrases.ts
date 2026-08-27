@@ -7,7 +7,7 @@
  * - "track" word clue
  * - Powers-of-2 pattern
  * 
- * Target: bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk
+ * Target: bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk
  */
 
 import * as bip39 from 'bip39';
@@ -18,7 +18,7 @@ import * as ecc from 'tiny-secp256k1';
 const bip32 = BIP32Factory(ecc);
 
 const BASE_MNEMONIC = 'focus economy expand destroy craft chimney bulk beef anxiety abandon goddess hotel joke liquid middle north park price refuse salmon silent sponsor symbol track';
-const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk';
+const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk';
 
 // Passphrase candidates based on puzzle hints
 const PASSPHRASES = [

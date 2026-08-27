@@ -151,7 +151,7 @@ If any answer is unclear = DON'T DO IT.
 
 ### Back to Legitimate Work
 
-**bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk:**
+**bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk:**
 - ✅ Publicly posted puzzle by @hunghuatang
 - ✅ Explicit prize offer (0.08252025 BTC)
 - ✅ Clear challenge with hints

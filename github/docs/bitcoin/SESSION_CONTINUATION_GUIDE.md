@@ -11,7 +11,7 @@
 - Created comprehensive documentation
 
 ### 🎯 Current Target
-**Address:** `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk`
+**Address:** `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk`
 **Transaction:** `2ef30328449d527c1052b74ce4249c90bf4886db3cebd9a2ce9071a4db23803a`
 **Balance:** 0.08252025 BTC (~$9,312)
 
@@ -29,7 +29,7 @@ The same testing approach can now find the mnemonic for the CORRECT address.
 
 ## Key Question
 
-Does the correct address (`bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk`) use:
+Does the correct address (`bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk`) use:
 
 ### Option A: Same Mnemonic, Different Path?
 - Same 24 words: "focus economy expand destroy..."

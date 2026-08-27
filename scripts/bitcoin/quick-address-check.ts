@@ -37,7 +37,7 @@ paths.forEach(path => {
 
 console.log('');
 console.log('❌ OLD target (found mnemonic): bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh');
-console.log('✅ NEW target (need to find):   bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk');
+console.log('✅ NEW target (need to find):   bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk');
 console.log('');
 console.log('📊 Status: All 24 puzzle scripts updated with CORRECT address');
 console.log('🚀 Next: Run proven solvers against new target!');

@@ -15,7 +15,7 @@ import * as ecc from 'tiny-secp256k1';
 const bip32 = BIP32Factory(ecc);
 
 const MNEMONIC = 'focus economy expand destroy craft chimney bulk beef anxiety abandon goddess hotel joke liquid middle north park price refuse salmon silent sponsor symbol train';
-const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk';
+const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk';
 
 console.log('🔍 ALL-IN-ONE BIP39 PATH EXPLORER');
 console.log('   (Autonomous exploration like Ian Coleman tool)');

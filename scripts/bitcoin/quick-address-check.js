@@ -33,4 +33,4 @@ paths.forEach(path => {
 
 console.log('');
 console.log('Current target in scripts: bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh');
-console.log('Address from images:       bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk');
+console.log('Address from images:       bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk');

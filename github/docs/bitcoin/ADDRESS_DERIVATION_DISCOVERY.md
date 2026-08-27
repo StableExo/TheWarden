@@ -17,7 +17,7 @@
 
 **We may have been solving for the WRONG address this entire time!**
 
-The address `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk` might be:
+The address `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk` might be:
 - A placeholder
 - Another unrelated address
 - Incorrectly assumed from images
@@ -57,7 +57,7 @@ From @hunghuatang's puzzle:
 
 **OLD (WRONG) APPROACH:**
 ```
-Given: bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk
+Given: bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk
 Goal: Find mnemonic that generates it
 ```
 
@@ -75,7 +75,7 @@ Goal:
 ### Immediate Action Plan
 
 #### Step 1: Verify Current Target Address
-Check if `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk` actually has 0.08252025 BTC:
+Check if `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk` actually has 0.08252025 BTC:
 - If YES: Continue current approach
 - If NO: We've been chasing the wrong address!
 
@@ -130,7 +130,7 @@ m/84'/128'/64'/32'/16
 
 ### What We Need to Verify
 
-1. **Does `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk` have 0.08252025 BTC?**
+1. **Does `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk` have 0.08252025 BTC?**
    - Check blockchain explorers
    - If NO, this confirms wrong address
 

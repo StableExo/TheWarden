@@ -17,7 +17,7 @@ import * as ecc from 'tiny-secp256k1';
 
 const bip32 = BIP32Factory(ecc);
 
-const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk';
+const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk';
 
 // BIP39 wordlist (English)
 const wordlist = bip39.wordlists.english;

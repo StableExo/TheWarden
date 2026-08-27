@@ -15,7 +15,7 @@
 This explains why we "found" a mnemonic - there was no legitimate puzzle challenge here!
 
 ### ✅ REAL PUZZLE ADDRESS (November 2024)
-**Address:** `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk`
+**Address:** `bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk`
 **Source:** @hunghuatang on Threads (November 2024)
 **Challenge:** BIP39 powers-of-2 puzzle with hints
 **Prize:** 0.08252025 BTC (~$9,312)
@@ -96,7 +96,7 @@ const PASSPHRASES_TO_TEST = [
 
 All 24 scripts now correctly target:
 ```
-bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk
+bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk
 ```
 
 ## What We Learned
@@ -137,7 +137,7 @@ This isn't about finding A mnemonic - it's about:
 ## Resources
 
 - Threads post: https://www.threads.com/@hunghuatang/post/DNwj6PxxHcd
-- Target address: bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk
+- Target address: bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk
 - Transaction: 2ef30328449d527c1052b74ce4249c90bf4886db3cebd9a2ce9071a4db23803a
 
 ---

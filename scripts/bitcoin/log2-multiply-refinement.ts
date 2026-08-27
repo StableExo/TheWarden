@@ -24,7 +24,7 @@ const PUZZLE_NUMBERS = [
   2097152, 4194304, 8388608
 ];
 
-const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk';
+const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk';
 const TARGET_LAST_WORD = 'track'; // Index 1844
 const NEAR_MISS_WORD = 'train';   // Index 1848 from 80.18
 
@@ -247,7 +247,7 @@ async function twoStageTransformations() {
  */
 async function main() {
   console.log('🧪 Log2*Multiply Refinement Search');
-  console.log('Target: bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk');
+  console.log('Target: bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk');
   console.log('Last word hint: "track" (index 1844)');
   console.log('Known near-miss: "train" (index 1848) at multiplier 80.18\n');
   

@@ -15,7 +15,7 @@ import * as ecc from 'tiny-secp256k1';
 const bip32 = BIP32Factory(ecc);
 const wordlist = bip39.wordlists.english;
 
-const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk';
+const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk';
 
 console.log('🎯 Testing Solution Sequence from Video (Timestamp 4:22)');
 console.log('='.repeat(70));

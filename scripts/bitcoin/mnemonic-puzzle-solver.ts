@@ -2,7 +2,7 @@
  * Bitcoin Mnemonic Puzzle Solver
  * 
  * Puzzle: 24 powers-of-2 numbers mapping to BIP39 wordlist
- * Reward: 0.08252025 BTC at bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk
+ * Reward: 0.08252025 BTC at bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk
  * Source: https://www.threads.com/@hunghuatang/post/DNwj6PxxHcd
  * 
  * Strategy: Binary manipulation to decode correct word indices
@@ -20,7 +20,7 @@ const PUZZLE_NUMBERS = [
 ];
 
 // Target Bitcoin address to verify
-const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwd442aksk';
+const TARGET_ADDRESS = 'bc1qkf6trv39epu4n0wfzw4mk58zf5hrvwwd442aksk';
 
 // Last word hint
 const LAST_WORD_HINT = 'track';
