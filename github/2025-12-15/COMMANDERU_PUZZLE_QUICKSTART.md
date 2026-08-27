@@ -1,5 +1,9 @@
 # Quick Start: Commander U 8.5 BTC Puzzle
 
+> ## 🚫 RULED OUT (2026-08-27 · CR-5) — LIKELY FAKE / HONEYpot, DO NOT ATTEMPT
+> Prize cannot be verified on-chain; no address holding 8.5 BTC exists for this puzzle.
+> See `github/docs/bitcoin/COMMANDERU_8.5BTC_VERIFICATION_2026-08-27.md`.
+
 ## TL;DR
 There's an 8.5 BTC puzzle at https://commanderu.github.io/index.html
 

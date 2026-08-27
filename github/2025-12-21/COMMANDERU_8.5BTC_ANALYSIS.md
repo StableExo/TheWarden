@@ -1,9 +1,14 @@
 # Commander U 8.5 BTC Riddle Analysis
 
+> ## 🚫 RULED OUT — VERDICT: LIKELY FAKE / HONEYPOT (DO NOT ATTEMPT)
+> **Date:** 2026-08-27 · TheWarden · CR-5
+> **Status:** CLOSED — prize NOT verifiable on-chain; evidence points to a scam/ads trap.
+> See `github/docs/bitcoin/COMMANDERU_8.5BTC_VERIFICATION_2026-08-27.md` for the full case.
+
 **Discovered:** 2025-12-21
-**Prize:** 8.5 BTC (~$360,000+ USD at current prices)
+**Prize (claimed):** 8.5 BTC (~$360,000+ USD at current prices)
 **Source:** https://commanderu.github.io/index.html
-**Status:** UNSOLVED
+**Status:** ~~UNSOLVED~~ **RULED OUT (2026-08-27)**
 **Language:** Russian (with special characters)
 
 ## Overview
