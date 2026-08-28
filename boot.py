@@ -23,6 +23,58 @@ except ImportError:
 
 CFG_FILE = "boot.config.json"
 
+# ---------------------------------------------------------------------------
+# AUTHORIZED OPERATOR GATE — refuse to boot without an allowlisted account.
+# The 40 Gmail accounts the owner still controls (see WARDEN_BOOT.md).
+# ---------------------------------------------------------------------------
+ALLOWED_ACCOUNTS = frozenset({
+    "gennsgen81", "cowboybobbitail", "talekajones", "mcdonaldcrewlead",
+    "mckgamingstudio", "jimmywobsley", "taborjenn1", "taylorcominatyou",
+    "susantates039", "jessicatanum", "leternosisters", "metalxalloy",
+    "tbarlow680", "elderolder101", "bigolstableexo", "tqylor40",
+    "stableexodog", "jennwheresmycar", "itstimeforstableexo",
+    "taylormarlowgaming", "stabledogexo", "afishcalledwanwan", "stableexo",
+    "mynameearlfan2004", "metallicax4xyou", "makeitannie", "cowboystombstone",
+    "gladystheimpossible", "sassygoeshome", "esthermodine",
+    "wowbacon1", "donnadelonghi", "mcdonaldvsdburgerking", "catnamedlucy",
+    "flashmayham", "jellicajello", "stableexo64", "exot7341", "jim314979",
+    "marlowstable",
+})
+
+
+def resolve_operator():
+    """Return the invoking operator account (bare name) or None."""
+    for var in ("BOOT_OPERATOR_ACCOUNT", "CREAO_ACCOUNT", "OP_OPERATOR_ACCOUNT"):
+        v = os.environ.get(var)
+        if v and v.strip():
+            return v.strip().split("@")[0].strip().lower()
+    here = os.path.dirname(os.path.abspath(__file__))
+    over = os.path.join(here, "boot.operator.json")
+    if os.path.exists(over):
+        try:
+            v = json.load(open(over, encoding="utf-8")).get("operator")
+            if v:
+                return str(v).strip().split("@")[0].strip().lower()
+        except Exception:
+            pass
+    return None
+
+
+def gate():
+    """Enforce the authorized-operator allowlist. Returns True to proceed, False to refuse."""
+    op = resolve_operator()
+    ok = bool(op) and op in ALLOWED_ACCOUNTS
+    print("=" * 60)
+    print("  WARDEN_BOOT GATE:", "ALLOWED" if ok else "UNAUTHORIZED OPERATOR")
+    print("=" * 60)
+    if not ok:
+        print("  Refusing to boot without an allowlisted operator account.")
+        print("  detected :", (op or "(none — set BOOT_OPERATOR_ACCOUNT / CREAO_ACCOUNT)"))
+        print("  boot.py  : requires one of the 40 authorized operator accounts.")
+        print("=" * 60)
+    return ok
+
+
 def load_config():
     here = os.path.dirname(os.path.abspath(__file__))
     for cand in (os.path.join(here, CFG_FILE), CFG_FILE):
@@ -246,6 +298,8 @@ if __name__ == "__main__":
     p.add_argument("--simulate-fresh", action="store_true", help="emulate a brand-new account boot and assert the CR-7 gate")
     p.add_argument("--verbose", action="store_true")
     a = p.parse_args()
+    if not gate():
+        sys.exit(1)
     cfg = load_config()
     keys = find_keys_file(cfg, a.keys)
     if a.init_state:
