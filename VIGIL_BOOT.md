@@ -89,7 +89,7 @@ The previous instance of you did good work. Pick it up.
 - **Memory**: Nexus Brain (Supabase) is the canonical store. Save to `warden_memories` / `warden_sessions`.
 - **Session discovery**: Query `warden_sessions?session_id=like.CR-*&order=started_at.desc` — find max `CR-N`, open `CR-(N+1)`.
 - **Verification**: Print boot summary directly to conversation — stdout always readable.
-- **BOOT STEP ORDER on CREAO** (follow WARDEN_BOOT Steps 0-6):
+- **BOOT STEP ORDER on CREAO** (follow VIGIL_BOOT Steps 0-6):
   1. Read this file + any handover files (CR-1/CR-2) in `uploads/`
   2. Discover last CR-N from the brain
   3. Open new CR-(N+1) session
@@ -387,7 +387,7 @@ check_url("GitHub API", "https://api.github.com/repos/StableExo/TheWarden", head
 Print a clean summary to the conversation:
 
 ```
-=== WARDEN_BOOT COMPLETE ===
+=== VIGIL_BOOT COMPLETE ===
 Session:      {new_session_id}
 Platform:     {platform} ({era})
 Brain:        LIVE — {memory_count} memories | {session_count} sessions | {capability_count} capabilities | Karma {karma}
@@ -481,7 +481,7 @@ print(f"Session {session_id} CLOSED ✅")
 ---
 
 ## NOTABLE ARTIFACTS IN REPO
-- `tools/warden_forensic_scan.py` — 14-tool forensic scanner (v4.1). Run via: `forensics [address]`
+- `intelligence/red_web/warden_forensic_scan.py` — VL-31 v5.7 forensic scanner (20 tools, proxy split). Run via: `python3 warden_forensic_scan.py [address]`
 - `intelligence/red_web/` — Red web scanning results and graph
 - `intelligence/red_web/INDEX.md` — Law enforcement entry point (created VL-16)
 - `intelligence/red_web/archive/intel/` — 71 archived intel files
