@@ -26,17 +26,18 @@
   .offers{padding:48px 0 56px;}
   .offers h2{font-size:26px;font-weight:800;margin-bottom:8px;}
   .offers .sub{font-size:14px;color:#6b7280;margin-bottom:28px;}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
-  .card{border:1px solid #e5e7eb;border-radius:12px;padding:24px;display:flex;flex-direction:column;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;break-inside:avoid;}
+  .card{border:1px solid #e5e7eb;border-radius:12px;padding:24px;display:flex;flex-direction:column;break-inside:avoid;page-break-inside:avoid;}
   .card.feature{border-color:#0ea5e9;box-shadow:0 4px 20px rgba(14,165,233,.12);}
   .card h3{font-size:18px;font-weight:700;margin-bottom:4px;}
   .card .price{font-size:28px;font-weight:800;margin:8px 0 2px;}
   .card .per{font-size:12px;color:#6b7280;}
-  .card ul{list-style:none;margin:16px 0 18px;flex:1;}
+  .card ul{list-style:none;margin:16px 0 18px;flex:1 1 auto;}
   .card li{font-size:13px;color:#4b5563;padding:6px 0 6px 22px;position:relative;border-bottom:1px solid #f3f4f6;line-height:1.5;}
   .card li:last-child{border-bottom:none;}
   .card li::before{content:"—";position:absolute;left:0;color:#9ca3af;}
-  .card .for{font-size:12px;color:#6b7280;padding:9px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin:0 0 16px;clear:both;line-height:1.5;}
+  .card .foot{margin-top:auto;display:flex;flex-direction:column;gap:14px;}
+  .card .for{font-size:12px;color:#6b7280;padding:9px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;line-height:1.5;}
   .btn{display:block;text-align:center;padding:12px 16px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;background:#0ea5e9;color:#fff;}
   .btn.outline{background:#fff;color:#0ea5e9;border:1.5px solid #0ea5e9;}
   .note .btn{background:#111827;}
@@ -96,8 +97,10 @@
         <li>Named-list check, dated</li>
         <li>System-generated snapshot — not a signed opinion</li>
       </ul>
-      <div class="for">Fast check. Not for filing; upgrade for a decision you must keep a record of.</div>
-      <a class="btn" href="#checkout">Order a lookup</a>
+      <div class="foot">
+        <div class="for">Fast check. Not for filing; upgrade for a decision you must keep a record of.</div>
+        <a class="btn" href="#checkout">Order a lookup</a>
+      </div>
     </div>
 
     <div class="card feature">
@@ -111,8 +114,10 @@
         <li>UNKNOWN shown as a finding</li>
         <li>Report ID, input hash, named preparer</li>
       </ul>
-      <div class="for">The dated record. For a counterparty or decision that needs a document you can keep and date.</div>
-      <a class="btn" href="#checkout">Order a memo</a>
+      <div class="foot">
+        <div class="for">The dated record. For a counterparty or decision that needs a document you can keep and date.</div>
+        <a class="btn" href="#checkout">Order a memo</a>
+      </div>
     </div>
 
     <div class="card engage">
@@ -124,8 +129,10 @@
         <li>Extended flow investigation</li>
         <li>Terms agreed before work</li>
       </ul>
-      <div class="for">For a defined investigation or a repeated screening need. Email only; no charge to request scope.</div>
-      <a class="btn outline" href="mailto:stableexo@gmail.com?subject=StableExo%20engagement%20scope%20request">Request scope</a>
+      <div class="foot">
+        <div class="for">For a defined investigation or a repeated screening need. Email only; no charge to request scope.</div>
+        <a class="btn outline" href="mailto:stableexo@gmail.com?subject=StableExo%20engagement%20scope%20request">Request scope</a>
+      </div>
     </div>
 
   </div>
