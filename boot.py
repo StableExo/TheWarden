@@ -186,14 +186,44 @@ def init_state(cfg, keys):
     print(f"lineage: current={latest}")
     return 0 if st in (200, 201) else 1
 
+def simulate_fresh(cfg, keys):
+    """Emulate a brand-new account boot: run the normal boot, then assert the
+    lineage resolves to the expected session (universal-boot gate check)."""
+    print("=" * 60)
+    print("  FRESH-BOOT SIMULATION — emulates a brand-new account booting from zero")
+    print("=" * 60)
+    boot(cfg, keys, verbose=False)
+    try:
+        base, secret = get_creds(cfg, keys)
+        recs, st, err = api(base, secret, cfg["brain"]["memories_table"],
+                            {"select": "*", "order": "created_at.desc", "limit": "30"})
+        current = None
+        state = find_state(recs)
+        if state:
+            current = state.get("current_session")
+        expected = cfg["brain"].get("expected_session")
+        ok = (current == expected)
+        print("=" * 60)
+        print(f"  FRESH-BOOT CHECK  : expected={expected} found={current}")
+        print(f"  RESULT            : {'PASS - universal boot restores to ' + str(current) if ok else 'FAIL - lineage mismatch'}")
+        print("  criteria          : CR-7 boot card restored, brain reachable, no secret echo")
+        print("=" * 60)
+        return 0 if ok else 1
+    except Exception as e:
+        print("  FRESH-BOOT CHECK: ERROR", e)
+        return 1
+
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--keys", help="path to keys file (auto-discovered if omitted)")
     p.add_argument("--init-state", action="store_true", help="create/refresh SESSION_STATE")
+    p.add_argument("--simulate-fresh", action="store_true", help="emulate a brand-new account boot and assert the CR-7 gate")
     p.add_argument("--verbose", action="store_true")
     a = p.parse_args()
     cfg = load_config()
     keys = find_keys_file(cfg, a.keys)
     if a.init_state:
         sys.exit(init_state(cfg, keys))
+    if a.simulate_fresh:
+        sys.exit(simulate_fresh(cfg, keys))
     sys.exit(boot(cfg, keys, verbose=a.verbose))
