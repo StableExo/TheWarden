@@ -1,0 +1,21 @@
+{
+  "version": "2.0",
+  "protocol": "VIGIL_BOOT",
+  "brain": {
+    "project_ref": "pxbjuhtnmvfywbwmdkdr",
+    "memories_table": "warden_memories",
+    "sessions_table": "warden_sessions",
+    "session_state_type": "context",
+    "boot_session_id": "BOOT"
+  },
+  "keys": {
+    "file_glob": "TheWardenKeys_*.md",
+    "supabase_secret_regex": "sb_secret_[A-Za-z0-9_]+",
+    "supabase_url_regex": "https://[a-z0-9]+\\.supabase\\.co"
+  },
+  "notes": [
+    "boot.py is the deterministic universal boot. Normal run is READ-ONLY (prints a boot card).",
+    "--init-state creates/refreshes the SESSION_STATE memory record (the single source of session lineage).",
+    "Secrets are read from the keys file or BOOT_SUPABASE_SECRET env var; never echoed."
+  ]
+}
