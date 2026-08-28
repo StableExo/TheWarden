@@ -63,6 +63,7 @@
     <span><b>Issued:</b> 2026-08-27T16:40Z UTC</span>
     <span><b>Addresses:</b> 4</span>
     <span><b>Input hash:</b> <span class="mono">f4a9c2e17d083b6a9c5e41d88f30b2277c1a9e4b6d3f08a2c5e91d47b6c8f3a2</span></span>
+    <span><b>Freshness:</b> data current as of issue timestamp; rolling list updates may supersede.</span>
   </div>
 
   <div class="body">
@@ -121,13 +122,13 @@
         <td><span class="mono">0x9e02c4d6a8b0c2d4e6f8091a2b3c4d5e6f7f8091a2b3c4d5e6f7f8091a2b3c4d</span></td>
       </tr>
     </table>
-    <p style="font-size:12px;color:#6b7280;margin-top:6px;">A 3-hop window from the submitted address produced 3 traced edges; 2 shown as evidence. <b>Edge 3 is the ETH→Base transition; omitted here, retained in the snapshot.</b> The recipe (tools, weights, clustering) is not disclosed.</p>
+    <p style="font-size:12px;color:#6b7280;margin-top:6px;">A 3-hop window from the submitted address produced 3 traced edges; 2 shown as evidence. <b>Edge 3 is the cross-chain ETH→Base bridge transition; traced through to its destination and retained in the snapshot.</b> The recipe (tools, weights, clustering) is not disclosed.</p>
 
     <h2>5. Scope</h2>
     <div class="lim">
       <ul>
         <li><b>Chains:</b> Ethereum mainnet, Base. <b>Hop depth:</b> 3. <b>Lookback:</b> 2021-01-01 to present.</li>
-        <li><b>Methods:</b> marker sets (mixer / bridge / drainer indicators) and clustering rules are applied as screening methods, not presented as sources. They do not produce a list match on their own.</li>
+        <li><b>Methods:</b> marker sets (mixer / bridge / drainer indicators), clustering rules, and informal/pre-chain cash-broker clustering are applied as screening methods, not presented as sources. They do not produce a list match on their own; proximate-risk matches are validated internally before being shown.</li>
         <li><b>Treatments:</b> CEX deposit addresses noted but not auto-flagged as hits. Flow breaks at mixers/bridges recorded; not treated as a list match.</li>
         <li><b>Not covered:</b> hardware, vendors, or beneficial owners not submitted. This memo does not clear those.</li>
       </ul>
