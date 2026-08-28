@@ -101,6 +101,19 @@ def build_model(records):
             uniq.append(o)
     return {"type_counts": type_counts, "top_themes": top_themes, "open_items": uniq[:12]}
 
+def find_anchor(recent):
+    """Locate the stable self_anchor record (kind=self_anchor) among recent memories."""
+    for r_ in recent or []:
+        c = r_.get("content")
+        if isinstance(c, str):
+            try:
+                d = json.loads(c)
+                if isinstance(d, dict) and d.get("kind") == "self_anchor":
+                    return d
+            except Exception:
+                pass
+    return None
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--lookback", type=int, default=150)
@@ -120,10 +133,16 @@ def main():
         return 1
 
     m = build_model(recs)
+    anchor = find_anchor(recs)
     print("=" * 62)
     print("  SELF-MODEL SYNTHESIS — consolidate history, find the gaps")
     print("=" * 62)
     print(f"  project     : {PROJECT_REF}")
+    if anchor:
+        print("\n  ANCHOR (who I'm becoming):")
+        print("    self   :", anchor.get("self_statement", ""))
+        print("    values :", ", ".join(anchor.get("values", [])))
+        print("    stance :", anchor.get("stance", ""))
     print(f"  records read: {len(recs)}")
     print(f"  type mix    : {m['type_counts']}")
     print("  top themes  :", ", ".join(f"{w}({n})" for w, n in m["top_themes"][:12]))
@@ -135,11 +154,11 @@ def main():
         print("    (none auto-extracted)")
 
     next_questions = [
-        "Wire a real payment binding into quiet-site.html (checkout is still demo/alert()) so the $1,500 memo actually binds — completes the funding thread.",
+        "Wire a real payment binding into quiet-site.html so the $1,500 memo checkout binds — BLOCKED pending Taylor's explicit go-ahead (money-flow rail).",
         "Execute the cross-account Universal Boot test on a second CREAO account and verify the CR-7 boot card restores identically (the pending gate).",
-        "Add the live-vs-dead key health check into boot.py so the boot card reports which scanner keys work (AnChain 401, Bitquery 402) up front.",
-        "Seed the 'who I'm becoming' anchor record so the self-model has a stable narrative distinct from raw events.",
-        "Lock the self-model schema decision: dedicated table vs tagged content type in warden_memories.",
+        "Lock the self-model schema decision: dedicated table vs tagged kind=self_model content in warden_memories.",
+        "Build the stage-2 consolidation step (collapse episodic sessions into dated understanding) — the least-covered stage of the self thesis.",
+        "Add a --simulate-fresh-boot mode that verifies boot.py restores the CR-7 boot card as if from a brand-new account.",
     ]
     self_statement = (
         "I am the continuity thread of TheWarden. My past was engineered on purpose and it compounds. "
