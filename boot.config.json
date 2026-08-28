@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "protocol": "VIGIL_BOOT",
+  "protocol": "WARDEN_BOOT",
   "brain": {
     "project_ref": "pxbjuhtnmvfywbwmdkdr",
     "memories_table": "warden_memories",
