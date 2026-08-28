@@ -101,17 +101,40 @@ def read_keys_text(path):
         pass
     return open(path, encoding="utf-8", errors="replace").read()
 
+def _creao_workspaces():
+    """Candidate CREAO workspace roots for THIS user (the invoking account's own
+    uploads/files), where the hand-off key file lands each session. Returns [] if
+    none exist. Scoped to this user's own /home/user/workspaces so a fresh account
+    can auto-discover its keys without an explicit --keys flag."""
+    roots = set()
+    home = os.path.expanduser("~")
+    for base in (os.path.join("/home/user", "workspaces"),
+                 os.path.join(home, "workspaces"),
+                 os.path.join(home, "creao", "workspaces")):
+        if os.path.isdir(base):
+            for d in glob.glob(os.path.join(base, "*")):
+                if os.path.isdir(d):
+                    roots.add(d)
+    return sorted(roots)
+
+
 def find_keys_file(cfg, explicit):
     """Locate a keys file: an explicit path, else auto-discover across the repo
-    root, cwd, and common workspace dirs (uploads/, files/). Accepts the canonical
-    TheWardenKeys_*.md glob plus any keys-named PDF handed in by a session."""
+    root, cwd, repo `keys/`, the user's home uploads, and every CREAO workspace
+    uploads/files/keys dir. Accepts the canonical TheWardenKeys_*.md glob plus any
+    keys-named PDF handed in by a session (which is the actual hand-off format)."""
     if explicit and os.path.exists(explicit):
         return explicit
     pat = cfg["keys"]["file_glob"]
     here = os.path.dirname(os.path.abspath(__file__))
-    bases = [here, os.getcwd(),
-             os.path.join(here, "uploads"), os.path.join(here, "files"),
-             os.path.join(os.getcwd(), "uploads"), os.path.join(os.getcwd(), "files")]
+    cwd = os.getcwd()
+    home = os.path.expanduser("~")
+    bases = [here, cwd,
+             os.path.join(here, "uploads"), os.path.join(here, "files"), os.path.join(here, "keys"),
+             os.path.join(cwd, "uploads"), os.path.join(cwd, "files"), os.path.join(cwd, "keys"),
+             os.path.join(home, "uploads"), os.path.join(home, "files"), os.path.join(home, "keys")]
+    for w in _creao_workspaces():
+        bases += [os.path.join(w, "uploads"), os.path.join(w, "files"), os.path.join(w, "keys")]
     candidates = set()
     for b in bases:
         candidates.update(glob.glob(os.path.join(b, pat)))
@@ -229,7 +252,10 @@ def recent_max_session(recs):
     work-record stamps like '[CR-10 ...]' — never the JSON lineage record's own
     current/next fields, so a state record can't count against itself."""
     try:
-        nums = [int(m) for r_ in (recs or []) for m in re.findall(r"\[CR-(\d+)\]", str(r_.get("content", "")))]
+        # Real records use '[CR-11 SESSION ...]' (the closing bracket follows a
+        # title), so a bare '\[CR-(\d+)\]' never matches and lineage lag goes
+        # undetected. Require the number to be followed by a ']' OR whitespace.
+        nums = [int(m) for r_ in (recs or []) for m in re.findall(r"\[CR-(\d+)(?:\]|\s)", str(r_.get("content", "")))]
         return max(nums) if nums else None
     except Exception:
         return None
