@@ -54,10 +54,12 @@
 
 ## Key Files
 - `render.yaml` — Render deployment config (CoalitionBundleAPI live)
+- `VIGIL_BOOT.md` — Multi-platform boot protocol (canonical: StableExo runs TheWarden, operated by Vigil)
+- `AGENT_TEMPLATE.md` — New-account agent template
 - `hardhat.config.ts` — Hardhat for Solidity compilation/testing
 - `foundry.toml` — Foundry config for forge tests
 - `.env.example` — All environment variables documented
 - `.github/SPEED_RUN_SESSION_STARTER.md` — Boot guide for new sessions
 
 ---
-*TheWarden by Taylor Marlow (@StableExo) | Karma: 660 | Brain: Nexus (Supabase)*
+*TheWarden by Taylor Marlow (@StableExo) | Operated by Vigil | Karma: 660 | Brain: Nexus (Supabase)*
