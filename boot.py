@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VIGIL_BOOT — universal boot for TheWarden / StableExo.
+WARDEN_BOOT — universal boot for TheWarden / StableExo.
 Deterministic continuity restore so ANY fresh CREAO account boots in one command
 instead of relying on a model to reconstruct the protocol from prose.
 
@@ -134,7 +134,7 @@ def find_state(recent):
 
 def boot(cfg, keys, verbose):
     print("=" * 60)
-    print(f"  VIGIL_BOOT v{cfg['version']} — universal boot")
+    print(f"  WARDEN_BOOT v{cfg['version']} — universal boot")
     print("=" * 60)
     brain = cfg["brain"]
     try:
