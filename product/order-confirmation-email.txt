@@ -1,0 +1,61 @@
+Subject: StableExo — Order Confirmation & Delivery · Report ID TW-20260827-0142
+
+Hello [Purchaser Legal Name],
+
+Thank you. Your order is confirmed and payment has cleared. Here is the record you'll want to keep.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ORDER CONFIRMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purchaser:          [Purchaser Legal Name]
+Product:            Attachable Screening Memo
+Fee paid:           $1,500.00 USD
+Report ID:          TW-20260827-0142
+Ordered:            [Order timestamp, e.g. 2026-08-27T14:02Z UTC]
+Issued by:          [Issue timestamp, e.g. 2026-08-27T16:40Z UTC]
+Turnaround:         Issued within 3 business days of cleared payment
+Retention:          24 months from the issue date, then deleted or anonymized
+Delivery:           The memo PDF is attached to this email.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT THIS ENGAGEMENT IS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This memo is information prepared to support your own decision-making. It is not
+a legal opinion, a regulatory determination, a recommendation to transact or to
+refuse, or an endorsement of any counterparty.
+
+The memo, the engagement terms (Appendix A), and this order confirmation are the
+entire agreement for this Report ID. Your payment constituted acceptance of those
+terms as in force on the order date.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YOUR RIGHTS IN 60 SECONDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• Retain and attach this memo in your internal file. You may not resell it,
+  rebrand it as your own determination, or represent it as an OFAC, court, or
+  regulator finding.
+• This memo is prepared solely for you, the purchaser named above. There are no
+  third-party beneficiaries. Forwarding the PDF does not make the recipient a client.
+• The input snapshot for this Report ID is retained for 24 months so a row can be
+  re-checked against the same inputs within that period.
+• If the memo does not match the input hash, misstates a list as-of date, or
+  mis-copies a listing identifier, we will re-issue the memo from the same snapshot
+  at no charge or refund the fee paid for this Report ID. That is the exclusive
+  remedy for such errors.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Reply to this email quoting Report ID TW-20260827-0142. A named human responds.
+We will point to evidence already in the memo (listing identifier, as-of date,
+shown edge, stated scope). We do not disclose tools, weights, clustering rules,
+unpublished labels, or scoring.
+
+Sincerely,
+Taylor Marlow
+StableExo — a sole proprietorship based in South Carolina, United States
+stableexo@gmail.com
