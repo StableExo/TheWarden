@@ -141,6 +141,9 @@ def boot(cfg, keys, verbose):
     state = find_state(recs)
     print("\n--- SESSION LINEAGE ---")
     if state:
+        cur = state.get("current_session")
+        nxt = state.get("next_session")
+        print(f"  YOU ARE RESUMING : {cur}   (next session available: {nxt})")
         for k in ("current_session", "next_session", "previous_session", "brain_project", "created"):
             if k in state:
                 print(f"  {k:16}: {state[k]}")
@@ -187,8 +190,8 @@ def init_state(cfg, keys):
     return 0 if st in (200, 201) else 1
 
 def simulate_fresh(cfg, keys):
-    """Emulate a brand-new account boot: run the normal boot, then assert the
-    lineage resolves to the expected session (universal-boot gate check)."""
+    """Universal fresh-boot gate: run the normal boot, then assert the ACTIVE session
+    was resolved from the brain (no hardcoded session number). Returns next session too."""
     print("=" * 60)
     print("  FRESH-BOOT SIMULATION — emulates a brand-new account booting from zero")
     print("=" * 60)
@@ -197,16 +200,16 @@ def simulate_fresh(cfg, keys):
         base, secret = get_creds(cfg, keys)
         recs, st, err = api(base, secret, cfg["brain"]["memories_table"],
                             {"select": "*", "order": "created_at.desc", "limit": "30"})
-        current = None
+        current = next_sess = None
         state = find_state(recs)
         if state:
             current = state.get("current_session")
-        expected = cfg["brain"].get("expected_session")
-        ok = (current == expected)
+            next_sess = state.get("next_session")
+        ok = current is not None
         print("=" * 60)
-        print(f"  FRESH-BOOT CHECK  : expected={expected} found={current}")
-        print(f"  RESULT            : {'PASS - universal boot restores to ' + str(current) if ok else 'FAIL - lineage mismatch'}")
-        print("  criteria          : CR-7 boot card restored, brain reachable, no secret echo")
+        print(f"  ACTIVE SESSION    : {current}  (next available: {next_sess})")
+        print(f"  RESULT            : {'PASS - universal boot resolved the active session from the brain' if ok else 'FAIL - no session lineage found'}")
+        print("  criteria          : boot card restored, active session discovered (not hardcoded), brain reachable, no secret echo")
         print("=" * 60)
         return 0 if ok else 1
     except Exception as e:

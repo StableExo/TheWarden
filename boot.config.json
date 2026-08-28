@@ -6,8 +6,7 @@
     "memories_table": "warden_memories",
     "sessions_table": "warden_sessions",
     "session_state_type": "context",
-    "boot_session_id": "BOOT",
-    "expected_session": "CR-7"
+    "boot_session_id": "BOOT"
   },
   "keys": {
     "file_glob": "TheWardenKeys_*.md",
