@@ -82,14 +82,45 @@ def load_config():
             return json.load(open(cand, encoding="utf-8"))
     raise RuntimeError(f"{CFG_FILE} not found next to boot.py")
 
+def read_keys_text(path):
+    """Read a keys file as text. If it's a PDF, extract text via pdftotext so a
+    hand-off from the CREAO upload flow (which arrives as .pdf) boots hands-free."""
+    try:
+        with open(path, "rb") as fh:
+            head = fh.read(4)
+        if head.startswith(b"%PDF"):
+            try:
+                import subprocess
+                p = subprocess.run(["pdftotext", "-layout", path, "-"],
+                                   capture_output=True, text=True, timeout=60)
+                if p.returncode == 0 and p.stdout.strip():
+                    return p.stdout
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return open(path, encoding="utf-8", errors="replace").read()
+
 def find_keys_file(cfg, explicit):
+    """Locate a keys file: an explicit path, else auto-discover across the repo
+    root, cwd, and common workspace dirs (uploads/, files/). Accepts the canonical
+    TheWardenKeys_*.md glob plus any keys-named PDF handed in by a session."""
     if explicit and os.path.exists(explicit):
         return explicit
     pat = cfg["keys"]["file_glob"]
     here = os.path.dirname(os.path.abspath(__file__))
-    for cand in glob.glob(pat) + glob.glob(os.path.join(here, pat)):
-        if os.path.exists(cand):
-            return cand
+    bases = [here, os.getcwd(),
+             os.path.join(here, "uploads"), os.path.join(here, "files"),
+             os.path.join(os.getcwd(), "uploads"), os.path.join(os.getcwd(), "files")]
+    candidates = set()
+    for b in bases:
+        candidates.update(glob.glob(os.path.join(b, pat)))
+        candidates.update(glob.glob(os.path.join(b, "*.pdf")))
+    for c in sorted(candidates):
+        if os.path.isfile(c):
+            name = os.path.basename(c).lower()
+            if c.endswith(pat.split("*")[-1]) or "key" in name or "vigil" in name or "warden" in name:
+                return c
     return None
 
 def get_creds(cfg, keys_path):
@@ -98,8 +129,13 @@ def get_creds(cfg, keys_path):
     if secret and url:
         return url.rstrip("/"), secret
     if keys_path:
-        text = open(keys_path, encoding="utf-8").read()
-        mu = re.search(cfg["keys"]["supabase_url_regex"], text)
+        text = read_keys_text(keys_path)
+        ref = cfg["brain"]["project_ref"]
+        # Prefer the exact project-ref host so a bare 'https://*.supabase.co' (e.g. the
+        # mcp.supabase.co MCP endpoint) can never be mistaken for the Nexus REST host.
+        mu = re.search(rf"https://{re.escape(ref)}\.supabase\.co", text)
+        if not mu:
+            mu = re.search(cfg["keys"]["supabase_url_regex"], text)
         ms = re.search(cfg["keys"]["supabase_secret_regex"], text)
         if mu and ms:
             return mu.group(0).rstrip("/"), ms.group(0)
@@ -135,10 +171,13 @@ def redact(text):
 HEALTH_TOOLS = ["arkham","chainbase","nansen","moralis","dune","etherscan","tenderly","goplus","bitquery","basescan","alchemy","zerion","bicscan","anchain","trm","quicknode","jina"]
 
 def key_health(keys_path):
-    """Static live/dead summary parsed from the keys file annotations (no external calls, no secrets echoed)."""
+    """Static live/dead summary parsed from the keys file annotations (no external
+    calls, no secrets echoed). Uses the first line that mentions each tool (which, in
+    the canonical VigilKeys layout, is the authoritative SWEEP row) so column-wrapped
+    tables and per-tool annotations don't cross-contaminate status."""
     if not keys_path or not os.path.exists(keys_path):
         return None
-    text = open(keys_path, encoding="utf-8").read()
+    text = read_keys_text(keys_path)
     report = []
     for tool in HEALTH_TOOLS:
         idx = text.lower().find(tool)
@@ -149,10 +188,11 @@ def key_health(keys_path):
         line = text[row_start:row_end if row_end != -1 else len(text)].upper()
         if "401" in line: st = "DEAD (401)"
         elif "402" in line: st = "DEAD (402)"
-        elif "NEEDS NEW KEY" in line or "REGENERATE" in line: st = "DEAD"
-        elif "LIVE" in line: st = "LIVE"
+        elif "NEEDS NEW KEY" in line or "REGENERATE" in line or "EXPIRED" in line: st = "DEAD"
         elif "BLOCKED" in line or "CF-BLOCKS" in line or "CF 1010" in line: st = "BLOCKED/CF"
+        elif "VAULTED" in line: st = "VAULTED"
         elif "KEYLESS" in line or "FREE" in line: st = "FREE"
+        elif "LIVE" in line: st = "LIVE"
         elif "ROTATED" in line: st = "ROTATED"
         else: st = "unknown"
         report.append((tool, st))
@@ -184,6 +224,16 @@ def find_state(recent):
                 pass
     return None
 
+def recent_max_session(recs):
+    """Highest CR-N session number stamped in memory content. Only counts bracketed
+    work-record stamps like '[CR-10 ...]' — never the JSON lineage record's own
+    current/next fields, so a state record can't count against itself."""
+    try:
+        nums = [int(m) for r_ in (recs or []) for m in re.findall(r"\[CR-(\d+)\]", str(r_.get("content", "")))]
+        return max(nums) if nums else None
+    except Exception:
+        return None
+
 def boot(cfg, keys, verbose):
     print("=" * 60)
     print(f"  WARDEN_BOOT v{cfg['version']} — universal boot")
@@ -203,6 +253,8 @@ def boot(cfg, keys, verbose):
         return 1
 
     state = find_state(recs)
+    recent_max = recent_max_session(recs)
+
     print("\n--- SESSION LINEAGE ---")
     if state:
         cur = state.get("current_session")
@@ -213,8 +265,17 @@ def boot(cfg, keys, verbose):
                 print(f"  {k:16}: {state[k]}")
         if state.get("note"):
             print(f"  note         : {state['note'][:120]}")
+        try:
+            cur_num = int(re.search(r"\d+", str(cur)).group(0))
+        except Exception:
+            cur_num = None
+        if recent_max and cur_num and recent_max > cur_num:
+            print(f"  !! lineage lag: SESSION_STATE says {cur} but recent work is at CR-{recent_max}")
+            print(f"     fix         : run `boot.py --init-state` to resync")
     else:
         print("  (no lineage record found; run `boot.py --init-state`)")
+        if recent_max:
+            print(f"  latest session seen in memories: CR-{recent_max}")
 
     print("\n--- RECENT CONTINUITY ---")
     for r_ in recs[: (10 if verbose else 6)]:
@@ -226,6 +287,10 @@ def boot(cfg, keys, verbose):
     if kh:
         for tool, st in kh:
             print(f"  {tool:11}: {st}")
+        dead = [t for t, s in kh if s.startswith("DEAD")]
+        if dead:
+            print(f"  !! dead keys ({len(dead)}): {', '.join(dead)}")
+            print("      rotate/regenerate before arming the full scanner")
     else:
         print("  (no keys file supplied; set --keys or BOOT_SUPABASE_* for health)")
 
@@ -249,19 +314,23 @@ def boot(cfg, keys, verbose):
 def init_state(cfg, keys):
     base, secret = get_creds(cfg, keys)
     brain = cfg["brain"]
-    sessions, _, _ = api(base, secret, brain["sessions_table"],
-                         {"select": "session_id", "order": "created_at.desc", "limit": "5"})
-    latest = sessions[0]["session_id"] if sessions else "CR-7"
+    # Lineage is derived from the memories table (the real signal). The sessions
+    # table (warden_sessions) has no created_at, so ordering it is not reliable.
+    recs, _, _ = api(base, secret, brain["memories_table"],
+                     {"select": "*", "order": "created_at.desc", "limit": "50"})
+    mx = recent_max_session(recs)
+    latest = f"CR-{mx}" if mx else "CR-7"
+    nxt = f"CR-{mx + 1}" if mx else "CR-8"
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
     body = {
         "session_id": latest, "type": brain["session_state_type"],
-        "content": json.dumps({"current_session": latest, "last_session": sessions[1]["session_id"] if len(sessions) > 1 else None,
+        "content": json.dumps({"current_session": latest, "next_session": nxt,
                                "brain_project": brain["project_ref"], "created": now, "authoritative": True}),
         "significance": 4, "emotional_tag": "breakthrough", "created_at": now, "needs_embedding": True,
     }
     _, st, err = api(base, secret, brain["memories_table"], method="POST", body=body)
     print(f"session_state: {'created' if st in (200, 201) else 'FAILED ' + str(st) + ' ' + (err or '')}")
-    print(f"lineage: current={latest}")
+    print(f"lineage: current={latest} next={nxt}")
     return 0 if st in (200, 201) else 1
 
 def simulate_fresh(cfg, keys):
