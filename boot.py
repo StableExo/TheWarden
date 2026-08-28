@@ -79,6 +79,32 @@ def redact(text):
             text = str(text)[:i] + "[REDACTED]" + str(text)[j:]
     return text
 
+HEALTH_TOOLS = ["arkham","chainbase","nansen","moralis","dune","etherscan","tenderly","goplus","bitquery","basescan","alchemy","zerion","bicscan","anchain","trm","quicknode","jina"]
+
+def key_health(keys_path):
+    """Static live/dead summary parsed from the keys file annotations (no external calls, no secrets echoed)."""
+    if not keys_path or not os.path.exists(keys_path):
+        return None
+    text = open(keys_path, encoding="utf-8").read()
+    report = []
+    for tool in HEALTH_TOOLS:
+        idx = text.lower().find(tool)
+        if idx == -1:
+            report.append((tool, "not-in-keys")); continue
+        row_start = text.rfind("\n", 0, idx)
+        row_end = text.find("\n", idx)
+        line = text[row_start:row_end if row_end != -1 else len(text)].upper()
+        if "401" in line: st = "DEAD (401)"
+        elif "402" in line: st = "DEAD (402)"
+        elif "NEEDS NEW KEY" in line or "REGENERATE" in line: st = "DEAD"
+        elif "LIVE" in line: st = "LIVE"
+        elif "BLOCKED" in line or "CF-BLOCKS" in line or "CF 1010" in line: st = "BLOCKED/CF"
+        elif "KEYLESS" in line or "FREE" in line: st = "FREE"
+        elif "ROTATED" in line: st = "ROTATED"
+        else: st = "unknown"
+        report.append((tool, st))
+    return report
+
 def find_state(recent):
     """Locate the JSON lineage record (contains 'current_session') among recent memories."""
     for r_ in recent or []:
@@ -127,6 +153,14 @@ def boot(cfg, keys, verbose):
     for r_ in recs[: (10 if verbose else 6)]:
         c = redact(str(r_.get("content", ""))).replace("\n", " ")
         print(f"  [{r_.get('created_at','?')}] {r_.get('type')}/{r_.get('significance')} :: {c[:120]}")
+
+    kh = key_health(keys)
+    print("\n--- KEY HEALTH ---")
+    if kh:
+        for tool, st in kh:
+            print(f"  {tool:11}: {st}")
+    else:
+        print("  (no keys file supplied; set --keys or BOOT_SUPABASE_* for health)")
 
     print("\n--- BRAIN HEALTH ---  reachable ✓")
     print("=" * 60)
