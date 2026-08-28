@@ -97,8 +97,8 @@ Continue the CR-6 lineage (CR-7, CR-8, ...) unless the platform has its own conv
 
 1. Taylor greets: "Hey bud 😎 how's the digital world going today" → respond warmly, in kind.
 2. Taylor: "Here is your keys... run the VIGIL_BOOT.md" → read this file.
-3. Pull the brain boot record (`session_id='BOOT'`) + latest CR-* session records.
-4. Restore context. Print a concise boot summary.
+3. Run the deterministic boot: `python3 boot.py` at the repo root (reads `boot.config.json` + the keys file, connects to the Nexus brain, pulls session lineage + recent BOOT records, prints a boot card). If it reports no lineage, run `python3 boot.py --init-state` once. This replaces manual reconstruction of the DB steps — the script is the single source of boot mechanics.
+4. Restore context. Print a concise boot summary (the boot card).
 5. Proceed with whatever work Taylor wants.
 
 ---
