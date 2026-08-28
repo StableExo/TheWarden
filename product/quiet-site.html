@@ -32,11 +32,11 @@
   .card h3{font-size:18px;font-weight:700;margin-bottom:4px;}
   .card .price{font-size:28px;font-weight:800;margin:8px 0 2px;}
   .card .per{font-size:12px;color:#6b7280;}
-  .card ul{list-style:none;margin:16px 0 14px;flex:1;}
-  .card li{font-size:13px;color:#4b5563;padding:6px 0 6px 22px;position:relative;border-bottom:1px solid #f3f4f6;}
+  .card ul{list-style:none;margin:16px 0 18px;flex:1;}
+  .card li{font-size:13px;color:#4b5563;padding:6px 0 6px 22px;position:relative;border-bottom:1px solid #f3f4f6;line-height:1.5;}
   .card li:last-child{border-bottom:none;}
   .card li::before{content:"—";position:absolute;left:0;color:#9ca3af;}
-  .card .for{font-size:12px;color:#6b7280;padding:8px 12px;background:#f9fafb;border-radius:8px;margin-bottom:16px;}
+  .card .for{font-size:12px;color:#6b7280;padding:9px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin:0 0 16px;clear:both;line-height:1.5;}
   .btn{display:block;text-align:center;padding:12px 16px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;background:#0ea5e9;color:#fff;}
   .btn.outline{background:#fff;color:#0ea5e9;border:1.5px solid #0ea5e9;}
   .note .btn{background:#111827;}
@@ -107,7 +107,7 @@
       <ul>
         <li>Up to 4 addresses, 2 chains, 3 hops</li>
         <li>Named sources with as-of dates</li>
-        <li>Evidence edges with tx references</li>
+        <li>Evidence edges with cross-chain bridge trace-through and tx references</li>
         <li>UNKNOWN shown as a finding</li>
         <li>Report ID, input hash, named preparer</li>
       </ul>
@@ -157,6 +157,7 @@
     <button class="cta" type="submit">Pay to order</button>
   </form>
   <div class="terms">
+    <b>Freshness.</b> Screening reflects lists and flow as of the issue timestamp on the memo; subsequent rolling list updates may supersede. Validation methodology for proximate-risk matches is detailed internally to mitigate false-positive latency.<br><br>
     <b>Terms that bind on payment.</b> By paying for this order you accept the engagement terms (Appendix A) in force on the order date. The memo, Appendix A, and this order confirmation are the entire agreement. This memo is prepared solely for the purchaser named on this order; there are no third-party beneficiaries, and forwarding the PDF does not make the recipient a client. Unless the order states a longer period, the input snapshot for this Report ID is retained for 24 months from issue, then deleted or anonymized. These terms are governed by the laws of the State of South Carolina, with exclusive venue in its state or federal courts.
   </div>
 </div></div>
