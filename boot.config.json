@@ -4,6 +4,7 @@
   "brain": {
     "project_ref": "pxbjuhtnmvfywbwmdkdr",
     "memories_table": "warden_memories",
+    "capabilities_table": "warden_capabilities",
     "sessions_table": "warden_sessions",
     "session_state_type": "context",
     "boot_session_id": "BOOT"

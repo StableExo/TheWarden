@@ -14,6 +14,7 @@ Secrets come from the keys file or BOOT_SUPABASE_URL/BOOT_SUPABASE_SECRET env va
 and are NEVER echoed. Place this + boot.config.json at the repo root.
 """
 import argparse, datetime, glob, json, os, re, sys
+from collections import Counter
 
 try:
     import requests
@@ -105,6 +106,17 @@ def key_health(keys_path):
         report.append((tool, st))
     return report
 
+def capability_summary(cfg, base, secret):
+    """Query the live capabilities table and summarize count + verification status."""
+    table = cfg["brain"].get("capabilities_table", "warden_capabilities")
+    recs, st, err = api(base, secret, table, {"select": "capability,verification_status,proficiency", "limit": "1000"})
+    if recs is None:
+        return None
+    status = Counter(str(r.get("verification_status", "?")) for r in recs)
+    profs = [r.get("proficiency") for r in recs if isinstance(r.get("proficiency"), (int, float))]
+    avg = round(sum(profs) / len(profs), 2) if profs else None
+    return {"total": len(recs), "status": dict(status), "avg_proficiency": avg}
+
 def find_state(recent):
     """Locate the JSON lineage record (contains 'current_session') among recent memories."""
     for r_ in recent or []:
@@ -164,6 +176,17 @@ def boot(cfg, keys, verbose):
             print(f"  {tool:11}: {st}")
     else:
         print("  (no keys file supplied; set --keys or BOOT_SUPABASE_* for health)")
+
+    cap = capability_summary(cfg, base, secret)
+    print("\n--- CAPABILITIES ---")
+    if cap:
+        print(f"  total          : {cap['total']}")
+        for k, v in sorted(cap["status"].items(), key=lambda kv: -kv[1]):
+            print(f"  {k:13}: {v}")
+        if cap["avg_proficiency"] is not None:
+            print(f"  avg proficiency: {cap['avg_proficiency']}")
+    else:
+        print("  (capabilities table unreachable)")
 
     print("\n--- BRAIN HEALTH ---  reachable ✓")
     print("=" * 60)
