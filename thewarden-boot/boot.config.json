@@ -1,0 +1,327 @@
+{
+  "name": "TheWarden",
+  "session_prefix": "CR-",
+  "lineage_prefixes": [
+    "BOOT",
+    "CR-"
+  ],
+  "brain": {
+    "table": "warden_memories",
+    "boot_session_id": "BOOT",
+    "boot_limit": 1,
+    "lineage_limit": 8,
+    "order": "created_at.desc"
+  },
+  "keys_file": {
+    "patterns": [
+      "TheWardenKeys_*.md",
+      "VigilKeys.md",
+      "VigilKeys_*.md"
+    ],
+    "search_dirs": [
+      "uploads",
+      "thewarden-boot",
+      ".",
+      "/home/user/uploads"
+    ],
+    "project_url_re": "Project URL\\s*\\|\\s*(https://[^\\s|]+)",
+    "secret_key_re": "Secret Key\\s*\\|\\s*(sb_secret_[^\\s|]+)"
+  },
+  "identity": {
+    "brand": "StableExo",
+    "mission": "TheWarden",
+    "operator": "Vigil",
+    "account_bound": false
+  },
+  "health": {
+    "timeout_sec": 12,
+    "probes": {
+      "etherscan": {
+        "type": "rest",
+        "enabled": true,
+        "label": "Etherscan V2",
+        "url": "https://api.etherscan.io/v2/api?chainid=1&module=stats&action=ethsupply&apikey={KEY}",
+        "key_re": "etherscan[^|\\n]*\\|\\s*([^\\s|]+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "basescan": {
+        "type": "rest",
+        "enabled": true,
+        "label": "Basescan",
+        "url": "https://api.basescan.org/api?module=stats&action=ethsupply&apikey={KEY}",
+        "key_re": "basescan[^|\\n]*\\|\\s*([^\\s|]+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "dune": {
+        "type": "rest",
+        "enabled": true,
+        "label": "Dune",
+        "url": "https://api.dune.com/api/v1/query/1",
+        "headers": {
+          "X-Dune-API-Key": "{KEY}"
+        },
+        "key_re": "Dune Analytics\\s*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "jina": {
+        "type": "rest",
+        "enabled": true,
+        "label": "Jina embeddings",
+        "url": "https://api.jina.ai/v1/embeddings",
+        "method": "POST",
+        "body": {
+          "model": "jina-embeddings-v3",
+          "input": [
+            "hi"
+          ]
+        },
+        "headers": {
+          "Authorization": "Bearer {KEY}"
+        },
+        "key_re": "Jina API Key[^|\\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "telegram": {
+        "type": "rest",
+        "enabled": true,
+        "label": "Telegram bot",
+        "url": "https://api.telegram.org/bot{KEY}/getMe",
+        "key_re": "Bot Token\\s*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "supabase": {
+        "type": "rest",
+        "enabled": true,
+        "label": "Supabase Nexus",
+        "url": "https://pxbjuhtnmvfywbwmdkdr.supabase.co/rest/v1/",
+        "headers": {
+          "apikey": "{KEY}",
+          "Authorization": "Bearer {KEY}"
+        },
+        "key_re": "Secret Key\\s*\\|\\s*(sb_secret_[^\\s|]+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "chainbase_mcp": {
+        "type": "mcp",
+        "enabled": true,
+        "label": "Chainbase MCP",
+        "url": "https://api.chainbase.com/v1/mcp",
+        "headers": {
+          "X-API-KEY": "{KEY}"
+        },
+        "key_re": "chainbase[^|\\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "nansen_mcp": {
+        "type": "mcp",
+        "enabled": true,
+        "label": "Nansen MCP",
+        "url": "https://mcp.nansen.ai/ra/mcp",
+        "headers": {
+          "NANSEN-API-KEY": "{KEY}"
+        },
+        "key_re": "nansen[^|\\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "tenderly_mcp": {
+        "type": "mcp",
+        "enabled": true,
+        "label": "Tenderly MCP",
+        "url": "https://api.tenderly.co/mcp",
+        "headers": {
+          "X-Access-Key": "{KEY}"
+        },
+        "key_re": "tenderly[^|\\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "bitquery_mcp": {
+        "type": "mcp",
+        "enabled": true,
+        "label": "Bitquery MCP",
+        "url": "https://mcp.bitquery.io/mcp",
+        "headers": {
+          "X-API-KEY": "{KEY}"
+        },
+        "key_re": "bitquery[^|\\n]*\\|\\s*(ory_at_[^\\s]+)",
+        "ok_codes": [
+          200
+        ],
+        "dead_note": {
+          "402": "billing not activated"
+        }
+      },
+      "arkham": {
+        "type": "rest",
+        "enabled": true,
+        "label": "Arkham",
+        "url": "https://api.arkm.com/intelligence/address/0x0000000000000000000000000000000000000000",
+        "headers": {
+          "API-Key": "{KEY}"
+        },
+        "key_re": "arkham[^|\\n]*\\|\\s*([0-9a-f-]{36})",
+        "ok_codes": [
+          200
+        ],
+        "dead_note": {
+          "402": "key expired",
+          "403": "CF-blocked"
+        }
+      },
+      "xai": {
+        "type": "rest",
+        "enabled": true,
+        "label": "xAI / Grok",
+        "url": "https://api.x.ai/v1/models",
+        "headers": {
+          "Authorization": "Bearer {KEY}"
+        },
+        "key_re": "xAI / Grok\\s*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ],
+        "dead_note": {
+          "400": "invalid API key",
+          "401": "unauthorized"
+        }
+      },
+      "moralis": {
+        "type": "rest",
+        "enabled": true,
+        "label": "Moralis",
+        "url": "https://deep-index.moralis.io/api/v2/0x0000000000000000000000000000000000000000/balance",
+        "headers": {
+          "X-API-Key": "{KEY}"
+        },
+        "key_re": "moralis[^|\\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ],
+        "dead_note": {
+          "401": "token invalid format",
+          "400": "bad request"
+        }
+      },
+      "anchain": {
+        "type": "rest",
+        "enabled": true,
+        "label": "AnChain AI",
+        "url": "https://data.anchainai.com/",
+        "key_re": "anchain[^|\\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ],
+        "dead_note": {
+          "401": "key expired - needs regen"
+        }
+      },
+      "chainaware_mcp": {
+        "type": "mcp",
+        "enabled": true,
+        "label": "ChainAware MCP",
+        "url": "https://mcp.chainaware.ai/",
+        "headers": {
+          "X-API-KEY": "{KEY}"
+        },
+        "key_re": "chainaware[^|\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "cryptoapis_mcp": {
+        "type": "mcp",
+        "enabled": true,
+        "label": "Crypto APIs MCP",
+        "url": "https://ai.cryptoapis.io/mcp",
+        "headers": {
+          "X-API-KEY": "{KEY}"
+        },
+        "key_re": "cryptoapis[^|\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "tatum_mcp": {
+        "type": "mcp",
+        "enabled": true,
+        "label": "Tatum MCP",
+        "url": "https://mcp.tatum.com",
+        "headers": {
+          "X-API-KEY": "{KEY}"
+        },
+        "key_re": "tatum[^|\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "glassnode_mcp": {
+        "type": "mcp",
+        "enabled": true,
+        "label": "Glassnode MCP",
+        "url": "https://mcp.glassnode.com",
+        "headers": {
+          "X-API-KEY": "{KEY}"
+        },
+        "key_re": "glassnode[^|\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "defillama": {
+        "type": "rest",
+        "enabled": true,
+        "label": "DeFiLlama",
+        "url": "https://api.llama.fi/protocols",
+        "key_re": "defillama[^|\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ]
+      },
+      "defillama_mcp": {
+        "type": "mcp",
+        "enabled": true,
+        "label": "DeFiLlama MCP",
+        "url": "https://mcp.defillama.com/mcp",
+        "headers": {
+          "Authorization": "Bearer {KEY}"
+        },
+        "key_re": "defillama_sub[^|\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ],
+        "note": "OAuth-gated - client supplies their DefiLlama subscription bearer token"
+      },
+      "goplus_api": {
+        "type": "rest",
+        "enabled": true,
+        "label": "GoPlus API",
+        "url": "https://api.gopluslabs.io/api/v1/address_security/0x0000000000000000000000000000000000000000",
+        "headers": {
+          "x-api-key": "{KEY}"
+        },
+        "key_re": "goplus key[^|\n]*\\|\\s*(\\S+)",
+        "ok_codes": [
+          200
+        ],
+        "note": "App Key - returns sanctions/cybercrime/AML flags"
+      }
+    }
+  }
+}

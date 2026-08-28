@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-VL-31 v5.7 — 20/20 TOOLS ARMED AND FIRING IN PARALLEL
+VL-31 v5.8 — 21 TOOLS ARMED AND FIRING IN PARALLEL (20 EVM + Bitquery MCP)
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -129,6 +129,109 @@ MORALIS_CHAIN = {1:"eth",  8453:"base", 56:"bsc", 137:"polygon", 42161:"arbitrum
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  MCP HELPERS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# ─────────────────────────────────────────────────────────────────────────
+#  MCP INFRASTRUCTURE — v5.8: consolidated MCP registry + per-MCP tool count
+#  Every MCP server routes through one registry. mcp_tool_report() hits each
+#  armed server's tools/list for the REAL tool count per MCP (not hardcoded).
+# ─────────────────────────────────────────────────────────────────────────
+
+# name -> (endpoint, key_name_in_KEYS, auth_header, auth_value_prefix, armed)
+MCP_SERVERS = {
+    # live (keys in bound)
+    "bitquery":  ("https://mcp.bitquery.io/mcp",      "bitquery_bearer","X-API-KEY",      "",        True),
+    "nansen":    ("https://mcp.nansen.ai/ra/mcp",     "nansen",         "NANSEN-API-KEY", "",        True),
+    "tenderly":  ("https://api.tenderly.co/mcp",      "tenderly",       "X-Access-Key",   "",        True),
+    "defillama": ("https://mcp.defillama.com/mcp",    "defillama_sub",  "Authorization",  "Bearer ", True),
+    "chainbase": ("https://api.chainbase.com/v1/mcp", "chainbase",      "X-API-KEY",      "",        True),
+    # wired + ready — drop the client key into KEYS to arm:
+    "anchain":   ("https://mcp.anchain.com",          "anchain",        "X-API-KEY",      "",        False),
+    "chainaware":("https://mcp.chainaware.ai",        "chainaware",     "X-API-KEY",      "",        False),
+    "cryptoapis":("https://ai.cryptoapis.io/mcp",     "cryptoapis",     "x-api-key",      "",        False),
+    "tatum":     ("https://mcp.tatum.com",            "tatum",          "X-API-KEY",      "",        False),
+    "glassnode": ("https://mcp.glassnode.com",        "glassnode",      "X-API-KEY",      "",        False),
+    "cryptoquant":("https://mcp.cryptoquant.com",     "cryptoquant",    "X-API-KEY",      "",        False),
+    "allium":    ("https://api.allium.so/mcp",        "allium",         "X-API-KEY",      "",        False),
+}
+
+# every MCP name (so MCP_TOOLS/tiering/counting stays accurate)
+MCP_TOOLS_ALL = set(MCP_SERVERS.keys())
+
+
+def _mcp_json_rpc(url, headers, method, params=None, timeout=25):
+    """Generic MCP JSON-RPC call over streamable HTTP. Returns parsed result."""
+    import json as _j, urllib.request as _u, uuid as _uuid
+    rid = str(_uuid.uuid4())
+    body = _j.dumps({"jsonrpc":"2.0","id":rid,"method":method,"params":params or {}}).encode()
+    h = {"Content-Type":"application/json",
+         "Accept":"application/json, text/event-stream",
+         "User-Agent":"warden-mcp/5.8"}
+    h.update(headers or {})
+    try:
+        req = _u.Request(url, data=body, headers=h, method="POST")
+        with _u.urlopen(req, timeout=timeout) as r:
+            data = r.read(500000).decode("utf-8","replace")
+        for chunk in data.split("data:"):
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            try:
+                obj = _j.loads(chunk)
+            except Exception:
+                continue
+            if "result" in obj:
+                return obj["result"]
+        return None
+    except Exception as e:
+        return {"error": str(e)[:120]}
+
+
+def mcp_tool_counts(keys=None):
+    """Return {server_name: tool_count_or_reason} for every configured MCP by
+    hitting each server's tools/list. This is the authoritative per-MCP count."""
+    keys = keys or {}
+    out = {}
+    for name,(endpoint,keyname,header,prefix,armed) in MCP_SERVERS.items():
+        if not armed:
+            out[name] = "wired (add key to arm)"
+            continue
+        k = keys.get(keyname) or keys.get(name)
+        if not k:
+            out[name] = "no key"
+            continue
+        hdr = {header: prefix + k} if header else {}
+        res = _mcp_json_rpc(endpoint, hdr, "tools/list")
+        tools = res.get("tools") if isinstance(res, dict) else None
+        if isinstance(tools, list):
+            out[name] = len(tools)
+        elif res and isinstance(res, dict) and "error" in res:
+            out[name] = "ERR: " + str(res["error"])[:60]
+        else:
+            out[name] = "no-tools-returned"
+    return out
+
+
+def _bitquery_mcp(address, chains, keys):
+    """Bitquery MCP — 149 tools. Fires a token-balance call via the generic MCP
+    JSON-RPC path (graceful if the key is gated)."""
+    apikey = keys.get("bitquery_bearer", "") or keys.get("bitquery", "")
+    if not apikey:
+        return {"error": "no bitquery key"}
+    endpoint = "https://mcp.bitquery.io/mcp"
+    hdr = {"X-API-KEY": apikey}
+    manifest = _mcp_json_rpc(endpoint, hdr, "tools/list")
+    tools = manifest.get("tools") if isinstance(manifest, dict) else []
+    names = [t.get("name") for t in tools] if isinstance(tools, list) else []
+    out = {"tool_count": len(names), "sample_tools": names[:8]}
+    for want in ("evm", "balance", "address"):
+        hit = next((n for n in names if want.lower() in (n or "").lower()), None)
+        if hit:
+            res = _mcp_json_rpc(endpoint, hdr, "tools/call",
+                                {"name": hit, "arguments": {"address": address}})
+            out["call_" + hit] = res
+            break
+    return out
+
 
 def _chainbase_mcp(address, chains, keys):
     """Chainbase JSON-RPC 2.0 MCP — correct tool names confirmed GL-L76."""
@@ -1211,7 +1314,7 @@ def scan(address, chains=None, keys=None):
     results  = {}
     tool_log = []
 
-    MCP_TOOLS = {"chainbase","nansen","tenderly"}
+    MCP_TOOLS = MCP_TOOLS_ALL  # {chainbase,nansen,tenderly,bitquery,...}
 
     # Fix 7 (VL-29 v5.6) — per-tool timeout via inner future + hard deadline.
     # Slow tools (Nansen SSE, Dune poll) get max 90s each; outer wait still 120s.
@@ -1258,6 +1361,7 @@ def scan(address, chains=None, keys=None):
                 pool.submit(run,"chainbase",   _chainbase_mcp,    address, chains, keys),
                 pool.submit(run,"nansen",      _nansen_mcp,       address, keys),
                 pool.submit(run,"tenderly",    _tenderly_mcp,     address, keys),
+                pool.submit(run,"bitquery",    _bitquery_mcp,     address, chains, keys),
                 pool.submit(run,"moralis",     _moralis_rest,     address, chains, keys),
                 pool.submit(run,"goplus",      _goplus_rest,      address, chains, keys),
                 pool.submit(run,"etherscan",   _etherscan_rest,   address, chains, keys),
@@ -1284,7 +1388,7 @@ def scan(address, chains=None, keys=None):
 
     elapsed = round(time.time()-t0, 2)
     fired   = len(tool_log)
-    total   = 20 if not is_btc else 2
+    total   = 21 if not is_btc else 2
     print(f"[TheWarden] ✅ Complete in {elapsed}s — {fired}/{total} tools returned data")
 
     results["meta"] = {
