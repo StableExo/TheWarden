@@ -1,0 +1,208 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StableExo — Address Screening</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#fff;color:#1a2233;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px;}
+  .top{padding:22px 0;border-bottom:1px solid #e5e7eb;}
+  .brand{font-weight:700;font-size:16px;letter-spacing:.02em;}
+  .brand span{color:#38bdf8;}
+  .nav{float:right;font-size:13px;color:#6b7280;}
+  .nav a{color:#374151;text-decoration:none;margin-left:20px;}
+  .hero{padding:64px 0 40px;}
+  .hero .eyebrow{font-size:12px;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+  .hero h1{font-size:38px;line-height:1.18;font-weight:800;letter-spacing:-.01em;max-width:720px;}
+  .hero h1 .accent{color:#0ea5e9;}
+  .hero p{font-size:17px;color:#4b5563;max-width:660px;margin-top:18px;}
+  .proof{padding:40px 0;}
+  .proof h2{font-size:22px;font-weight:800;margin-bottom:12px;}
+  .proof .frame{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.06);max-width:720px;}
+  .proof .frame img{display:block;width:100%;height:auto;}
+  .proof .cap{font-size:12px;color:#6b7280;margin-top:10px;}
+  .offers{padding:48px 0 56px;}
+  .offers h2{font-size:26px;font-weight:800;margin-bottom:8px;}
+  .offers .sub{font-size:14px;color:#6b7280;margin-bottom:28px;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;break-inside:avoid;}
+  .card{border:1px solid #e5e7eb;border-radius:12px;padding:24px;display:flex;flex-direction:column;break-inside:avoid;page-break-inside:avoid;}
+  .card.feature{border-color:#0ea5e9;box-shadow:0 4px 20px rgba(14,165,233,.12);}
+  .card h3{font-size:18px;font-weight:700;margin-bottom:4px;}
+  .card .price{font-size:28px;font-weight:800;margin:8px 0 2px;}
+  .card .per{font-size:12px;color:#6b7280;}
+  .card ul{list-style:none;margin:16px 0 18px;flex:1 1 auto;}
+  .card li{font-size:13px;color:#4b5563;padding:6px 0 6px 22px;position:relative;border-bottom:1px solid #f3f4f6;line-height:1.5;}
+  .card li:last-child{border-bottom:none;}
+  .card li::before{content:"—";position:absolute;left:0;color:#9ca3af;}
+  .card .foot{margin-top:auto;display:flex;flex-direction:column;gap:14px;}
+  .card .for{font-size:12px;color:#6b7280;padding:9px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;line-height:1.5;}
+  .btn{display:block;text-align:center;padding:12px 16px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;background:#0ea5e9;color:#fff;}
+  .btn.outline{background:#fff;color:#0ea5e9;border:1.5px solid #0ea5e9;}
+  .note .btn{background:#111827;}
+  .engage .btn{background:#111827;}
+  .checkout{padding:40px 0 48px;background:#f9fafb;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;}
+  .checkout h2{font-size:24px;font-weight:800;margin-bottom:6px;}
+  .checkout .preview{display:inline-block;background:#fbbf24;color:#311b00;font-size:11px;font-weight:700;padding:2px 10px;border-radius:999px;letter-spacing:.05em;margin-bottom:14px;text-transform:uppercase;}
+  .checkout .note2{font-size:13px;color:#6b7280;margin-bottom:18px;}
+  .checkout .terms{font-size:12px;color:#6b7280;max-width:720px;margin-top:14px;line-height:1.7;}
+  .checkout .terms b{color:#374151;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;color:#374151;margin-bottom:4px;font-weight:600;}
+  .field input,.field textarea,.field select{width:100%;padding:11px 13px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .accept{display:flex;gap:10px;align-items:flex-start;margin:6px 0 4px;}
+  .accept input{margin-top:3px;width:auto;}
+  .accept label{font-size:12px;color:#374151;font-weight:400;line-height:1.5;}
+  .accept a{color:#0ea5e9;}
+  .cta{background:#0ea5e9;color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:700;width:100%;cursor:pointer;margin-top:6px;}
+  .fine{font-size:12px;color:#9ca3af;margin-top:10px;}
+  .foot{padding:28px 0;font-size:12px;color:#6b7280;}
+  .foot b{color:#374151;}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}.nav{float:none;margin-top:10px}.nav a{margin-left:0;margin-right:14px}.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top"><div class="wrap">
+  <span class="brand">Stable<span>Exo</span></span>
+  <span class="nav"><a href="#offers">Offers</a><a href="#proof">Sample</a><a href="#checkout">Order</a></span>
+</div></div>
+
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">Address screening · by StableExo</div>
+  <h1>See what was checked, against which lists, as of when — including when the answer is unknown.</h1>
+  <p>A dated, source-referenced screening of a crypto address, issued by a named preparer. A fast lookup for the everyday check; an attachable memo when a decision needs a record you can keep.</p>
+</div></div>
+
+<div class="proof" id="proof"><div class="wrap">
+  <h2>What you receive</h2>
+  <div class="frame">
+    <img src="memo-first-page.png" alt="Sample attachable screening memo, first page — shows the yellow illustrative-sample banner, report ID, input hash, dated sources, and classed findings table.">
+  </div>
+  <p class="cap">The attachable screening memo — page 1 of 3 (crop stops after the first findings row for brevity; the full document is delivered as a PDF by email). Fictional identifiers in an illustrative sample.</p>
+</div></div>
+
+<div class="offers" id="offers"><div class="wrap">
+  <h2>Three offers. Nothing more.</h2>
+  <p class="sub">A lookup for the everyday check. A memo when a decision must keep a record. An engagement when you need a defined scope.</p>
+  <div class="grid">
+
+    <div class="card note">
+      <h3>Lookup note</h3>
+      <div class="price">$99</div>
+      <div class="per">per address</div>
+      <ul>
+        <li>One address, one chain</li>
+        <li>Named-list check, dated</li>
+        <li>System-generated snapshot — not a signed opinion</li>
+      </ul>
+      <div class="foot">
+        <div class="for">Fast check. Not for filing; upgrade for a decision you must keep a record of.</div>
+        <a class="btn" href="#checkout">Order a lookup</a>
+      </div>
+    </div>
+
+    <div class="card feature">
+      <h3>Attachable memo</h3>
+      <div class="price">$1,500</div>
+      <div class="per">per submission</div>
+      <ul>
+        <li>Up to 4 addresses, 2 chains, 3 hops</li>
+        <li>Named sources with as-of dates</li>
+        <li>Evidence edges with cross-chain bridge trace-through and tx references</li>
+        <li>UNKNOWN shown as a finding</li>
+        <li>Report ID, input hash, named preparer</li>
+      </ul>
+      <div class="foot">
+        <div class="for">The dated record. For a counterparty or decision that needs a document you can keep and date.</div>
+        <a class="btn" href="#checkout">Order a memo</a>
+      </div>
+    </div>
+
+    <div class="card engage">
+      <h3>Custom engagement</h3>
+      <div class="price">Quote</div>
+      <div class="per">scoped per case</div>
+      <ul>
+        <li>Defined scope, chains, hop depth</li>
+        <li>Extended flow investigation</li>
+        <li>Terms agreed before work</li>
+      </ul>
+      <div class="foot">
+        <div class="for">For a defined investigation or a repeated screening need. Email only; no charge to request scope.</div>
+        <a class="btn outline" href="mailto:stableexo@gmail.com?subject=StableExo%20engagement%20scope%20request">Request scope</a>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+
+<div class="checkout" id="checkout"><div class="wrap">
+  <div class="preview" style="background:#0e9f6e;color:#fff;">Live checkout · secure</div>
+  <h2>Order</h2>
+  <p class="note2">Issued within 3 business days of cleared payment.</p>
+  <form id="orderForm" onsubmit="return submitOrder(event)">
+    <div class="row2">
+      <div class="field"><label>Product</label>
+        <select id="product">
+          <option value="lookup">Lookup note — $99</option>
+          <option value="memo">Attachable memo — $1,500</option>
+          <option value="engagement">Custom engagement — request scope</option>
+        </select>
+      </div>
+      <div class="field"><label>Purchaser legal name</label><input id="name" placeholder="Legal name for the order" required></div>
+    </div>
+    <div class="field"><label>Email for delivery</label><input id="email" type="email" placeholder="you@company.com" required></div>
+    <div class="field"><label>Addresses to screen (one per line)</label><textarea id="addresses" rows="3" placeholder="0x…"></textarea>
+      <p class="fine">Up to 4 addresses / 2 chains in the memo. More addresses, additional chains, or a deeper hop depth are a custom engagement.</p>
+    </div>
+    <div class="accept">
+      <input id="acceptTerms" type="checkbox" required>
+      <label>I have read and accept the <a href="stableexo-appendix-A-engagement-terms.pdf" target="_blank">engagement terms (Appendix A)</a>. Payment constitutes acceptance of these terms as in force on the order date.</label>
+    </div>
+    <button class="cta" type="submit">Pay to order</button>
+  </form>
+  <div class="terms">
+    <b>Freshness.</b> Screening reflects lists and flow as of the issue timestamp on the memo; subsequent rolling list updates may supersede. Validation methodology for proximate-risk matches is detailed internally to mitigate false-positive latency.<br><br>
+    <b>Terms that bind on payment.</b> By paying for this order you accept the engagement terms (Appendix A) in force on the order date. The memo, Appendix A, and this order confirmation are the entire agreement. This memo is prepared solely for the purchaser named on this order; there are no third-party beneficiaries, and forwarding the PDF does not make the recipient a client. Unless the order states a longer period, the input snapshot for this Report ID is retained for 24 months from issue, then deleted or anonymized. These terms are governed by the laws of the State of South Carolina, with exclusive venue in its state or federal courts.
+  </div>
+</div></div>
+
+<div class="foot"><div class="wrap">
+  <b>StableExo</b> — a sole proprietorship owned by Taylor Marlow, based in South Carolina, United States. · Questions: reply to your delivery email quoting the Report ID; a named human responds.
+</div></div>
+<script>
+  async function submitOrder(ev) {
+    ev.preventDefault();
+    var btn = document.getElementById('orderForm').querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.textContent = 'Starting secure checkout…';
+    try {
+      var body = {
+        product: document.getElementById('product').value,
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        addresses: document.getElementById('addresses').value
+      };
+      var r = await fetch('/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      var data = await r.json();
+      if (data && data.url) {
+        if (data.url.indexOf('mailto:') === 0) { window.location.href = data.url; }
+        else { window.location.assign(data.url); }
+        return;
+      }
+      alert(data && data.message ? data.message : 'Could not start checkout.');
+    } catch (err) {
+      alert('Could not start checkout. Please try again.');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Pay to order';
+  }
+</script>
+</body>
+</html>
