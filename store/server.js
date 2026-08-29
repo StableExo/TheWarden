@@ -30,9 +30,24 @@ const PRICE_LOOKUP = process.env.STRIPE_PRICE_LOOKUP || "price_1U9c2oFATow5sRkPh
 const PRICE_MEMO = process.env.STRIPE_PRICE_MEMO || "price_1U9c2sFATow5sRkPqsyL20lu";
 const IS_TEST_MODE = (STRIPE_SECRET_KEY || "").startsWith("sk_test_");
 
+// Binary assets are embedded as base64 in assets.js (the GitHub text-only push
+// cannot carry raw binaries). Decode and serve them here BEFORE the static
+// middleware so these routes always take precedence.
+const embeddedAssets = require("./assets.js");
+
 const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "64kb" }));
+
+app.get("/memo-first-page.png", (req, res) => {
+  res.set("Content-Type", "image/png");
+  res.send(Buffer.from(embeddedAssets.memoFirstPagePng, "base64"));
+});
+app.get("/stableexo-appendix-A-engagement-terms.pdf", (req, res) => {
+  res.set("Content-Type", "application/pdf");
+  res.send(Buffer.from(embeddedAssets.appendixAPdf, "base64"));
+});
+
 app.use(express.static(path.join(__dirname, "public"), { index: "index.html" }));
 
 function originOf(req) {
