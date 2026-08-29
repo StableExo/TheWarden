@@ -52,3 +52,33 @@ services:
         sync: false
     healthCheckPath: /health
     autoDeploy: true
+
+  # ── StableExo Store (product landing page + Stripe checkout) ─────────────
+  # Quiet landing page for the $99 lookup / $1,500 Attachable screening memo.
+  # Serves static assets + creates Stripe Checkout Sessions (Cash App Pay enabled).
+  - type: web
+    name: stableexo-store
+    runtime: node
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: store
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Live Stripe secret key. sync:false => you paste it into Render yourself.
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_LOOKUP
+        value: price_1U9c2oFATow5sRkPhWsv46v6
+      - key: STRIPE_PRICE_MEMO
+        value: price_1U9c2sFATow5sRkPqsyL20lu
+      # Set this to your live URL (https://<name>.onrender.com) for correct redirects.
+      - key: BASE_URL
+        sync: false
