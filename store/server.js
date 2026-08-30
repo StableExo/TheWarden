@@ -162,7 +162,9 @@ app.post("/create-checkout-session", async (req, res) => {
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: email || undefined,
       metadata,
-      payment_method_types: ["card", "cashapp"],
+      // Dynamic payment methods: Checkout automatically offers every method
+      // enabled in the Stripe Dashboard (Settings -> Payment methods). To turn
+      // a method on/off, toggle it there — no code change needed.
       success_url: `${originOf(req)}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${originOf(req)}/checkout/cancel`,
     });
