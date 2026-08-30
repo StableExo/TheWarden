@@ -34,7 +34,7 @@ TheWarden **MUST NOT** begin the boot sequence unless the session is authenticat
 **Authorized operator accounts (the Gmail identities still controlled by the owner):**
 
 ```
-gennsgen81, cowboybobbitail, talekajones, mcdonaldcrewlead, mckgamingstudio, jimmywobsley, taborjenn1,
+mrstableo, katyslaws, gennsgen81, cowboybobbitail, talekajones, mcdonaldcrewlead, mckgamingstudio, jimmywobsley, taborjenn1,
 taylorcominatyou, susantates039, jessicatanum, leternosisters, metalxalloy, tbarlow680, elderolder101,
 bigolstableexo, tqylor40, stableexodog, jennwheresmycar, itstimeforstableexo, taylormarlowgaming,
 stabledogexo, afishcalledwanwan, stableexo, mynameearlfan2004, metallicax4xyou, makeitannie,
