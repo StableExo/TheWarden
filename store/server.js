@@ -35,8 +35,89 @@ const IS_TEST_MODE = (STRIPE_SECRET_KEY || "").startsWith("sk_test_");
 // middleware so these routes always take precedence.
 const embeddedAssets = require("./assets.js");
 
+// --- Auto order-confirmation email (webhook-driven) -------------------------
+const crypto = require("crypto");
+let nodemailer = null;
+try { nodemailer = require("nodemailer"); } catch (_) { /* optional dep */ }
+
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
+const SMTP_USER = process.env.SMTP_USER || "";
+const SMTP_PASS = process.env.SMTP_PASS || "";
+
+async function sendOrderConfirmation(session) {
+  if (!nodemailer || !SMTP_USER || !SMTP_PASS) {
+    console.warn("Order email not configured (SMTP_USER/SMTP_PASS) — skipped.");
+    return;
+  }
+  const email =
+    (session.customer_details && session.customer_details.email) ||
+    session.customer_email;
+  if (!email) { console.warn("No buyer email on session; skipped."); return; }
+  const name =
+    (session.customer_details && session.customer_details.name) || "there";
+  const md = session.metadata || {};
+  const product = md.product || "Lookup note";
+  const addresses = md.addresses || "";
+  const reportId = "R-" + String(session.id).slice(-8).toUpperCase();
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com", port: 465, secure: true,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+  });
+  const text =
+`Hi ${name},
+
+Your order is confirmed. Here's what happens next.
+
+Order reference: ${reportId}
+Scope: ${product}
+Addresses submitted: ${addresses || "(none provided)"}
+
+What we'll deliver:
+- Named sources with as-of dates, evidence edges, and any UNKNOWN shown as a finding (never guessed).
+- A dated report carrying your Report ID so it's clear what each output represents.
+- Issued within 3 business days of cleared payment, to this email.
+
+Questions? Reply to this email and quote your Report ID — a named human responds.
+
+Privacy note: what you submit and what we find stays between us. Nothing is shared, sold, or published. This engagement is governed by the terms you accepted at checkout (Appendix A).
+
+— StableExo, a sole proprietorship owned by Taylor Marlow, South Carolina`;
+  await transporter.sendMail({
+    from: `StableExo <${SMTP_USER}>`,
+    to: email,
+    subject: `StableExo order received · ${reportId}`,
+    text,
+  });
+  console.log("order confirmation sent to", email, reportId);
+}
+
 const app = express();
 app.disable("x-powered-by");
+
+// Stripe webhook: raw body is required for signature verification, so this
+// route is registered BEFORE any body-parsing middleware.
+app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  if (!STRIPE_WEBHOOK_SECRET) {
+    return res.status(200).json({ received: true, note: "webhook secret not configured" });
+  }
+  const sig = req.headers["stripe-signature"];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error("webhook verify error:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    if (session.payment_status === "paid") {
+      try { await sendOrderConfirmation(session); }
+      catch (e) { console.error("webhook email error:", e.message); }
+    }
+  }
+  return res.json({ received: true });
+});
+
 app.use(express.json({ limit: "64kb" }));
 
 app.get("/memo-first-page.png", (req, res) => {
