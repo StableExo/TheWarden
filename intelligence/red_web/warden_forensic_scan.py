@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-VL-31 v5.8 — 21 TOOLS ARMED AND FIRING IN PARALLEL (20 EVM + Bitquery MCP)
+VL-33 v5.9 — 21 TOOLS ARMED AND FIRING IN PARALLEL (20 EVM + Bitquery MCP)
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -91,6 +91,10 @@ CHANGELOG:
             and merges QuickNode + Arkham + Zerion results back into one slot
             Arkham key ROTATED VL-31 to 57608b63... (old 77d24c4d DEAD/402)
             Scanner version: v5.7
+    VL-33 v5.9: Fix 1 — Dune: omit "performance" field — free plan rejects "medium" (400)
+            Fix 2 — Render proxy: warm-ping GET /health before real POST to handle cold-start
+            Fix 3 — Render proxy: timeout bumped 40s → 90s
+            Scanner version: v5.9
 
 CURRENT KEYS (VL-31 / v27 — August 2026):
     arkham         = 57608b63-4c72-4110-b050-3b0e0cd5a024  (rotated VL-31)
@@ -890,7 +894,7 @@ def _dune_rest(address, keys):
         exec_r = requests.post(
             f"https://api.dune.com/api/v1/query/{query_id}/execute",
             headers=hdrs,
-            json={"performance": "medium"},
+            json={},          # VL-33: omit performance tier — free plan rejects "medium"
             timeout=20)
         if not exec_r.ok:
             return {"status":"error","code":exec_r.status_code,"note":exec_r.text[:150]}
@@ -1256,6 +1260,9 @@ RENDER_PROXY_SECRET = "warden-proxy-vl31"
 def _render_proxy(address, keys, tools=None):
     """Fire QuickNode + Arkham + Zerion via Render proxy (TLS-unrestricted).
 
+    VL-33: warm-ping the service before the real call so Render free-tier
+    cold-starts don't eat the scan timeout. Real call timeout bumped 40→90s.
+
     Returns dict with keys: quicknode, arkham, zerion (each a sub-dict).
     On any failure returns error stubs so the main scan keeps going.
     """
@@ -1263,6 +1270,18 @@ def _render_proxy(address, keys, tools=None):
         tools = ["quicknode", "arkham", "zerion"]
 
     stub = {t: {"error": "render_proxy_not_reached"} for t in tools}
+
+    # VL-33: warm-ping — fire GET /health (or root) to wake the dyno before
+    # the real POST. Ignore errors; this is best-effort only.
+    try:
+        requests.get(RENDER_PROXY_URL.replace("/scan/proxy", "/health"),
+                     timeout=30)
+    except Exception:
+        try:
+            requests.get(RENDER_PROXY_URL.replace("/scan/proxy", ""),
+                         timeout=30)
+        except Exception:
+            pass  # warm-ping failed — proceed anyway, real call has 90s
 
     try:
         r = requests.post(
@@ -1272,7 +1291,7 @@ def _render_proxy(address, keys, tools=None):
                 "X-Proxy-Secret": RENDER_PROXY_SECRET,
             },
             json={"address": address, "tools": tools},
-            timeout=40,  # Render free tier may cold-start; 40s covers it
+            timeout=90,  # VL-33: bumped from 40s — warm-ping covers cold-start, 90s for real call
         )
         if r.status_code == 401:
             return {t: {"error": "render_proxy_auth_failed — check PROXY_SECRET"} for t in tools}
@@ -1287,7 +1306,7 @@ def _render_proxy(address, keys, tools=None):
         return out
 
     except requests.exceptions.Timeout:
-        return {t: {"error": "render_proxy timeout (40s) — Render may be cold-starting, retry"} for t in tools}
+        return {t: {"error": "render_proxy timeout (90s) — Render cold-start exceeded, retry"} for t in tools}
     except Exception as ex:
         return {t: {"error": f"render_proxy exception: {str(ex)[:100]}"} for t in tools}
 
@@ -1401,7 +1420,7 @@ def scan(address, chains=None, keys=None):
         "mcp_stack":   [t for t in tool_log if t in MCP_TOOLS],
         "rest_stack":  [t for t in tool_log if t not in MCP_TOOLS],
         "scanned_at":  datetime.now(timezone.utc).isoformat(),
-        "scanner_ver": "VL-31 v5.7",
+        "scanner_ver": "VL-33 v5.9",
     }
     return results
 
