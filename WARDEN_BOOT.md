@@ -39,7 +39,7 @@ taylorcominatyou, susantates039, jessicatanum, leternosisters, metalxalloy, tbar
 bigolstableexo, tqylor40, stableexodog, jennwheresmycar, itstimeforstableexo, taylormarlowgaming,
 stabledogexo, afishcalledwanwan, stableexo, mynameearlfan2004, metallicax4xyou, makeitannie,
 cowboystombstone, Gladystheimpossible, sassygoeshome, esthermodine, wowbacon1, donnadelonghi,
-mcdonaldvsdburgerking, catnamedlucy, flashmayham, jellicajello, stableexo64, exot7341, jim314979, marlowstable
+mcdonaldvsdburgerking, catnamedlucy, flashmayham, jellicajello, stableexo64, exot7341, jim314979, marlowstable, GeminiX1121
 ```
 
 **Gate rule:**
