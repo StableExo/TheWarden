@@ -11,6 +11,14 @@
  *   BASE_URL              (optional)  public origin for success/cancel URLs (Render URL)
  *   STRIPE_PRICE_LOOKUP   (optional)  price id for the $99 lookup
  *   STRIPE_PRICE_MEMO     (optional)  price id for the $1,500 memo
+ *   SUPABASE_URL          (required)  https://pxbjuhtnmvfywbwmdkdr.supabase.co
+ *   SUPABASE_SECRET       (required)  sb_secret_...
+ *   TELEGRAM_BOT_TOKEN    (required)  @realTheWarden_bot token
+ *   TELEGRAM_OPERATOR_ID  (required)  operator Telegram chat ID
+ *   SMTP_USER / SMTP_PASS (required)  Gmail + app password for delivery
+ *   RENDER_PROXY_URL      (optional)  https://thewarden.onrender.com/scan/proxy
+ *   RENDER_PROXY_SECRET   (optional)  warden-proxy-vl31
+ *   ETHERSCAN_KEY         (optional)  for on-chain data
  */
 "use strict";
 const path = require("path");
@@ -34,6 +42,9 @@ const IS_TEST_MODE = (STRIPE_SECRET_KEY || "").startsWith("sk_test_");
 // cannot carry raw binaries). Decode and serve them here BEFORE the static
 // middleware so these routes always take precedence.
 const embeddedAssets = require("./assets.js");
+
+// Delivery system — order queue, Telegram notify, scan, memo, email
+const { queueOrder, pollTelegramCommands } = require("./deliver.js");
 
 // --- Auto order-confirmation email (webhook-driven) -------------------------
 const crypto = require("crypto");
@@ -111,8 +122,12 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     if (session.payment_status === "paid") {
+      // 1. Send immediate confirmation to customer
       try { await sendOrderConfirmation(session); }
-      catch (e) { console.error("webhook email error:", e.message); }
+      catch (e) { console.error("confirmation email error:", e.message); }
+      // 2. Queue order + alert operator via Telegram
+      try { await queueOrder(session); }
+      catch (e) { console.error("queueOrder error:", e.message); }
     }
   }
   return res.json({ received: true });
@@ -200,4 +215,13 @@ app.get("/checkout/cancel", (req, res) => {
 
 app.get("/health", (req, res) => res.send("ok"));
 
-app.listen(PORT, () => console.log(`stableexo-store listening on :${PORT} (test=${IS_TEST_MODE})`));
+app.listen(PORT, () => {
+  console.log(`stableexo-store listening on :${PORT} (test=${IS_TEST_MODE})`);
+  // Start Telegram command poller — checks every 5 seconds for /approve /deliver /reject
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    setInterval(pollTelegramCommands, 5000);
+    console.log("telegram command poller started");
+  } else {
+    console.warn("TELEGRAM_BOT_TOKEN not set — operator commands disabled");
+  }
+});
