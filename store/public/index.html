@@ -58,6 +58,8 @@
   .accept a{color:#0ea5e9;}
   .cta{background:#0ea5e9;color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:700;width:100%;cursor:pointer;margin-top:6px;}
   .fine{font-size:12px;color:#9ca3af;margin-top:10px;}
+  .pdetail{margin-top:8px;font-size:12px;color:#4b5563;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;line-height:1.5;}
+  .pdetail b{color:#374151;}
   .foot{padding:28px 0;font-size:12px;color:#6b7280;}
   .foot b{color:#374151;}
   @media(max-width:760px){.grid{grid-template-columns:1fr}.nav{float:none;margin-top:10px}.nav a{margin-left:0;margin-right:14px}.row2{grid-template-columns:1fr}}
@@ -150,6 +152,7 @@
           <option value="memo">Attachable memo — $1,500</option>
           <option value="engagement">Custom engagement — request scope</option>
         </select>
+        <div class="pdetail" id="productDetail"></div>
       </div>
       <div class="field"><label>Purchaser legal name</label><input id="name" placeholder="Legal name for the order" required></div>
     </div>
@@ -203,6 +206,17 @@
     btn.disabled = false;
     btn.textContent = 'Pay to order';
   }
+  var DETAIL = {
+    lookup: '<b>One address, one chain.</b> A dated named-list snapshot from the core engine — what checked, which lists, as of when. Delivered by email.',
+    memo: '<b>Up to 4 addresses / 2 chains / 3 hops.</b> Full toolset fires: named sources with as-of dates, cross-chain bridge, tx-IDs, and UNKNOWN shown as a finding. A dated PDF memo with Report ID, by email.',
+    engagement: '<b>Defined scope.</b> Custom chains, hop depth, and extended flow investigation. A quote agreed before work. Email only — no charge to request scope.'
+  };
+  function updateDetail(){
+    var s = document.getElementById('product');
+    document.getElementById('productDetail').innerHTML = DETAIL[s.value];
+  }
+  document.getElementById('product').addEventListener('change', updateDetail);
+  updateDetail();
 </script>
 </body>
 </html>
