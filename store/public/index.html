@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -35,59 +35,66 @@
   .card ul{list-style:none;margin:16px 0 18px;flex:1 1 auto;}
   .card li{font-size:13px;color:#4b5563;padding:6px 0 6px 22px;position:relative;border-bottom:1px solid #f3f4f6;line-height:1.5;}
   .card li:last-child{border-bottom:none;}
-  .card li::before{content:"—";position:absolute;left:0;color:#9ca3af;}
+  .card li::before{content:"\2014";position:absolute;left:0;color:#9ca3af;}
   .card .foot{margin-top:auto;display:flex;flex-direction:column;gap:14px;}
   .card .for{font-size:12px;color:#6b7280;padding:9px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;line-height:1.5;}
-  .btn{display:block;text-align:center;padding:12px 16px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;background:#0ea5e9;color:#fff;}
+  .btn{display:block;text-align:center;padding:12px 16px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;background:#0ea5e9;color:#fff;cursor:pointer;border:none;font-family:inherit;}
   .btn.outline{background:#fff;color:#0ea5e9;border:1.5px solid #0ea5e9;}
   .note .btn{background:#111827;}
   .engage .btn{background:#111827;}
   .checkout{padding:40px 0 48px;background:#f9fafb;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;}
   .checkout h2{font-size:24px;font-weight:800;margin-bottom:6px;}
-  .checkout .preview{display:inline-block;background:#fbbf24;color:#311b00;font-size:11px;font-weight:700;padding:2px 10px;border-radius:999px;letter-spacing:.05em;margin-bottom:14px;text-transform:uppercase;}
+  .livebadge{display:inline-flex;align-items:center;gap:6px;background:#0e9f6e;color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:999px;letter-spacing:.05em;margin-bottom:14px;text-transform:uppercase;}
+  .livebadge::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#fff;opacity:.85;}
   .checkout .note2{font-size:13px;color:#6b7280;margin-bottom:18px;}
   .checkout .terms{font-size:12px;color:#6b7280;max-width:720px;margin-top:14px;line-height:1.7;}
   .checkout .terms b{color:#374151;}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12px;color:#374151;margin-bottom:4px;font-weight:600;}
-  .field input,.field textarea,.field select{width:100%;padding:11px 13px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;}
+  .field input,.field textarea,.field select{width:100%;padding:11px 13px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .accept{display:flex;gap:10px;align-items:flex-start;margin:6px 0 4px;}
-  .accept input{margin-top:3px;width:auto;}
+  .accept input{margin-top:3px;width:auto;cursor:pointer;}
   .accept label{font-size:12px;color:#374151;font-weight:400;line-height:1.5;}
   .accept a{color:#0ea5e9;}
-  .cta{background:#0ea5e9;color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:700;width:100%;cursor:pointer;margin-top:6px;}
+  .cta{background:#0ea5e9;color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:700;width:100%;cursor:pointer;margin-top:6px;font-family:inherit;transition:opacity .15s;}
+  .cta:disabled{opacity:.6;cursor:not-allowed;}
+  .cta.loading{opacity:.7;}
+  .err{color:#dc2626;font-size:13px;margin-top:8px;display:none;}
   .fine{font-size:12px;color:#9ca3af;margin-top:10px;}
   .pdetail{margin-top:8px;font-size:12px;color:#4b5563;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;line-height:1.5;}
   .pdetail b{color:#374151;}
-  .foot{padding:28px 0;font-size:12px;color:#6b7280;}
-  .foot b{color:#374151;}
+  .addresses-wrap{display:block;}
+  .addresses-wrap.hidden{display:none;}
+  .pagefoot{padding:28px 0;font-size:12px;color:#6b7280;}
+  .pagefoot b{color:#374151;}
   @media(max-width:760px){.grid{grid-template-columns:1fr}.nav{float:none;margin-top:10px}.nav a{margin-left:0;margin-right:14px}.row2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
+
 <div class="top"><div class="wrap">
   <span class="brand">Stable<span>Exo</span></span>
   <span class="nav"><a href="#offers">Offers</a><a href="#proof">Sample</a><a href="#checkout">Order</a></span>
 </div></div>
 
 <div class="hero"><div class="wrap">
-  <div class="eyebrow">Address screening · by StableExo</div>
-  <h1>See what was checked, against which lists, as of when — including when the answer is unknown.</h1>
-  <p>A dated, source-referenced screening of a crypto address, issued by a named preparer. Three tiers, one engine — a lookup for the everyday check, a memo for a decision that must keep a record, an engagement for a defined investigation. Depth is what you buy.</p>
+  <div class="eyebrow">Address screening &middot; by StableExo</div>
+  <h1>See what was checked, against which lists, as of when &mdash; including when the answer is unknown.</h1>
+  <p>A dated, source-referenced screening of a crypto address, issued by a named preparer. A fast lookup for the everyday check; an attachable memo when a decision needs a record you can keep.</p>
 </div></div>
 
 <div class="proof" id="proof"><div class="wrap">
   <h2>What you receive</h2>
   <div class="frame">
-    <img src="memo-first-page.png" alt="Sample attachable screening memo, first page — shows the yellow illustrative-sample banner, report ID, input hash, dated sources, and classed findings table.">
+    <img src="memo-first-page.png" alt="Sample attachable screening memo, first page &mdash; report ID, input hash, dated sources, and classed findings table.">
   </div>
-  <p class="cap">The attachable screening memo — page 1 of 3 (crop stops after the first findings row for brevity; the full document is delivered as a PDF by email). Fictional identifiers in an illustrative sample.</p>
+  <p class="cap">The attachable screening memo &mdash; page 1 of 3. Illustrative sample with fictional identifiers. Full document delivered as a PDF by email.</p>
 </div></div>
 
 <div class="offers" id="offers"><div class="wrap">
-  <h2>Three tiers, one engine.</h2>
-  <p class="sub">A lookup for the surface. A memo for a decision that must keep a record. An engagement for a defined investigation. Depth is what you buy.</p>
+  <h2>Three offers. Nothing more.</h2>
+  <p class="sub">A lookup for the everyday check. A memo when a decision must keep a record. An engagement when you need a defined scope.</p>
   <div class="grid">
 
     <div class="card note">
@@ -97,10 +104,10 @@
       <ul>
         <li>One address, one chain</li>
         <li>Named-list check, dated</li>
-        <li>System-generated snapshot — not a signed opinion</li>
+        <li>System-generated snapshot &mdash; not a signed opinion</li>
       </ul>
       <div class="foot">
-        <div class="for">A fast, current read on one address before you move — a dated snapshot of the surface, the honest starting point.</div>
+        <div class="for">Fast check. Not for filing; upgrade for a decision you must keep a record of.</div>
         <a class="btn" href="#checkout">Order a lookup</a>
       </div>
     </div>
@@ -110,14 +117,14 @@
       <div class="price">$1,500</div>
       <div class="per">per submission</div>
       <ul>
-        <li>Full toolset fires — named sources, as-of dates, cross-chain bridge trace</li>
         <li>Up to 4 addresses, 2 chains, 3 hops</li>
-        <li>Evidence edges with tx references and bridge trace-through</li>
+        <li>Named sources with as-of dates</li>
+        <li>Cross-chain bridge trace-through with tx references</li>
         <li>UNKNOWN shown as a finding</li>
         <li>Report ID, input hash, named preparer</li>
       </ul>
       <div class="foot">
-        <div class="for">When you onboard a counterparty, ready a filing, or make a decision you'll need to defend later.</div>
+        <div class="for">The dated record. For a counterparty or decision that needs a document you can keep and date.</div>
         <a class="btn" href="#checkout">Order a memo</a>
       </div>
     </div>
@@ -132,7 +139,7 @@
         <li>Terms agreed before work</li>
       </ul>
       <div class="foot">
-        <div class="for">When scope, chains, or hop depth outgrow a one-shot memo. Email only; no charge to request scope.</div>
+        <div class="for">For a defined investigation or a repeated screening need. Email only; no charge to request scope.</div>
         <a class="btn outline" href="mailto:stableexo@gmail.com?subject=StableExo%20engagement%20scope%20request">Request scope</a>
       </div>
     </div>
@@ -141,30 +148,35 @@
 </div></div>
 
 <div class="checkout" id="checkout"><div class="wrap">
-  <div class="preview" style="background:#0e9f6e;color:#fff;">Live checkout · secure</div>
+  <span class="livebadge">Secure checkout</span>
   <h2>Order</h2>
   <p class="note2">Issued within 3 business days of cleared payment.</p>
   <form id="orderForm" onsubmit="return submitOrder(event)">
     <div class="row2">
-      <div class="field"><label>Product</label>
+      <div class="field">
+        <label>Product</label>
         <select id="product">
-          <option value="lookup">Lookup note — $99</option>
-          <option value="memo">Attachable memo — $1,500</option>
-          <option value="engagement">Custom engagement — request scope</option>
+          <option value="lookup">Lookup note &mdash; $99</option>
+          <option value="memo">Attachable memo &mdash; $1,500</option>
+          <option value="engagement">Custom engagement &mdash; request scope</option>
         </select>
         <div class="pdetail" id="productDetail"></div>
       </div>
       <div class="field"><label>Purchaser legal name</label><input id="name" placeholder="Legal name for the order" required></div>
     </div>
     <div class="field"><label>Email for delivery</label><input id="email" type="email" placeholder="you@company.com" required></div>
-    <div class="field"><label>Addresses to screen (one per line)</label><textarea id="addresses" rows="3" placeholder="0x…"></textarea>
-      <p class="fine">Up to 4 addresses / 2 chains in the memo. More addresses, additional chains, or a deeper hop depth are a custom engagement.</p>
+    <div class="addresses-wrap" id="addressesWrap">
+      <div class="field"><label>Addresses to screen (one per line)</label>
+        <textarea id="addresses" rows="3" placeholder="0x&hellip;"></textarea>
+        <p class="fine">Up to 4 addresses / 2 chains in the memo. More addresses, chains, or hop depth = custom engagement.</p>
+      </div>
     </div>
     <div class="accept">
       <input id="acceptTerms" type="checkbox" required>
       <label>I have read and accept the <a href="stableexo-appendix-A-engagement-terms.pdf" target="_blank">engagement terms (Appendix A)</a>. Payment constitutes acceptance of these terms as in force on the order date.</label>
     </div>
-    <button class="cta" type="submit">Pay to order</button>
+    <button class="cta" id="submitBtn" type="submit">Pay to order</button>
+    <div class="err" id="checkoutErr"></div>
   </form>
   <div class="terms">
     <b>Freshness.</b> Screening reflects lists and flow as of the issue timestamp on the memo; subsequent rolling list updates may supersede. Validation methodology for proximate-risk matches is detailed internally to mitigate false-positive latency.<br><br>
@@ -172,20 +184,54 @@
   </div>
 </div></div>
 
-<div class="foot"><div class="wrap">
-  <b>StableExo</b> — a sole proprietorship owned by Taylor Marlow, based in South Carolina, United States. · Questions: reply to your delivery email quoting the Report ID; a named human responds.
+<div class="pagefoot"><div class="wrap">
+  <b>StableExo</b> &mdash; a sole proprietorship owned by Taylor Marlow, based in South Carolina, United States. &middot; Questions: reply to your delivery email quoting the Report ID; a named human responds.
 </div></div>
+
 <script>
+  var DETAIL = {
+    lookup: '<b>One address, one chain.</b> Named-list check with as-of dates from the core engine. System-generated snapshot delivered by email.',
+    memo: '<b>Up to 4 addresses / 2 chains / 3 hops.</b> Full engine fires: named sources, as-of dates, cross-chain bridge trace, tx references, UNKNOWN shown as a finding. Dated PDF with Report ID, by email.',
+    engagement: '<b>Defined scope.</b> Custom chains, hop depth, and extended flow investigation. Quote agreed before work begins. Email only &mdash; no charge to request scope.'
+  };
+
+  var productEl = document.getElementById('product');
+  var addrWrap  = document.getElementById('addressesWrap');
+  var detailEl  = document.getElementById('productDetail');
+  var btnEl     = document.getElementById('submitBtn');
+  var errEl     = document.getElementById('checkoutErr');
+
+  function updateProduct() {
+    var v = productEl.value;
+    detailEl.innerHTML = DETAIL[v];
+    addrWrap.className = (v === 'engagement') ? 'addresses-wrap hidden' : 'addresses-wrap';
+    btnEl.textContent  = (v === 'engagement') ? 'Request scope by email' : 'Pay to order';
+  }
+
+  productEl.addEventListener('change', updateProduct);
+  updateProduct();
+
+  // Pre-fill product from hash click (#checkout with ?p=memo etc is optional)
+  document.querySelectorAll('a[href="#checkout"]').forEach(function(a) {
+    a.addEventListener('click', function() {
+      var txt = this.textContent.toLowerCase();
+      if (txt.indexOf('memo') > -1) { productEl.value = 'memo'; updateProduct(); }
+      else if (txt.indexOf('lookup') > -1) { productEl.value = 'lookup'; updateProduct(); }
+    });
+  });
+
   async function submitOrder(ev) {
     ev.preventDefault();
-    var btn = document.getElementById('orderForm').querySelector('button[type=submit]');
-    btn.disabled = true;
-    btn.textContent = 'Starting secure checkout…';
+    errEl.style.display = 'none';
+    btnEl.disabled = true;
+    btnEl.classList.add('loading');
+    var v = productEl.value;
+    btnEl.textContent = (v === 'engagement') ? 'Opening email…' : 'Starting secure checkout…';
     try {
       var body = {
-        product: document.getElementById('product').value,
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
+        product:   v,
+        name:      document.getElementById('name').value,
+        email:     document.getElementById('email').value,
         addresses: document.getElementById('addresses').value
       };
       var r = await fetch('/create-checkout-session', {
@@ -199,24 +245,15 @@
         else { window.location.assign(data.url); }
         return;
       }
-      alert(data && data.message ? data.message : 'Could not start checkout.');
+      throw new Error(data && data.message ? data.message : 'Could not start checkout.');
     } catch (err) {
-      alert('Could not start checkout. Please try again.');
+      errEl.textContent = err.message || 'Could not start checkout. Please try again.';
+      errEl.style.display = 'block';
+      btnEl.disabled = false;
+      btnEl.classList.remove('loading');
+      updateProduct();
     }
-    btn.disabled = false;
-    btn.textContent = 'Pay to order';
   }
-  var DETAIL = {
-    lookup: '<b>One address, one chain.</b> A dated named-list snapshot from the core engine — what checked, which lists, as of when. Delivered by email.',
-    memo: '<b>Up to 4 addresses / 2 chains / 3 hops.</b> Full toolset fires: named sources with as-of dates, cross-chain bridge, tx-IDs, and UNKNOWN shown as a finding. A dated PDF memo with Report ID, by email.',
-    engagement: '<b>Defined scope.</b> Custom chains, hop depth, and extended flow investigation. A quote agreed before work. Email only — no charge to request scope.'
-  };
-  function updateDetail(){
-    var s = document.getElementById('product');
-    document.getElementById('productDetail').innerHTML = DETAIL[s.value];
-  }
-  document.getElementById('product').addEventListener('change', updateDetail);
-  updateDetail();
 </script>
 </body>
 </html>
