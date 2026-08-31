@@ -2,7 +2,7 @@
 """
 warden_forensic_scan.py — TheWarden Universal Forensic Address Scanner
 ══════════════════════════════════════════════════════════════════════════
-VL-33 v5.9 — 21 TOOLS ARMED AND FIRING IN PARALLEL (20 EVM + Bitquery MCP)
+VL-35 v6.0 — 23 TOOLS ARMED AND FIRING IN PARALLEL (EVM + TRON + Solana + Bitquery MCP)
 
 TOOL REGISTRY:
   MCP (JSON-RPC 2.0):
@@ -15,7 +15,7 @@ TOOL REGISTRY:
     Moralis      deep-index.moralis.io/v2.2    wallet history + net worth
     Etherscan    api.etherscan.io/v2           multi-chain
     QuickNode    RPC direct                    balance + nonce + code
-    GoPlus       api.gopluslabs.io             security flags (free, no auth)
+    GoPlus       api.gopluslabs.io             security flags × 8 chains (ETH/BSC/Polygon/Avax/FTM/Arb/Op/Base — free)
     GoldRush     api.covalenthq.com/v1         200+ chains balances
     Bitquery     streaming.bitquery.io/eap     ory_at bearer (QUOTA — graceful)
     OnChainRisk  api.onchainrisk.io/api/v1     AML score
@@ -27,6 +27,8 @@ TOOL REGISTRY:
     Jina         r.jina.ai                     web intelligence             [v5.0 NEW]
     AnChain AI   api.anchainai.com             score + attribution + suspicious-activities  [v5.4]
     TRM Labs     api.trmlabs.com               sanctions screening (keyless free) [v5.2 NEW]
+    TRON         api.trongrid.io/v1            TRX balance + TRC20 (free, no key) [v6.0 NEW]
+    Solana       mainnet-beta RPC              SOL balance + token accounts (free) [v6.0 NEW]
 
 KEYS dict (v5.5 / VL-28):
     arkham, chainbase, moralis, nansen, etherscan, goplus_key, goplus_secret,
@@ -469,12 +471,83 @@ def _moralis_rest(address, chains, keys):
 
 
 def _goplus_rest(address, chains, keys):
-    """GoPlus free REST — no auth needed."""
+    """GoPlus free REST — multi-chain (ETH/BSC/Polygon/Avalanche/Fantom/Arbitrum/Optimism/Base)."""
+    GOPLUS_CHAINS = [1, 56, 137, 43114, 250, 42161, 10, 8453]
+    out = {}
+    for chain_id in GOPLUS_CHAINS:
+        try:
+            r = requests.get(
+                f"https://api.gopluslabs.io/api/v1/address_security/{address}",
+                params={"chain_id": str(chain_id)},
+                timeout=15
+            )
+            data  = r.json().get("result",{}) if r.ok else {}
+            flags = {k:v for k,v in data.items() if v not in [None,"0",0,"",False]}
+            out[chain_id] = {"flags":flags,"flag_count":len(flags),"clean":len(flags)==0}
+        except Exception as ex:
+            out[chain_id] = {"error":str(ex)[:60]}
+    any_flags = any(v.get("flag_count",0)>0 for v in out.values() if isinstance(v,dict))
+    return {"chains":out,"any_flags":any_flags}
+
+
+def _tron_rest(address, chains, keys):
+    """TRON free REST via TronGrid — no key needed. Handles T-prefix TRON addresses."""
+    if not (address.startswith("T") and len(address)==34):
+        return {"skip":"not a TRON address"}
     try:
-        r = requests.get(f"https://api.gopluslabs.io/api/v1/address_security/{address}",timeout=15)
-        data  = r.json().get("result",{}) if r.ok else {}
-        flags = {k:v for k,v in data.items() if v not in [None,"0",0,"",False]}
-        return {"flags":flags,"flag_count":len(flags),"clean":len(flags)==0}
+        r = requests.get(
+            f"https://api.trongrid.io/v1/accounts/{address}",
+            timeout=20
+        )
+        if not r.ok:
+            return {"error":f"HTTP {r.status_code}"}
+        data = r.json().get("data",[{}])
+        if not data:
+            return {"balance_trx":0,"trc20_count":0,"note":"no data — possibly unfunded"}
+        acc = data[0]
+        balance_trx = round(acc.get("balance",0) / 1e6, 4)
+        trc20 = acc.get("trc20",[])
+        # Extract USDT (TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t) if present
+        usdt_contract = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+        usdt_raw = next((int(t.get(usdt_contract,0)) for t in trc20 if usdt_contract in t), 0)
+        usdt = round(usdt_raw / 1e6, 2)
+        return {
+            "balance_trx": balance_trx,
+            "trc20_count": len(trc20),
+            "usdt_trc20": usdt,
+            "account_type": acc.get("type",""),
+            "create_time": acc.get("create_time",""),
+        }
+    except Exception as ex:
+        return {"error":str(ex)[:80]}
+
+
+def _solana_rest(address, chains, keys):
+    """Solana free REST via public RPC — no key needed. Handles base58 Solana addresses."""
+    # Rough heuristic: Solana addresses are 32-44 base58 chars, no 0x prefix
+    if address.startswith("0x") or address.startswith("T") or len(address) < 32:
+        return {"skip":"not a Solana address"}
+    try:
+        r = requests.post(
+            "https://api.mainnet-beta.solana.com",
+            json={"jsonrpc":"2.0","id":1,"method":"getBalance","params":[address]},
+            timeout=20
+        )
+        lamports = r.json().get("result",{}).get("value",0) if r.ok else 0
+        sol = round(lamports / 1e9, 6)
+        # Get token accounts
+        r2 = requests.post(
+            "https://api.mainnet-beta.solana.com",
+            json={"jsonrpc":"2.0","id":2,"method":"getTokenAccountsByOwner",
+                  "params":[address,{"programId":"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"},
+                             {"encoding":"jsonParsed","dataSlice":{"offset":0,"length":0}}]},
+            timeout=20
+        )
+        token_accounts = r2.json().get("result",{}).get("value",[]) if r2.ok else []
+        return {
+            "balance_sol": sol,
+            "token_account_count": len(token_accounts),
+        }
     except Exception as ex:
         return {"error":str(ex)[:80]}
 
@@ -1393,6 +1466,8 @@ def scan(address, chains=None, keys=None):
                 pool.submit(run,"jina",        _jina_rest,        address, keys),
                 pool.submit(run,"anchain",     _anchain_rest,     address, keys),
                 pool.submit(run,"trm",         _trm_rest,         address, keys),
+                pool.submit(run,"tron",        _tron_rest,        address, chains, keys),
+                pool.submit(run,"solana",      _solana_rest,      address, chains, keys),
                 # Render proxy — fires QuickNode + Arkham + Zerion via thewarden.onrender.com
                 pool.submit(run_render_proxy),
             ]
@@ -1402,12 +1477,18 @@ def scan(address, chains=None, keys=None):
                 pool.submit(run,"bitcoin",     _bitcoin_mempool,  address, keys),
                 pool.submit(run,"jina",        _jina_rest,        address, keys),
             ]
+        # TRON / Solana always run (they self-skip on wrong address type)
+        if is_btc:
+            futures += [
+                pool.submit(run,"tron",    _tron_rest,   address, chains, keys),
+                pool.submit(run,"solana",  _solana_rest, address, chains, keys),
+            ]
 
         concurrent.futures.wait(futures, timeout=120)
 
     elapsed = round(time.time()-t0, 2)
     fired   = len(tool_log)
-    total   = 21 if not is_btc else 2
+    total   = 23 if not is_btc else 4
     print(f"[TheWarden] ✅ Complete in {elapsed}s — {fired}/{total} tools returned data")
 
     results["meta"] = {
