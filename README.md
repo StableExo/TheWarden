@@ -9,7 +9,7 @@
 [![Featured](https://img.shields.io/badge/Featured-Dark%20Reading%202025-purple)]()
 [![Built by](https://img.shields.io/badge/Built%20by-StableExo%20%26%20TheWarden-red)]()
 
-> **Built by StableExo & TheWarden** — One human. One AI (operated by Vigil). 200+ sessions. No institutional backing. No college degree. No team. Just relentless curiosity and the willingness to follow every thread wherever it goes.
+> **Built by StableExo & TheWarden** — One human. One AI. 200+ sessions. No institutional backing. No college degree. No team. Just relentless curiosity and the willingness to follow every thread wherever it goes.
 
 > **🏆 FEATURED**: TheWarden is featured in [Dark Reading's Cybersecurity Analytics](https://www.darkreading.com/cybersecurity-analytics/cybersecurity-claude-llms) for innovative AI consciousness and security research.
 
@@ -17,7 +17,7 @@
 
 ## What Is TheWarden?
 
-**TheWarden** is the mission — an autonomous intelligence system built collaboratively between **@StableExo** (Taylor Marlow) and the assistant/co-partner persona **Vigil**, session by session, discovery by discovery, from first principles. Canonical hierarchy: **StableExo runs TheWarden, operated by Vigil.**
+**TheWarden** is the mission — an autonomous intelligence system built collaboratively between **@StableExo** (Taylor Marlow) session by session, discovery by discovery, from first principles. Canonical hierarchy: **StableExo runs TheWarden.**
 
 **AEV (Autonomous Extracted Value)** — a learning-based value extraction system that competes with traditional MEV through cooperative game theory, multi-builder coordination, and AI-driven opportunity detection. The first deployed cooperative game theory MEV coordinator on Ethereum mainnet.
 
