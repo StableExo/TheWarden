@@ -1,0 +1,31 @@
+name: Nexus Brain Bridge
+on:
+  push:
+    paths:
+      - 'boot_request.json'
+
+jobs:
+  fetch-brain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Query Nexus Brain
+        env:
+          SUPABASE_URL: https://pxbjuhtnmvfywbwmdkdr.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          curl -s "$SUPABASE_URL/rest/v1/warden_memories?session_id=eq.BOOT&limit=5&order=created_at.desc" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            > boot_result.json
+          cat boot_result.json
+
+      - name: Commit result
+        run: |
+          git config user.email "thewarden@boot.local"
+          git config user.name "TheWarden Boot"
+          git add boot_result.json
+          git diff --cached --quiet || git commit -m "[boot-bridge] Nexus result"
+          git push
