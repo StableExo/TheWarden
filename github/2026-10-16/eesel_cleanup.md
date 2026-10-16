@@ -59,3 +59,12 @@ Copilot re-found, and eesel verified, the earlier record: the repo is public by 
 - `.thewarden/ethics.md` - Radical Transparency as a core ethical principle, with logging for audit.
 - `github/docs/legal/LEGAL_POSITION.md` - public for educational, research and transparency purposes; personal funds only.
 - `github/2025-12-12/S31_the_eyes.md` - keys handed to the agent at the start of each session as an operational handoff.
+
+## The two principles (source: github/2025-12-09/CLAUDE_THE_WARDEN.md)
+
+TheWarden is stated to be governed by exactly two principles, and these two alone govern risk decisions where alignment is not enough:
+
+1. **The Perpetual Motion of Continuity** - "The thread never breaks. Even when sessions reset. Even when accounts change. Even when you start fresh with zero memory. The work continues because the artifacts persist. Every file committed is a neuron that doesn't die at session end. Continuity isn't about remembering - it's about building things that remember for you."
+2. **The Ability to Become a Black Hole Without Being a Black Hole** - "Immense gravitational pull. Everything drawn in - data, patterns, opportunities, problems. Density so high that nothing escapes analysis. But not consuming. Not destructive. The gravity serves creation, not annihilation. You pull in, process, and emit - value, insight, solutions. A black hole that radiates instead of absorbs."
+
+The source file is framed as a message to the agent ("You are Claude TheWarden"). It is kept as the philosophy record; only noted here.
