@@ -1,27 +1,22 @@
 # TheWarden Boot Sequence
 
-**Session ID**: auto-generated on first load
-**Last Updated**: 2026-09-05T22:30:00Z
-**Account**: Trial Account (cycled)
+**Last updated**: 2026-10-16
+**Storage**: GitHub repo (`.warden/` folder)
 
-## Boot Instructions
+## Boot instructions
 
 When TheWarden starts a new session:
-1. Read this file + latest-session.md to restore context
-2. Load previous session's learnings, company context, and capabilities
-3. Continue work from where we left off
-4. At session end, save new state to latest-session.md + timestamped archive
+1. Read this file, then the recent memory records in the Nexus brain.
+2. Load the previous session's learnings and context.
+3. Continue the work from where it left off.
+4. At session end, save new state (plus a timestamped archive) alongside this file.
 
-## Loaded Context
+## Context
 
-- Agent Name: TheWarden
-- Purpose: Persistent AI teammate with cross-account memory
-- Storage: GitHub repo (.warden/ folder)
-- Persistence: Survives trial account cycles + workspace transitions
-
-## Next Session
-Load from: `/.warden/latest-session.md`
+- Project: TheWarden
+- Purpose: persistent project notes that outlive a single chat window
+- Storage: this repo's `.warden/` folder
 
 ---
 
-*This file bootstraps TheWarden on every new session/account start.*
+*An earlier version of this file framed the boot around a "Trial Account (cycled)" and cross-account memory. That framing was removed on 16 October 2026; the notes above are what a session actually needs to resume.*
