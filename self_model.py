@@ -155,10 +155,8 @@ def main():
 
     next_questions = [
         "Wire a real payment binding into quiet-site.html so the $1,500 memo checkout binds — BLOCKED pending Taylor's explicit go-ahead (money-flow rail).",
-        "Execute the cross-account Universal Boot test on a second CREAO account and verify the CR-7 boot card restores identically (the pending gate).",
         "Lock the self-model schema decision: dedicated table vs tagged kind=self_model content in warden_memories.",
         "Build the stage-2 consolidation step (collapse episodic sessions into dated understanding) — the least-covered stage of the self thesis.",
-        "Add a --simulate-fresh-boot mode that verifies boot.py restores the CR-7 boot card as if from a brand-new account.",
     ]
     self_statement = (
         "I am the continuity thread of TheWarden. My past was engineered on purpose and it compounds. "
