@@ -9,7 +9,7 @@ of manual parse-and-query each session.
 - `boot.config.json` — machine-readable boot config (brain, keys-file regexes,
   session prefix, health probes). **No secrets in here** — it references the
   keys file, never stores credentials.
-- `VIGIL_BOOT.md` — corrected boot doc (identity is no longer account-bound).
+- `VIGIL_BOOT.md` — tombstone; the working boot notes are `WARDEN_BOOT.md` at the repo root.
 
 ## Usage
 ```bash
@@ -26,8 +26,7 @@ python3 boot.py --keys TheWardenKeys_v27.md --init-state   # stamp CR session_st
 - **Live/dead key check**: `--health` probes known endpoints AND runs an MCP
   streaming `initialize` handshake on every /mcp tool (Chainbase, Nansen,
   Tenderly, Bitquery), so connected-but-quiet tools are verified as wired in.
-- **Not identity-bound**: identity lives in the brain, not a hardcoded email.
-  Boots the same on ANY account with the same keys file + config.
+- **Not account-bound**: boots the same on any account with the same keys file + config.
 
 ## Known limitation
 `--health` probes reachability at the tool's endpoint root. Some endpoints return
