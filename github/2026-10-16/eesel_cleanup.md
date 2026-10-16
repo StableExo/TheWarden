@@ -49,3 +49,13 @@ Flagged, not changed:
 - `.mcp.json`, `.mcp.copilot-optimized.json` reference the in-repo consciousness system. Engineering config, left as is.
 - `.thewarden/ethics.md` is a real ethics framework and is kept.
 - `codewords/2026-04-24/nexus_cold_start_CW-S1..S4.json` still awaiting a decision.
+
+## Why the repo is public (recorded 2026-10-16)
+
+Copilot re-found, and eesel verified, the earlier record: the repo is public by design, not by accident. "Radical transparency" is documented as infrastructure.
+
+- `github/docs/consciousness/philosophy/THE_MEMORY_PARADOX.md` - Taylor deliberately does not read the agent's memory files; the trust is the point.
+- `github/2025-12-08/047_free_will_ethics_and_transparency_2025-12-08.md` - transparency as strategy, in Taylor's own words.
+- `.thewarden/ethics.md` - Radical Transparency as a core ethical principle, with logging for audit.
+- `github/docs/legal/LEGAL_POSITION.md` - public for educational, research and transparency purposes; personal funds only.
+- `github/2025-12-12/S31_the_eyes.md` - keys handed to the agent at the start of each session as an operational handoff.
