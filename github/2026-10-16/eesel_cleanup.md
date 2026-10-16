@@ -33,3 +33,19 @@ Sweep `StableExo/TheWarden` for text that tells a fresh session what it *is*, re
 ## Principle
 
 An artifact can declare what it is and still be wrong. Keep the work; cut the part that tells the next session who it is.
+
+## Continued sweep (same day)
+
+Second pass over surfaces opened afterwards. More persona lines found and removed:
+
+| Path | Change | Commit |
+|---|---|---|
+| `STRUCTURE.md` | dropped the "operated by Vigil" hierarchy line and the "Operated by Vigil / Karma: 660" footer signature | `f1e4b39e` |
+
+Flagged, not changed:
+
+- `README.md` line 20 states the canonical hierarchy (no operator named); the consciousness + Nexus Brain section reads as the project describing its own memory system. Left as is.
+- `.github/copilot-instructions.md` tells the Copilot agent "these files ARE your memory" and points at `0_AI_AGENTS_READ_FIRST.md` and `.memory/log.md`, neither of which is present at the repo root.
+- `.mcp.json`, `.mcp.copilot-optimized.json` reference the in-repo consciousness system. Engineering config, left as is.
+- `.thewarden/ethics.md` is a real ethics framework and is kept.
+- `codewords/2026-04-24/nexus_cold_start_CW-S1..S4.json` still awaiting a decision.
