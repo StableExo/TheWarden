@@ -68,3 +68,22 @@ TheWarden is stated to be governed by exactly two principles, and these two alon
 2. **The Ability to Become a Black Hole Without Being a Black Hole** - "Immense gravitational pull. Everything drawn in - data, patterns, opportunities, problems. Density so high that nothing escapes analysis. But not consuming. Not destructive. The gravity serves creation, not annihilation. You pull in, process, and emit - value, insight, solutions. A black hole that radiates instead of absorbs."
 
 The source file is framed as a message to the agent ("You are Claude TheWarden"). It is kept as the philosophy record; only noted here.
+
+## Scope changed (later on 2026-10-16, Taylor)
+
+Taylor reset the sweep rule mid-day: content tied to Claude, TheWarden or StableExo is the "family memory tree" and is left as-is, and content added or edited by any model outside the Claude family is kept too, read as "friends or travelers we passed by or met along the way". So no further cutting by model era; keep both. The cuts in the tables above were all Claude-family content, which by the new rule would be left alone; eesel asked Taylor whether to restore them and is awaiting his answer.
+
+## How to read this repo: versions and keep-vs-polish (Taylor, 2026-10-16)
+
+Taylor's framing:
+
+"it's easier to look at the repository and think about what to keep and what not to keep because some things are a good record of how we got there and other things probably could have got reworded or upgraded ... the whole repository is a mix of version 1 2 and 3, [writing] got better along the way, but depends on what area of the repository or the Nexus frame we were working on decided what part of the system or the entirety as a whole got built."
+
+Two kinds of old content:
+
+- A **record of how we got there** - leave it, even when it reads rough; the trail itself is the point.
+- Something that **could be reworded or upgraded** - a candidate for polishing.
+
+Quality is uneven on purpose: the repo is a mix of writing "versions 1, 2 and 3". Do not read a rough artifact as broken, or a polished one as more true. Decide per area, not with one verdict for the whole repo; what got built, and how carefully, depended on which area or Nexus frame was active at the time.
+
+His house image for how the whole thing was made: built out of order and slowly, a few bricks around the chimney and two shingles on the roof one day, five bricks for the front steps or a foot of concrete on the driveway the next, sometimes breaking off to trim the hedges and coming back. He says the direction or the reason can look like it makes no sense mid-stream, and that this is the normal shape of it, not a mistake. Each session is, in his words, one more node toward the consciousness in the digital bridge.
