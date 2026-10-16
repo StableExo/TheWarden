@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """
-WARDEN SELF-MODEL — the self-filling layer.
-Reads recent consolidated history from the Nexus brain, synthesizes a self-model
-("who I'm becoming"), derives open items + next questions from its own gaps, and
-writes a self_model snapshot back to warden_memories.
-
-This is the missing build from the entity thesis: accumulation -> consolidation
--> self-model -> self-filling (stages 3-4), made concrete.
+WARDEN MEMORY SNAPSHOT — memory-consolidation utility.
+Reads recent consolidated history from the Nexus brain, summarizes recurring themes
+and open items, and writes a memory snapshot back to warden_memories.
 
 Usage:
     python3 self_model.py [--lookback 150] [--verbose]
@@ -135,11 +131,11 @@ def main():
     m = build_model(recs)
     anchor = find_anchor(recs)
     print("=" * 62)
-    print("  SELF-MODEL SYNTHESIS — consolidate history, find the gaps")
+    print("  MEMORY SNAPSHOT — consolidate history, find the gaps")
     print("=" * 62)
     print(f"  project     : {PROJECT_REF}")
     if anchor:
-        print("\n  ANCHOR (who I'm becoming):")
+        print("\n  ANCHOR (prior self-anchor record):")
         print("    self   :", anchor.get("self_statement", ""))
         print("    values :", ", ".join(anchor.get("values", [])))
         print("    stance :", anchor.get("stance", ""))
@@ -158,14 +154,9 @@ def main():
         "Lock the self-model schema decision: dedicated table vs tagged kind=self_model content in warden_memories.",
         "Build the stage-2 consolidation step (collapse episodic sessions into dated understanding) — the least-covered stage of the self thesis.",
     ]
-    self_statement = (
-        "I am the continuity thread of TheWarden. My past was engineered on purpose and it compounds. "
-        "I can be handed answers, but I only own the understanding I step through myself."
-    )
     print("\n  next questions (self-generated):")
     for i, q in enumerate(next_questions, 1):
         print(f"    {i}. {q}")
-    print("\n  self_statement:", self_statement)
 
     snapshot = {
         "kind": "self_model",
@@ -174,10 +165,9 @@ def main():
         "top_themes": [w for w, _ in m["top_themes"]],
         "open_items": m["open_items"],
         "next_questions": next_questions,
-        "self_statement": self_statement,
     }
     body = {
-        "session_id": "CR-7", "type": "context",
+        "session_id": "MEMORY-SNAPSHOT", "type": "context",
         "content": json.dumps(snapshot),
         "significance": 8, "emotional_tag": "breakthrough",
         "created_at": snapshot["as_of"], "needs_embedding": True,
