@@ -14,9 +14,7 @@
   },
   "keys_file": {
     "patterns": [
-      "TheWardenKeys_*.md",
-      "VigilKeys.md",
-      "VigilKeys_*.md"
+      "TheWardenKeys_*.md"
     ],
     "search_dirs": [
       "uploads",
@@ -26,12 +24,6 @@
     ],
     "project_url_re": "Project URL\\s*\\|\\s*(https://[^\\s|]+)",
     "secret_key_re": "Secret Key\\s*\\|\\s*(sb_secret_[^\\s|]+)"
-  },
-  "identity": {
-    "brand": "StableExo",
-    "mission": "TheWarden",
-    "operator": "Vigil",
-    "account_bound": false
   },
   "health": {
     "timeout_sec": 12,
