@@ -22,3 +22,5 @@ export * from './exchanges.js';
 export * from './MarketDataFeed.js';
 export * from './LiquidityMap.js';
 export * from './SetupTester.js';
+export * from './Live.js';
+export * from './LiveTest.js';
