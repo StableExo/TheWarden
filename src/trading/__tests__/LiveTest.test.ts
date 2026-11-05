@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fireState, fireLine, firingBoard, formatBoard } from '../LiveTest.js';
+import { fireState, fireLine, firingBoard, formatBoard, lightFor, boardLight, formatLights } from '../LiveTest.js';
 import type { Candle, SetupSpec } from '../types.js';
 
 function bar(time: number, high: number, low: number, close: number, open = close): Candle {
@@ -116,5 +116,57 @@ describe('board and formatting', () => {
     const text = formatBoard(firingBoard(s, [breakoutLong(20)]));
     expect(text).toContain('break-20-high');
     expect(text).toContain('fired');
+  });
+});
+
+describe('traffic lights', () => {
+  it('maps each state to a colour', () => {
+    expect(lightFor('fired')).toBe('green');
+    expect(lightFor('at-level')).toBe('yellow');
+    expect(lightFor('approaching')).toBe('yellow');
+    expect(lightFor('far')).toBe('red');
+    expect(lightFor('waiting')).toBe('red');
+  });
+
+  it('puts the light on each rule line', () => {
+    const s = thenFlat(20, 100);
+    s.push(bar(20 * 3_600_000, 105, 99, 104));
+    expect(fireLine(s, breakoutLong(20)).light).toBe('green');
+
+    const far = thenFlat(20, 100);
+    far.push(bar(20 * 3_600_000, 91, 89, 90));
+    expect(fireLine(far, breakoutLong(20)).light).toBe('red');
+  });
+
+  it('reports the most urgent light as the board light', () => {
+    const s = thenFlat(20, 100);
+    s.push(bar(20 * 3_600_000, 91, 89, 90)); // long far, short fired
+    const board = firingBoard(s, [
+      breakoutLong(20),
+      { ...breakoutLong(20), name: 'break-20-low', direction: 'short' },
+    ]);
+    expect(boardLight(board)).toBe('green');
+  });
+
+  it('is red when no rule is anywhere near its level', () => {
+    const s = thenFlat(20, 100);
+    s.push(bar(20 * 3_600_000, 101, 99, 100));
+    const spec: SetupSpec = {
+      name: 'touch-200',
+      direction: 'long',
+      trigger: { kind: 'touch', level: 200 },
+      stopPct: 0.012,
+      horizonBars: 24,
+    };
+    expect(boardLight(firingBoard(s, [spec]))).toBe('red');
+    expect(boardLight([])).toBe('red');
+  });
+
+  it('formats a lit board without throwing', () => {
+    const s = thenFlat(20, 100);
+    s.push(bar(20 * 3_600_000, 105, 99, 104));
+    const text = formatLights(firingBoard(s, [breakoutLong(20)]));
+    expect(text).toContain('GREEN');
+    expect(text).toContain('break-20-high');
   });
 });
