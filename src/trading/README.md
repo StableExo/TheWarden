@@ -89,6 +89,88 @@ the market must trade through to fire the rule from here.
 | `{ kind: 'reclaim', period }` | close crosses back over an EMA | that EMA |
 | `{ kind: 'touch', level }` | price trades at a fixed level | that level |
 
+## Live context: funding, open interest, latency (read-only)
+
+`Live.ts` reads the two numbers that decide what *holding* a perp costs, plus how
+fresh each venue's clock is. It is **data-in only**: there is no order, cancel,
+position or key handling in the file, and there should never be. It reads public
+endpoints and nothing else.
+
+```ts
+import { allVenueStats, probeAll } from './trading/Live';
+
+const stats = await allVenueStats();   // funding + OI, failures skipped
+const latency = await probeAll();      // fastest first, unreachable last
+
+for (const s of stats) console.log(s.venue, s.fundingRate, s.openInterestUsd);
+console.log('fastest right now:', latency[0].venue, latency[0].ageMs, 'ms');
+```
+
+`fundingRate` is a fraction of notional per interval (`1e-4` = 1bp).
+`ageMs` is the gap between the venue's own clock and our receive time: a
+**round-trip upper bound**, not a one-way figure (it includes request travel, the
+venue's processing and the reply travel).
+
+Venues wired in: OKX, Deribit, KuCoin, MEXC, HTX, Bitget. All six are
+derivative venues, so each can express both directions (a perp is long/short);
+the spot feeds in `exchanges.ts` are long-only.
+
+### Latency measured from this host (2026-11-05, one sample each)
+
+| venue | ageMs (round-trip upper bound) |
+|---|---|
+| Coinbase | ~90 |
+| Deribit | ~91 |
+| MEXC | ~121 |
+| KuCoin | ~140 |
+| Bitget | ~146 |
+| OKX | ~150 |
+| HTX | ~233 |
+| Kraken | ~1500 (whole-second clock, coarse) |
+
+One sample is a hint, not a ranking. Route choice should be made on a repeated
+probe (see next steps), not a single reading. Kraken's number is coarse because
+its public time endpoint resolves to the whole second.
+
+## Live firing board (read-only)
+
+`LiveTest.ts` puts the backtest rules on the newest tape: each rule gets the
+price it is waiting for, how far away that is right now, and its historical
+frequency, sorted nearest-to-firing first, with the live funding / OI / latency
+context attached.
+
+```ts
+import { firingBoard, firingReport, formatBoard } from './trading/LiveTest';
+
+const board = firingBoard(series, specs);       // series = newest bars, last = now
+console.log(formatBoard(board));
+//   fired        short break-20-low     trigger 75431.20  dist -0.42%  prob 25.0% (n=32)
+//   approaching  long  break-20-high    trigger 80900.00  dist  0.65%  prob 48.6% (n=37)
+
+const report = await firingReport(series, specs, ['okx', 'deribit']);
+for (const s of report.context) console.log(s.venue, s.fundingRate, s.openInterestUsd, s.ageMs);
+```
+
+States: `fired` (the market just traded through the level), `at-level` (within
+0.1%), `approaching` (within 1%), `far`, `waiting` (not enough history). The
+level comes from bars *before* the last one, so "fired" means the newest bar
+crossed a line that was already set.
+
+**This is a monitor, not an executor.** `LiveTest.ts` reads a candle series and
+prints what is firing. There is no order, cancel, size or key handling in it, and
+there should never be. Every decision to act is a person's.
+
+Sample board on BTC hourly bars (2026-11-05, last close 75,925.79):
+
+```
+approaching  short  break-20-low     0.65%
+approaching  short  break-50-low     0.65%
+far          short  lose-EMA20      -3.81%
+far          long   reclaim-EMA20    3.81%
+far          long   break-20-high    6.53%
+far          long   break-50-high    6.86%
+```
+
 ## Honest limitations
 
 - Probability is in-sample frequency. It does not walk forward, and it does not
