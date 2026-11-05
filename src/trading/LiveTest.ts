@@ -25,6 +25,25 @@ const STATE_RANK: Record<FireState, number> = {
   waiting: 4,
 };
 
+/**
+ * The traffic light for one rule.
+ *
+ * - `green`  the market has traded through the level on the newest bar.
+ * - `yellow` it is at the level or approaching (within ~1%).
+ * - `red`    it is far away, or the rule lacks the history to be evaluated.
+ *
+ * The light reports how close the RULE'S OWN stated trigger is to firing. It is
+ * not a view on which way price will go, and green is not a promise: it says the
+ * level was crossed, nothing about what happens next.
+ */
+export type Light = 'green' | 'yellow' | 'red';
+
+export function lightFor(state: FireState): Light {
+  if (state === 'fired') return 'green';
+  if (state === 'at-level' || state === 'approaching') return 'yellow';
+  return 'red';
+}
+
 export interface FireLine {
   name: string;
   direction: 'long' | 'short';
@@ -38,6 +57,8 @@ export interface FireLine {
    */
   distancePct: number | null;
   state: FireState;
+  /** The traffic light derived from `state`. */
+  light: Light;
   /** Historical frequency, from replay. Evidence, not a forecast. */
   probability: number;
   samples: number;
@@ -117,6 +138,7 @@ export function fireLine(series: Candle[], spec: SetupSpec, opts: TesterOptions 
     lastPrice: series[series.length - 1]?.close ?? NaN,
     distancePct,
     state,
+    light: lightFor(state),
     probability: stats.probability,
     samples: stats.samples,
     expectancyR: stats.expectancyR,
@@ -194,6 +216,30 @@ export function formatBoard(lines: FireLine[]): string {
         `dist ${pct(l.distancePct)}`.padEnd(16),
         `prob ${prob}`,
       ].join('');
+    })
+    .join('\n');
+}
+
+const LIGHT_RANK: Record<Light, number> = { green: 0, yellow: 1, red: 2 };
+
+/**
+ * The overall light for a board: the most urgent one present, so a single green
+ * (or yellow) rule lights the board even while everything else is red.
+ */
+export function boardLight(lines: FireLine[]): Light {
+  let best: Light = 'red';
+  for (const l of lines) if (LIGHT_RANK[l.light] < LIGHT_RANK[best]) best = l.light;
+  return best;
+}
+
+/** One line per rule, prefixed with its traffic light. */
+export function formatLights(lines: FireLine[]): string {
+  const label: Record<Light, string> = { green: 'GREEN ', yellow: 'YELLOW', red: 'RED   ' };
+  return lines
+    .map((l) => {
+      const dist = l.distancePct === null ? '—' : `${(l.distancePct * 100).toFixed(2)}%`;
+      const prob = `${(l.probability * 100).toFixed(1)}% (n=${l.samples})`;
+      return `${label[l.light]}  ${l.direction.padEnd(5)} ${l.name.padEnd(20)} dist ${dist.padEnd(8)} prob ${prob}`;
     })
     .join('\n');
 }
