@@ -171,6 +171,32 @@ far          long   break-20-high    6.53%
 far          long   break-50-high    6.86%
 ```
 
+### Traffic lights
+
+Each rule carries a light derived from its state, and `boardLight` gives one for
+the whole board:
+
+| light | state | meaning |
+|---|---|---|
+| green | `fired` | the newest bar traded through the level |
+| yellow | `at-level`, `approaching` | at the level or within ~1% |
+| red | `far`, `waiting` | far away, or not enough history |
+
+```ts
+import { boardLight, formatLights } from './trading/LiveTest';
+
+console.log(boardLight(board));     // 'yellow' — the most urgent light present
+console.log(formatLights(board));
+// YELLOW  short break-20-low       dist 0.65%   prob 25.0% (n=32)
+// YELLOW  short break-50-low       dist 0.65%   prob 15.8% (n=19)
+// RED     long  break-20-high      dist 6.53%   prob 48.6% (n=37)
+```
+
+The light reports how close the **rule's own stated trigger** is. It is not a
+view on direction, and green is not a promise: it says the level was crossed,
+nothing about what comes next. The historical frequency rides on the same line
+so a green light is never read on its own.
+
 ## Honest limitations
 
 - Probability is in-sample frequency. It does not walk forward, and it does not
