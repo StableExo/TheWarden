@@ -3,8 +3,9 @@
  *
  * Environment loading has been unified onto utils/supabaseEnvLoader, which is
  * now the single source of truth. This module is retained only so that existing
- * imports of `initializeEnvironment` keep working; it delegates directly to the
- * canonical loader instead of duplicating the Supabase logic.
+ * imports (`initializeEnvironment`, `loadEnvFromSupabaseSync`) keep working; it
+ * delegates directly to the canonical loader instead of duplicating Supabase
+ * logic.
  */
 export * from './supabaseEnvLoader';
 import { loadEnvFromSupabase } from './supabaseEnvLoader';
@@ -26,4 +27,14 @@ export async function initializeEnvironment(): Promise<void> {
         [...result.errors, ...result.missingRequired].join('; ')
     );
   }
+}
+
+/**
+ * @deprecated Environment loading is asynchronous. Retained as a no-op so
+ * existing callers still compile; use `loadEnvFromSupabase()` instead.
+ */
+export function loadEnvFromSupabaseSync(): void {
+  console.warn(
+    '[loadEnvFromSupabase] loadEnvFromSupabaseSync is deprecated and a no-op; use loadEnvFromSupabase().'
+  );
 }
