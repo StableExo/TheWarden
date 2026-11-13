@@ -220,10 +220,13 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
       pairKey: borrowToken,
       route: path.steps.map((s: any) => `${s.tokenIn}>${s.tokenOut}`),
     }).catch(() => undefined);
-    if (!guard.allowLiveExecution) {
-      const reason = `GovernedExecution blocked live execution: ${guard.reason}`;
+    if (guard.requiresApproval) {
+      const reason = `GovernedExecution held live execution (approval required): ${guard.reason}`;
       logger.warn(`[IntegratedOrchestrator] ${reason}`);
       throw new Error(reason);
+    }
+    if (guard.dryRun) {
+      logger.info(`[IntegratedOrchestrator] DRY_RUN active (${guard.reason}); proceeding to guarded simulation`);
     }
 
     logger.info(
@@ -854,8 +857,8 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
     const { evaluateGuardrails, enqueueOpportunity } = await import('./GovernedExecution');
     const guard = await evaluateGuardrails();
     await enqueueOpportunity(context.opportunity).catch(() => undefined);
-    if (!guard.allowLiveExecution) {
-      logger.warn(`[IntegratedOrchestrator] Execution blocked by guardrails: ${guard.reason}`);
+    if (guard.requiresApproval) {
+      logger.warn(`[IntegratedOrchestrator] Execution held for approval: ${guard.reason}`);
       return {
         success: false,
         stage: ExecutionState.EXECUTING,
@@ -872,6 +875,9 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
         ],
         warnings: [guard.reason],
       } as unknown as CheckpointResult;
+    }
+    if (guard.dryRun) {
+      logger.info(`[IntegratedOrchestrator] DRY_RUN active (${guard.reason}); proceeding to guarded simulation`);
     }
 
     // Phase 3: Route through V3 executor via UserOps if available

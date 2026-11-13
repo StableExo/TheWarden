@@ -210,3 +210,54 @@ export async function evaluateGuardrails(
     return failSafe;
   }
 }
+
+
+export interface SimulationOutcome {
+  gasEstimate?: string;
+  wouldSucceed: boolean;
+  error?: string;
+}
+
+/**
+ * Mark the queue row for `idempotencyKey` as `completed` with simulation
+ * metadata and log a `simulation_result` event. Used while DRY_RUN is active so
+ * we still collect real telemetry without broadcasting.
+ */
+export async function recordSimulationResult(
+  idempotencyKey: string,
+  result: SimulationOutcome
+): Promise<void> {
+  const supabase = getGovernanceClient();
+  if (!supabase) return;
+  try {
+    const { data } = await supabase
+      .from('execution_queue')
+      .select('id,payload')
+      .eq('idempotency_key', idempotencyKey)
+      .maybeSingle();
+
+    const sim = {
+      simulated: true,
+      gasEstimate: result.gasEstimate ?? null,
+      wouldSucceed: result.wouldSucceed,
+      error: result.error ?? null,
+      at: new Date().toISOString(),
+    };
+    const payload = { ...((data?.payload as Record<string, unknown>) ?? {}), simulation: sim };
+
+    await supabase
+      .from('execution_queue')
+      .update({ status: 'completed', completed_at: new Date().toISOString(), payload })
+      .eq('idempotency_key', idempotencyKey);
+
+    await supabase.from('cognitive_ledger').insert({
+      event_type: 'simulation_result',
+      actor: 'thewarden-execution',
+      payload: { idempotencyKey, ...sim },
+    });
+  } catch (err) {
+    logger.warn(
+      `[GovernedExecution] recordSimulationResult failed: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+}
