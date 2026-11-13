@@ -214,6 +214,18 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
       throw new Error('[IntegratedOrchestrator] V3 executor not initialized — cannot execute from event-driven pipeline');
     }
 
+    const { evaluateGuardrails, enqueueOpportunity } = await import('./GovernedExecution');
+    const guard = await evaluateGuardrails();
+    await enqueueOpportunity({
+      pairKey: borrowToken,
+      route: path.steps.map((s: any) => `${s.tokenIn}>${s.tokenOut}`),
+    }).catch(() => undefined);
+    if (!guard.allowLiveExecution) {
+      const reason = `GovernedExecution blocked live execution: ${guard.reason}`;
+      logger.warn(`[IntegratedOrchestrator] ${reason}`);
+      throw new Error(reason);
+    }
+
     logger.info(
       `[IntegratedOrchestrator] Event-driven execution: ` +
       `token=${borrowToken.substring(0, 10)}... amount=${borrowAmount} steps=${path.steps.length}`
@@ -838,6 +850,29 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
    */
   private async executeStage(context: ExecutionContext): Promise<CheckpointResult> {
     logger.info(`[IntegratedOrchestrator] Execution stage for ${context.id}`);
+
+    const { evaluateGuardrails, enqueueOpportunity } = await import('./GovernedExecution');
+    const guard = await evaluateGuardrails();
+    await enqueueOpportunity(context.opportunity).catch(() => undefined);
+    if (!guard.allowLiveExecution) {
+      logger.warn(`[IntegratedOrchestrator] Execution blocked by guardrails: ${guard.reason}`);
+      return {
+        success: false,
+        stage: ExecutionState.EXECUTING,
+        timestamp: Date.now(),
+        context,
+        errors: [
+          {
+            timestamp: Date.now(),
+            stage: ExecutionState.EXECUTING,
+            errorType: 'GUARDRAIL_BLOCKED',
+            message: guard.reason,
+            recoverable: true,
+          },
+        ],
+        warnings: [guard.reason],
+      } as unknown as CheckpointResult;
+    }
 
     // Phase 3: Route through V3 executor via UserOps if available
     if (this.v3Executor) {

@@ -425,6 +425,14 @@ export class FlashSwapV3Executor {
     borrowAmount: bigint,
     path: UniversalSwapPath
   ): Promise<ExecutionResult> {
+    const { evaluateGuardrails } = await import('./GovernedExecution');
+    const guard = await evaluateGuardrails();
+    if (!guard.allowLiveExecution) {
+      const reason = `GovernedExecution blocked live execution: ${guard.reason}`;
+      logger.warn(`[FlashSwapV3Executor] ${reason}`);
+      throw new Error(reason);
+    }
+
     if (this.userOpEnabled) {
       return this.executeViaUserOp(borrowToken, borrowAmount, path);
     }
