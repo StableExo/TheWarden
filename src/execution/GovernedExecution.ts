@@ -83,8 +83,9 @@ export function buildIdempotencyKey(opportunity: OpportunityInput): string {
  * Insert the opportunity into `execution_queue` and log a `proposed_trade`
  * event to `cognitive_ledger`.
  */
-export async function enqueueOpportunity(opportunity: OpportunityInput): Promise<EnqueueResult> {
-  const idempotencyKey = buildIdempotencyKey(opportunity);
+export async function enqueueOpportunity(opportunity: unknown): Promise<EnqueueResult> {
+  const op = (opportunity ?? {}) as OpportunityInput;
+  const idempotencyKey = buildIdempotencyKey(op);
   const supabase = getGovernanceClient();
   if (!supabase) return { queued: false, idempotencyKey, reason: 'supabase_unavailable' };
 
@@ -94,8 +95,8 @@ export async function enqueueOpportunity(opportunity: OpportunityInput): Promise
       .upsert(
         {
           kind: 'arbitrage',
-          target: opportunity.pairKey ?? opportunity.pool ?? null,
-          payload: opportunity as unknown as Record<string, unknown>,
+          target: op.pairKey ?? op.pool ?? null,
+          payload: op as unknown as Record<string, unknown>,
           status: 'pending',
           idempotency_key: idempotencyKey,
         },
@@ -106,7 +107,7 @@ export async function enqueueOpportunity(opportunity: OpportunityInput): Promise
 
     if (error) throw error;
 
-    await logLedgerEvent('proposed_trade', opportunity, idempotencyKey);
+    await logLedgerEvent('proposed_trade', op, idempotencyKey);
     return { queued: true, id: data?.id as string | undefined, idempotencyKey };
   } catch (err) {
     logger.error(
