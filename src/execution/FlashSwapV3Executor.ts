@@ -428,7 +428,10 @@ export class FlashSwapV3Executor {
     const { evaluateGuardrails } = await import('./GovernedExecution');
     const guard = await evaluateGuardrails();
     if (!guard.allowLiveExecution) {
-      const reason = `GovernedExecution blocked live execution: ${guard.reason}`;
+      if (guard.dryRun) {
+        return this.simulateArbitrage(borrowToken, borrowAmount, path, guard.reason);
+      }
+      const reason = `GovernedExecution held live execution (approval required): ${guard.reason}`;
       logger.warn(`[FlashSwapV3Executor] ${reason}`);
       throw new Error(reason);
     }
@@ -438,6 +441,55 @@ export class FlashSwapV3Executor {
     }
     logger.warn('Executing via direct tx (legacy). Enable UserOp for gasless execution.');
     return this.executeDirectTx(borrowToken, borrowAmount, path);
+  }
+
+  /**
+   * DRY_RUN path: run the full pre-flight estimateGas / revert simulation but
+   * never sign or broadcast. Records the outcome to execution_queue and
+   * cognitive_ledger so we still get real telemetry.
+   */
+  private async simulateArbitrage(
+    borrowToken: string, borrowAmount: bigint, path: UniversalSwapPath, reason: string
+  ): Promise<ExecutionResult> {
+    const startTime = Date.now();
+    const { enqueueOpportunity, recordSimulationResult } = await import('./GovernedExecution');
+    const enq = await enqueueOpportunity({
+      pairKey: borrowToken,
+      route: path.steps.map((s: any) => `${s.tokenIn}>${s.tokenOut}`),
+    });
+
+    let gasEstimate: bigint | undefined;
+    let wouldSucceed = false;
+    let simError: string | undefined;
+    try {
+      gasEstimate = await this.contract.executeArbitrage.estimateGas(
+        borrowToken, borrowAmount, path, 0, '0x0000000000000000000000000000000000000000'
+      );
+      wouldSucceed = true;
+      logger.info(`[DryRun] Simulation OK: gas=${gasEstimate.toString()} time=${Date.now() - startTime}ms (${reason})`);
+    } catch (error: any) {
+      wouldSucceed = false;
+      simError = error?.message ?? String(error);
+      logger.warn(`[DryRun] Simulation would revert: ${simError}`);
+    }
+
+    await recordSimulationResult(enq.idempotencyKey, {
+      gasEstimate: gasEstimate?.toString(),
+      wouldSucceed,
+      error: simError,
+    });
+
+    return {
+      success: false,
+      source: FlashLoanSource.AAVE,
+      borrowAmount,
+      feePaid: 0n,
+      grossProfit: 0n,
+      netProfit: 0n,
+      gasUsed: gasEstimate,
+      error: `DRY_RUN simulated (${wouldSucceed ? 'would succeed' : 'would revert'}): ${simError ?? 'ok'}`,
+      executionMethod: this.userOpEnabled ? 'userop' : 'direct',
+    } as unknown as ExecutionResult;
   }
 
   /**
