@@ -13,5 +13,6 @@ buildCommand = "npm install"
 #   PRIVATE_KEY         = <EOA private key>
 #   CDP_PAYMASTER_URL   = https://api.developer.coinbase.com/rpc/v1/base/EeBuC9EkcVpsMwYSiiC1TUKwFTWJVzD1
 #   CHAINSTACK_HTTPS    = https://base-mainnet.core.chainstack.com/c726a0ad837354cad25d58bd89c7ac57
-startCommand = "node scripts/deploy-countersweeper.mjs"
+# Boots the continuous governed Warden wedge. (Was: one-shot CounterSweeper deploy.)
+startCommand = "npm start"
 restartPolicyType = "ON_FAILURE"
