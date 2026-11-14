@@ -11,6 +11,28 @@
  *                               (defaults to the FlashSwap V3 address when set)
  *   CDP_POLICY_MAX_ETH          max ETH value per transaction, in ETH (default 0.05)
  *
+ * Covered operations (docs.cdp.coinbase.com -> policy engine):
+ *   signEvmTransaction / sendEvmTransaction
+ *     ethValue cap + evmAddress allowlist. evmAddress compares the transaction's
+ *     `to`, so allowlisting the router is what stops a drain to an unknown contract.
+ *   prepareUserOperation / sendUserOperation
+ *     evmAddress allowlist only. A CDP smart-account UserOp is its own operation,
+ *     not an EVM transaction, and only `evmAddress` is available for it (matched
+ *     against the operation's `to` fields). There is no per-UserOp ethValue or
+ *     evmData criterion.
+ *
+ * The signEvmHash boundary (read this before moving funds):
+ *   Raw 32-byte hash signing is the `signEvmHash` operation, and it accepts NO
+ *   criteria at all. CDP rejects a request when a rule targets the operation and
+ *   nothing matches, so the only way to constrain signEvmHash is a blanket reject,
+ *   which would break the path. The enclave therefore cannot enforce a value or
+ *   target limit on a raw hash signature. If the Base Smart Account owner signature
+ *   (toCoinbaseSmartAccount signs a UserOp hash) lands on signEvmHash rather than on
+ *   a UserOp operation, the smart account has no enclave-level cap. So: keep only
+ *   active working capital in the Base Smart Account, and keep idle funds in a
+ *   policy-capped EOA treasury wallet, which the evmAddress + ethValue rules below
+ *   do cover.
+ *
  * The USD cap rule is emitted only when CDP_POLICY_MAX_USD_CENTS is set, because
  * netUSDChange is evaluated on mainnet transactions only.
  */
@@ -48,6 +70,12 @@ async function main(): Promise<void> {
     { type: 'evmAddress', addresses: allowedTargets, operator: 'in' },
   ];
 
+  // UserOps take only evmAddress, so the allowlist is the whole of the
+  // enclave-level control on the smart-account path.
+  const userOpCriteria: Record<string, unknown>[] = [
+    { type: 'evmAddress', addresses: allowedTargets, operator: 'in' },
+  ];
+
   if (process.env.CDP_POLICY_MAX_USD_CENTS) {
     // Mainnet-only criterion. Confirm it applies to signEvmTransaction for server
     // wallets on your first live run: the documented netUSDChange samples use
@@ -64,7 +92,7 @@ async function main(): Promise<void> {
   const policy = await cdp.policies.createPolicy({
     policy: {
       scope: 'project',
-      description: `Warden enclave policy: <=${maxEth} ETH per tx, ${allowedTargets.length} allowed target(s)`,
+      description: `Warden enclave policy: <=${maxEth} ETH per tx, ${allowedTargets.length} allowed target(s), tx + UserOp`,
       rules: [
         {
           action: 'accept',
@@ -75,6 +103,18 @@ async function main(): Promise<void> {
           action: 'accept',
           operation: 'sendEvmTransaction',
           criteria,
+        },
+        // These fail closed: once a rule targets prepareUserOperation /
+        // sendUserOperation, a UserOp whose target is not allowlisted is rejected.
+        {
+          action: 'accept',
+          operation: 'prepareUserOperation',
+          criteria: userOpCriteria,
+        },
+        {
+          action: 'accept',
+          operation: 'sendUserOperation',
+          criteria: userOpCriteria,
         },
       ],
     },
