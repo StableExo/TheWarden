@@ -20,13 +20,13 @@
  */
 import {
   AbstractSigner,
-  TransactionRequest,
-  TransactionResponse,
-  TypedDataDomain,
-  TypedDataField,
   hexlify,
   type JsonRpcProvider,
   type Provider,
+  type TransactionRequest,
+  type TransactionResponse,
+  type TypedDataDomain,
+  type TypedDataField,
 } from 'ethers';
 import { serializeTransaction } from 'viem';
 import { toAccount } from 'viem/accounts';
