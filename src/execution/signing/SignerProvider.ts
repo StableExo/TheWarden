@@ -12,13 +12,13 @@
  *
  *   SIGNER_MODE=local  (default) key held locally, sourced from the AES-encrypted
  *                      Supabase environment_secrets store when USE_SUPABASE=true
- *   SIGNER_MODE=cdp    key generated and used inside the Coinbase CDP enclave
- *                      (Phase 2, see CdpEnclaveSigner)
+ *   SIGNER_MODE=cdp    key generated and used inside the Coinbase CDP enclave,
+ *                      with spend policies enforced at the enclave layer
  *
  * Nothing else in the codebase should read WALLET_PRIVATE_KEY / DEPLOYER_PRIVATE_KEY.
  */
 import { JsonRpcProvider, type AbstractSigner } from 'ethers';
-import type { LocalAccount } from 'viem';
+import type { Account } from 'viem';
 
 export type SignerMode = 'local' | 'cdp';
 
@@ -34,8 +34,11 @@ export interface SignerProvider {
   /** ethers v6 signer, for NonceManager / TransactionExecutor / contract calls. */
   getEthersSigner(): AbstractSigner;
 
-  /** viem account used as the ERC-4337 Coinbase Smart Account owner. */
-  getViemOwner(): Promise<LocalAccount>;
+  /**
+   * viem account used as the ERC-4337 Coinbase Smart Account owner.
+   * LocalAccount in local mode, a Custom Account over the CDP account in cdp mode.
+   */
+  getViemOwner(): Promise<Account>;
 }
 
 export function resolveSignerMode(raw: string | undefined = process.env.SIGNER_MODE): SignerMode {
@@ -48,8 +51,8 @@ export function resolveSignerMode(raw: string | undefined = process.env.SIGNER_M
 
 /**
  * Build the provider the rest of the app should use, based on SIGNER_MODE.
- * Modules are imported lazily so a cdp deployment never loads the local-key path
- * and vice versa.
+ * Modules are imported lazily, so a local deployment never loads the CDP SDK
+ * and a cdp deployment never loads the local-key path.
  */
 export async function createSignerProvider(provider: JsonRpcProvider): Promise<SignerProvider> {
   const mode = resolveSignerMode();
