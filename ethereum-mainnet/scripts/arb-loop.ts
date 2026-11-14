@@ -58,7 +58,7 @@ const BUILDERS = ETH_MAINNET.builders;
 const TIP_FRACTION  = 0.10;   // 10% of profit goes to builder as tip
 const MIN_TIP_WEI   = parseEther('0.00001');
 
-const DRY_RUN = process.argv.includes('--dry-run');
+const DRY_RUN = process.argv.includes('--dry-run') || process.env.DRY_RUN === 'true';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const START = Date.now();
