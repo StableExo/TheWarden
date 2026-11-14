@@ -178,6 +178,8 @@
     "autonomous:learn": "node --import tsx scripts/autonomous-cycle-runner.ts",
     "cycle": "node --import tsx scripts/run-single-cycle.ts",
     "cycle:next": "node --import tsx scripts/run-single-cycle.ts",
+    "cdp:policies": "node --import tsx src/scripts/setup-cdp-policies.ts",
+    "benchmark:cdp-signing": "node --import tsx src/scripts/benchmark-cdp-signing.ts",
     "supabase:types": "supabase gen types typescript --linked > src/infrastructure/supabase/schemas/database.types.ts",
     "supabase:types:local": "supabase gen types typescript --local > src/infrastructure/supabase/schemas/database.types.ts",
     "supabase:start": "supabase start",
@@ -224,6 +226,7 @@
     "start:builder": "node --import tsx ethereum-mainnet/scripts/build-block.ts"
   },
   "dependencies": {
+    "@coinbase/cdp-sdk": "^1.62.0",
     "@solana/web3.js": "1.98.4",
     "@supabase/supabase-js": "2.86.0",
     "alchemy-sdk": "3.6.5",

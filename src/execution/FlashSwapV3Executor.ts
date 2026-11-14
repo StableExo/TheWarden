@@ -17,10 +17,12 @@
  */
 
 import { Contract, Provider, Signer, ethers, parseUnits, formatUnits } from 'ethers';
+import type { Account } from 'viem';
 import { createPublicClient, http, encodeFunctionData, type Hex, type PublicClient } from 'viem';
 import { base } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { toCoinbaseSmartAccount, createBundlerClient } from 'viem/account-abstraction';
+import type { SignerProvider } from './signing/SignerProvider';
 import { logger } from '../utils/logger';
 import { PriorityFeePredictorMLP } from '../ml/PriorityFeePredictorMLP';
 
@@ -104,6 +106,7 @@ export interface FlashSwapV3Config {
   contractAddress: string;
   provider: Provider;
   signer?: Signer;
+  signerProvider?: SignerProvider;
   gasBuffer?: number;
   defaultSlippage?: number;
   chainId?: number;
@@ -121,6 +124,7 @@ interface ResolvedFlashSwapV3Config {
   contractAddress: string;
   provider: Provider;
   signer?: Signer;
+  signerProvider?: SignerProvider;
   gasBuffer: number;
   defaultSlippage: number;
   chainId: number;
@@ -241,6 +245,7 @@ export class FlashSwapV3Executor {
       contractAddress: config.contractAddress,
       provider: config.provider,
       signer: config.signer,
+      signerProvider: config.signerProvider,
       gasBuffer: config.gasBuffer ?? 1.2,
       defaultSlippage: config.defaultSlippage ?? 0.01,
       chainId: config.chainId ?? 8453,
@@ -258,7 +263,7 @@ export class FlashSwapV3Executor {
 
   /** Check if UserOp execution is available */
   get userOpEnabled(): boolean {
-    return !!(this.config.privateKey && this.config.cdpPaymasterUrl);
+    return !!(this.config.cdpPaymasterUrl && (this.config.signerProvider || this.config.privateKey));
   }
 
   /**
@@ -267,16 +272,21 @@ export class FlashSwapV3Executor {
   private async ensureBundlerClient(): Promise<void> {
     if (this.bundlerClient) return;
 
-    if (!this.config.privateKey || !this.config.cdpPaymasterUrl) {
-      throw new Error('Smart Wallet config required: privateKey and cdpPaymasterUrl');
+    if ((!this.config.signerProvider && !this.config.privateKey) || !this.config.cdpPaymasterUrl) {
+      throw new Error('Smart Wallet config required: signerProvider (or privateKey) and cdpPaymasterUrl');
     }
 
     logger.info('Initializing Smart Wallet bundler client...');
 
-    const privateKeyHex = this.config.privateKey.startsWith('0x') 
-      ? this.config.privateKey as Hex
-      : `0x${this.config.privateKey}` as Hex;
-    const owner = privateKeyToAccount(privateKeyHex);
+    // Phase 1: the smart account owner comes from the signer provider, so the
+    // key can live in an enclave instead of in this process.
+    const owner: Account = this.config.signerProvider
+      ? await this.config.signerProvider.getViemOwner()
+      : privateKeyToAccount(
+          (this.config.privateKey!.startsWith('0x')
+            ? this.config.privateKey
+            : `0x${this.config.privateKey}`) as Hex
+        );
 
     const transport = this.config.rpcUrl ? http(this.config.rpcUrl) : http();
     this.viemPublicClient = createPublicClient({ chain: base, transport });
