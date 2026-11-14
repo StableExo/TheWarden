@@ -1,0 +1,163 @@
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -29,7 +29,17 @@
+   await initializeEnvironment();
+ }
+ 
+-import { JsonRpcProvider, Wallet, Contract, formatEther, formatUnits, parseEther } from 'ethers';
++import {
++  JsonRpcProvider,
++  Contract,
++  formatEther,
++  formatUnits,
++  parseEther,
++  type AbstractSigner,
++  type Wallet,
++} from 'ethers';
++import { createSignerProvider, type SignerProvider } from './execution/signing/SignerProvider';
++import { LocalKeySigner } from './execution/signing/LocalKeySigner';
+ // ethers namespace reserved for utilities
+ import type { ethers as _ethers } from 'ethers';
+ import { EventEmitter } from 'events';
+@@ -238,7 +248,10 @@
+   rpcUrl: string;
+   rpcUrlFallback?: string;
+   chainId: number;
+-  walletPrivateKey: string;
++  /** Deprecated: signing now comes from signerProvider. Kept for existing callers. */
++  walletPrivateKey?: string;
++  /** Resolved once at boot from SIGNER_MODE (local key or CDP enclave). */
++  signerProvider?: SignerProvider;
+ 
+   // Multi-chain configuration
+   scanChains?: number[]; // Array of chain IDs to scan
+@@ -321,17 +334,18 @@
+     logger.warn('No fallback RPC configured. Set BASE_RPC_URL_FALLBACK for resilience.');
+   }
+ 
+-  const walletPrivateKey = process.env.WALLET_PRIVATE_KEY || process.env.DEPLOYER_PRIVATE_KEY;
+-  if (!walletPrivateKey) {
+-    throw new Error('WALLET_PRIVATE_KEY is required');
+-  }
++  // Signing is resolved once, at boot. SIGNER_MODE picks where the key lives:
++  //   local -> AES-encrypted Supabase secret (or .env for development)
++  //   cdp   -> Coinbase CDP enclave; no key in this process at all
++  // Throws here if no key can be found, exactly as the old check did.
++  const signerProvider = await createSignerProvider(new JsonRpcProvider(rpcUrl));
+ 
+   // Optional configuration with defaults
+   const config: WardenConfig = {
+     rpcUrl,
+     rpcUrlFallback,
+     chainId,
+-    walletPrivateKey,
++    signerProvider,
+ 
+     // Multi-chain scanning configuration
+     // Parse SCAN_CHAINS env var (comma-separated chain IDs) or default to primary chain
+@@ -438,7 +452,10 @@
+ class TheWarden extends EventEmitter {
+   private config: WardenConfig;
+   private provider: JsonRpcProvider;
+-  private wallet: Wallet;
++  private signerProvider: SignerProvider;
++  private wallet: AbstractSigner;
++  /** Resolved by the signer provider; used anywhere the address is needed. */
++  private walletAddress: string;
+   private dexRegistry: DEXRegistry;
+   private advancedOrchestrator?: AdvancedOrchestrator;
+   private integratedOrchestrator?: IntegratedArbitrageOrchestrator;
+@@ -487,7 +504,18 @@
+     this.provider = new JsonRpcProvider(config.rpcUrl);
+ 
+     // Initialize wallet
+-    this.wallet = new Wallet(config.walletPrivateKey, this.provider);
++    // Signing comes from the provider. In local mode this is the same ethers
++    // Wallet as before; in cdp mode it is the enclave-backed signer.
++    if (config.signerProvider) {
++      this.signerProvider = config.signerProvider;
++    } else if (config.walletPrivateKey) {
++      // Legacy caller (old tests, tooling) that still passes a raw key.
++      this.signerProvider = LocalKeySigner.fromKey(config.walletPrivateKey, this.provider);
++    } else {
++      throw new Error('WardenConfig.signerProvider is required (or walletPrivateKey for legacy callers)');
++    }
++    this.wallet = this.signerProvider.getEthersSigner();
++    this.walletAddress = this.signerProvider.getAddress();
+ 
+     // S73: Store fallback for provider recovery
+     if (config.rpcUrlFallback) {
+@@ -524,7 +552,7 @@
+         logger.info('  OFFLINE CACHE ONLY MODE - No RPC calls will be made');
+         logger.info('═══════════════════════════════════════════════════════════');
+         logger.info(`Configured chain ID: ${this.config.chainId}`);
+-        logger.info(`Wallet address: ${this.wallet.address}`);
++        logger.info(`Wallet address: ${this.walletAddress}`);
+         logger.info('Network connection and balance checks skipped in offline mode');
+       } else {
+         // Verify network connection
+@@ -542,9 +570,9 @@
+ 
+         // Verify wallet
+               _tick('getBalance...');
+-      const balance = await this.provider.getBalance(this.wallet.address);
++      const balance = await this.provider.getBalance(this.walletAddress);
+       _tick('getBalance DONE');
+-        logger.info(`Wallet address: ${this.wallet.address}`);
++        logger.info(`Wallet address: ${this.walletAddress}`);
+         logger.info(`Wallet balance: ${formatEther(balance)} ETH`);
+ 
+         // Check token balances for common tokens based on chain
+@@ -646,8 +674,8 @@
+         // Without this, gas estimator falls back to wallet.address (EOA) when FLASHSWAP_V2_ADDRESS is unset
+         const executorAddress = (this.config.enableV3 && (this.config as any).flashSwapV3Address)
+           ? (this.config as any).flashSwapV3Address
+-          : (this.config.executorAddress || this.wallet.address);
+-        const titheRecipient = this.config.titheRecipient || this.wallet.address;
++          : (this.config.executorAddress || this.walletAddress);
++        const titheRecipient = this.config.titheRecipient || this.walletAddress;
+ 
+         logger.info(`Executor address: ${executorAddress}`);
+         logger.info(`Tithe recipient: ${titheRecipient}`);
+@@ -671,20 +699,19 @@
+ 
+         // Phase 3: Initialize V3 executor with UserOp support if configured
+         if (this.config.enableV3 && (this.config as any).flashSwapV3Address) {
+-          const privateKey = process.env.DEPLOYER_PRIVATE_KEY || process.env.WALLET_PRIVATE_KEY;
+           const cdpPaymasterUrl = process.env.CDP_PAYMASTER_URL;
+           const rpcUrl = process.env.BASE_RPC_URL;
+ 
+-          if (privateKey && cdpPaymasterUrl && rpcUrl) {
++          if (cdpPaymasterUrl && rpcUrl) {
+             this.integratedOrchestrator.initV3Executor({
+               contractAddress: (this.config as any).flashSwapV3Address,
+-              privateKey,
++              signerProvider: this.signerProvider,
+               cdpPaymasterUrl,
+               rpcUrl,
+             });
+             logger.info('⚔️ FlashSwapV3 + Smart Wallet enabled — gasless execution via CDP Paymaster');
+           } else {
+-            logger.warn('FlashSwapV3 configured but missing DEPLOYER_PRIVATE_KEY, CDP_PAYMASTER_URL, or BASE_RPC_URL');
++            logger.warn('FlashSwapV3 configured but missing a signer, CDP_PAYMASTER_URL, or BASE_RPC_URL');
+           }
+         }
+ 
+@@ -853,7 +880,7 @@
+         this.phase4Components = await initializePhase4Components(
+           phase4Config,
+           this.provider,
+-          this.wallet
++          this.wallet as unknown as Wallet
+         );
+ 
+         logger.info('═══════════════════════════════════════════════════════════');
+@@ -1038,7 +1065,7 @@
+       for (const token of tokens) {
+         try {
+           const contract = new Contract(token.address, ERC20_ABI, this.provider);
+-          const balance = await contract.balanceOf(this.wallet.address);
++          const balance = await contract.balanceOf(this.walletAddress);
+           const formattedBalance = formatUnits(balance, token.decimals);
+           logger.info(`${token.symbol} balance: ${formattedBalance}`);
+         } catch (error) {
