@@ -17,6 +17,7 @@ import type { getAddress as _getAddress } from 'ethers';
 import { logger } from '../utils/logger';
 import { ArbitrageOrchestrator } from '../arbitrage/ArbitrageOrchestrator';
 import { FlashSwapV3Executor, UniversalSwapPath, ExecutionResult as V3ExecutionResult } from '../execution/FlashSwapV3Executor';
+import type { SignerProvider } from './signing/SignerProvider';
 import { ExecutionPipeline } from '../execution/ExecutionPipeline';
 import { TransactionExecutor, TransactionExecutorConfig } from '../execution/TransactionExecutor';
 import { SystemHealthMonitor } from '../monitoring/SystemHealthMonitor';
@@ -185,13 +186,17 @@ export class IntegratedArbitrageOrchestrator extends EventEmitter {
    */
   initV3Executor(config: {
     contractAddress: string;
-    privateKey: string;
+    /** Preferred: signing comes from the provider, local key or CDP enclave. */
+    signerProvider?: SignerProvider;
+    /** Legacy local-key path, kept until every caller passes signerProvider. */
+    privateKey?: string;
     cdpPaymasterUrl: string;
     rpcUrl: string;
   }): void {
     this.v3Executor = new FlashSwapV3Executor({
       contractAddress: config.contractAddress,
       provider: this.provider,
+      signerProvider: config.signerProvider,
       privateKey: config.privateKey,
       cdpPaymasterUrl: config.cdpPaymasterUrl,
       rpcUrl: config.rpcUrl,
