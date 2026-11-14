@@ -2,8 +2,8 @@
  * LocalKeySigner - SIGNER_MODE=local (the default).
  *
  * Behaviour is exactly what main.ts and FlashSwapV3Executor did before the
- * abstraction was introduced: an ethers Wallet and a viem account derived from
- * one EOA key, so both execution paths keep working unchanged.
+ * abstraction existed: an ethers Wallet and a viem account derived from one EOA
+ * key, so both execution paths keep working unchanged.
  *
  * What changed is where the key comes from. Preference order:
  *   1. an explicit key passed in (tests, tooling)
@@ -14,7 +14,7 @@
  */
 import { Wallet, type AbstractSigner, type JsonRpcProvider } from 'ethers';
 import { privateKeyToAccount } from 'viem/accounts';
-import type { Hex, LocalAccount } from 'viem';
+import type { Account, Hex } from 'viem';
 
 import { loadEnvVar } from '../../utils/supabaseEnvLoader';
 import { logger } from '../../utils/logger';
@@ -28,7 +28,7 @@ export class LocalKeySigner implements SignerProvider {
   readonly mode: SignerMode = 'local';
 
   private address!: string;
-  private viemOwner!: LocalAccount;
+  private viemOwner!: Account;
   private wallet!: Wallet;
 
   private constructor(private readonly provider: JsonRpcProvider) {}
@@ -48,8 +48,8 @@ export class LocalKeySigner implements SignerProvider {
     const resolved = key ?? (await LocalKeySigner.resolveKey());
     if (!resolved) {
       throw new Error(
-        'No signing key found. Set it as a Supabase secret (USE_SUPABASE=true, ' +
-          `key ${KEY_NAMES.join(' or ')} with SECRETS_ENCRYPTION_KEY present), or as an ` +
+        'No signing key found. Store it as a Supabase secret (USE_SUPABASE=true, with ' +
+          `${KEY_NAMES.join(' or ')} and SECRETS_ENCRYPTION_KEY present), or set an ` +
           'environment variable for local development.'
       );
     }
@@ -59,10 +59,11 @@ export class LocalKeySigner implements SignerProvider {
 
   private static async resolveKey(): Promise<{ value: string; source: string } | null> {
     for (const name of KEY_NAMES) {
-      // Supabase secret first (falls back to process.env when USE_SUPABASE is off).
+      // Supabase secret first (the loader falls back to process.env when USE_SUPABASE is off).
       const fromStore = await loadEnvVar(name, { isSecret: true });
       if (fromStore) {
-        const source = process.env.USE_SUPABASE === 'true' ? `supabase secret ${name}` : `.env ${name}`;
+        const source =
+          process.env.USE_SUPABASE === 'true' ? `supabase secret ${name}` : `.env ${name}`;
         return { value: fromStore, source };
       }
       // USE_SUPABASE=true with no secret row: still honour a plain env var.
@@ -96,7 +97,7 @@ export class LocalKeySigner implements SignerProvider {
     return this.wallet;
   }
 
-  async getViemOwner(): Promise<LocalAccount> {
+  async getViemOwner(): Promise<Account> {
     return this.viemOwner;
   }
 }
