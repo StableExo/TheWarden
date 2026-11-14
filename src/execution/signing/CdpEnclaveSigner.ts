@@ -203,6 +203,14 @@ export class CdpEnclaveSigner implements SignerProvider {
     return this.ethersSigner;
   }
 
+  /**
+   * Policy boundary: a raw hash signature reaches CDP as `signEvmHash`, which
+   * accepts no criteria at all, so the enclave cannot cap its value or target it.
+   * If that is where the smart-account owner signature lands (rather than on the
+   * prepareUserOperation / sendUserOperation operations), the Base Smart Account
+   * has no enclave-level limit. Keep only active working capital there and keep
+   * idle funds in the EOA treasury, which setup-cdp-policies.ts does cap.
+   */
   async getViemOwner(): Promise<Account> {
     await this.init();
     if (typeof this.account.signTransaction !== 'function') {
