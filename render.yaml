@@ -1,3 +1,7 @@
+# NOTE (17 Nov 2026): the two arb services below run ethereum-mainnet/scripts/arb-loop.ts,
+# the Ethereum engine we are parking in favour of the Base-native path on Railway.
+# autoDeploy is off so pushes to main no longer redeploy them. The stableexo-store
+# service is left as it was.
 services:
   # ── CoalitionBundleAPI ──────────────────────────────────────────────────────
   # TheWarden AEV Pure Arb Engine — arb-loop.ts daemon
@@ -25,7 +29,7 @@ services:
       - key: ETH_PRIVATE_KEY
         sync: false
     healthCheckPath: /health
-    autoDeploy: true
+    autoDeploy: false   # stale: arb system runs on Railway; do not redeploy on every push
 
   # ── BlockBuilder (second arb instance) ─────────────────────────────────────
   # VL-33: Changed from build-block.ts → arb-loop.ts (was mis-configured)
@@ -51,7 +55,7 @@ services:
       - key: THIRDWEB_SECRET_KEY
         sync: false
     healthCheckPath: /health
-    autoDeploy: true
+    autoDeploy: false   # stale: arb system runs on Railway; do not redeploy on every push
 
   # ── StableExo Store (product landing page + Stripe checkout) ─────────────
   # Quiet landing page for the $99 lookup / $1,500 Attachable screening memo.
@@ -82,3 +86,4 @@ services:
       # Set this to your live URL (https://<name>.onrender.com) for correct redirects.
       - key: BASE_URL
         sync: false
+
