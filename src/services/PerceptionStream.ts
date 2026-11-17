@@ -1,16 +1,17 @@
 // src/services/PerceptionStream.ts
 
 import { createPublicClient, http } from 'viem';
-import { mainnet } from 'viem/chains';
+import { base } from 'viem/chains';
 import { SensoryMemory } from '../consciousness/sensory_memory';
 import { TemporalAwarenessFramework } from '../consciousness/temporal_awareness';
 
 // Create a dedicated public client for block watching
 function createBlockWatchClient() {
   const rpcUrl =
-    process.env.ETHEREUM_RPC_URL || process.env.BASE_RPC_URL || 'http://localhost:8545';
+    process.env.BASE_RPC_URL || process.env.ETHEREUM_RPC_URL || 'http://localhost:8545';
   return createPublicClient({
-    chain: mainnet,
+    // TheWarden is Base-native: this block-watch client reads Base.
+    chain: base,
     transport: http(rpcUrl),
   });
 }
@@ -86,3 +87,4 @@ export class PerceptionStream {
     }
   }
 }
+
