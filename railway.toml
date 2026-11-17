@@ -4,15 +4,18 @@ builder = "NIXPACKS"
 buildCommand = "npm install"
 
 [deploy]
-# GL-L29: CounterSweeper deployment — runs once, deploys contract, exits
-# Bytecode pre-compiled (solc 0.8.25) and embedded in the script
-# Gas-free via Coinbase CDP Paymaster
-# Beneficiary: 0xfBe1783869504e07052d57A39867f82D5e3563B5 (Taylor's Coinbase)
-#
-# Required env vars in Railway dashboard:
-#   PRIVATE_KEY         = <EOA private key>
-#   CDP_PAYMASTER_URL   = https://api.developer.coinbase.com/rpc/v1/base/EeBuC9EkcVpsMwYSiiC1TUKwFTWJVzD1
-#   CHAINSTACK_HTTPS    = https://base-mainnet.core.chainstack.com/c726a0ad837354cad25d58bd89c7ac57
-# Boots the continuous governed Warden wedge. (Was: one-shot CounterSweeper deploy.)
+# Base-native entrypoint (was: one-shot CounterSweeper deploy, then the Ethereum arb-loop).
+# NOTE: the Railway service currently has a dashboard "Custom Start Command" that
+# OVERRIDES this value and points at ethereum-mainnet/scripts/arb-loop.ts. Clear that
+# override to let this Base entrypoint take effect.
 startCommand = "npm start"
 restartPolicyType = "ON_FAILURE"
+
+# Required env vars, set in the Railway dashboard (values never live in git):
+#   PRIVATE_KEY         = <EOA private key>
+#   CDP_PAYMASTER_URL   = <Coinbase CDP paymaster RPC URL>
+#   CHAINSTACK_HTTPS    = <Chainstack HTTPS RPC URL>
+#   BASE_RPC_URL        = <Base RPC URL>
+#   BASE_WSS_URL        = <Base WSS URL>
+#
+# Beneficiary: 0xfBe1783869504e07052d57A39867f82D5e3563B5 (Taylor's Coinbase)
