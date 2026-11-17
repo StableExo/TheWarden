@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npm install viem && node scripts/deploy-counter-sweeper.js",
-  "framework": null,
-  "outputDirectory": "public"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": false
+  }
 }
