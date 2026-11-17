@@ -1,15 +1,16 @@
 /**
  * SwapEventMonitor — Real-time WebSocket monitoring for DEX Swap events
  * 
- * S67: Flashblocks migration + V2 Swap event support
- * 
- * Changes from S54/S62:
+ * S67 + Denim: V2/V3 Swap event support
+ *
+ * Denim (live 5 Nov 2026) retired Flashblocks. Canonical blocks are now 200ms
+ * (~5/sec) and there is no pre-confirmation channel. The optional HTTP poll of
+ * eth_getBlockByNumber("pending") below is kept only for compatibility and is
+ * never started: the "pending" tag has no canonical equivalent post-Denim.
  * - REMOVED: pendingLogs WSS subscription (wss://mainnet-preconf.base.org deprecated, returns 405)
  * - ADDED: V2 Swap event topic + parser (P1-B complete)
- * - CHANGED: Primary WSS → QuickNode (Flashblocks-enabled)
- * - CHANGED: Flashblocks pre-confirmation via HTTP pending block polling (not WSS)
- * - Base recommendation: Use standard eth_subscribe("logs") + HTTP eth_getBlockByNumber("pending")
- * 
+ * - Primary channel: standard eth_subscribe("logs") for canonical Swap logs
+ *
  * Subscribes to BOTH V2 and V3 Swap events on monitored pools via WSS (eth_subscribe).
  * Parses Uniswap V3/V2/SushiSwap/Aerodrome Swap logs into typed events.
  * Emits events for the PriceTracker to consume.
@@ -20,7 +21,7 @@
  * - Multi-pool subscription in a single WSS connection
  * - Fallback WSS endpoint support
  * - V2 + V3 dual-topic subscription (S67)
- * - HTTP Flashblocks polling for 200ms pre-confirmations (S67)
+ * - Canonical 200ms blocks via standard 'logs' subscription (Denim)
  * - Structured logging for monitoring
  */
 
@@ -73,7 +74,7 @@ export interface SwapEventMonitorConfig {
   reconnectMaxDelay?: number;
   heartbeatInterval?: number;
   heartbeatTimeout?: number;
-  /** S67: Enable HTTP Flashblocks polling via eth_getBlockByNumber("pending") */
+  /** @deprecated Denim retired Flashblocks. Kept for config compatibility; never started. */
   useFlashblocks?: boolean;  // Optional in input
   /** S67: HTTP RPC URL for Flashblocks polling */
   flashblocksHttpUrl?: string;
@@ -156,9 +157,9 @@ export class SwapEventMonitor extends EventEmitter {
     const v3Count = this.config.pools.length - v2Count;
     logger.info(`[SwapMonitor] S67: Starting with ${this.config.pools.length} pools (${v3Count} V3 + ${v2Count} V2)`);
     await this.connect();
-    if (this.config.useFlashblocks && this.config.flashblocksHttpUrl) {
-      this.startFlashblockPolling();
-    }
+    // Denim: Flashblocks retired - the 'pending' pre-confirmation channel is gone.
+    // Canonical Swap logs arrive over the standard 'logs' subscription above.
+    // startFlashblockPolling() is intentionally not called any more.
   }
 
   stop(): void {
@@ -380,6 +381,10 @@ export class SwapEventMonitor extends EventEmitter {
     if (this.flashblockTimer) { clearInterval(this.flashblockTimer); this.flashblockTimer = null; }
   }
 
+  /**
+   * @deprecated Denim retired the 'pending' pre-confirmation block. Kept for
+   * compatibility only; startFlashblockPolling() is no longer called.
+   */
   private async pollPendingBlock(): Promise<void> {
     const response = await fetch(this.config.flashblocksHttpUrl, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -427,10 +432,11 @@ export function sqrtPriceX96ToPrice(sqrtPriceX96: bigint, token0Decimals: number
 /**
  * S67: Create monitor config from environment + Supabase pools
  * Primary WSS = QuickNode, backup = QuickNode Fallback/ChainStack
- * Flashblocks via HTTP pending block polling (not WSS pendingLogs)
+ * Flashblocks via HTTP pending block polling (not WSS pendingLogs) -- retired by Denim
  */
 export function createMonitorConfigFromEnv(pools: MonitoredPool[]): SwapEventMonitorConfig {
-  const useFlashblocks = process.env.ENABLE_FLASHBLOCKS === 'true';
+  // Denim: Flashblocks retired. HTTP 'pending' polling is disabled unconditionally.
+  const useFlashblocks = false;
   return {
     wssUrl: process.env.BASE_WSS_URL, // CW-S5: Alchemy removed
     wssUrlBackup: process.env.BASE_WSS_URL_FALLBACK || process.env.CHAINSTACK_WSS_ENDPOINT || process.env.TENDERLY_NODE_WSS || process.env.BASE_WSS_URL_BACKUP, // CW-S2: Added FALLBACK variant
@@ -444,3 +450,4 @@ export function createMonitorConfigFromEnv(pools: MonitoredPool[]): SwapEventMon
     flashblocksPollInterval: parseInt(process.env.FLASHBLOCKS_POLL_INTERVAL || '200'),
   };
 }
+

@@ -18,8 +18,12 @@ let _publicClient: ViemPublicClient | null = null;
  * Get the chain configuration based on RPC URL
  */
 function getChainFromRpcUrl(rpcUrl: string): Chain {
-  // Default to Base if BASE_RPC_URL is set, otherwise mainnet
-  if (process.env.BASE_RPC_URL && rpcUrl === process.env.BASE_RPC_URL) {
+  // TheWarden is Base-native. Treat any Base-looking endpoint as Base; only
+  // fall back to mainnet for an explicitly Ethereum endpoint.
+  if (
+    (process.env.BASE_RPC_URL && rpcUrl === process.env.BASE_RPC_URL) ||
+    /base(-mainnet|\.org|\.llamarpc|\.drpc)|mainnet\.base\.org/i.test(rpcUrl)
+  ) {
     return base;
   }
   return mainnet;
@@ -30,7 +34,7 @@ function getChainFromRpcUrl(rpcUrl: string): Chain {
  */
 export function getPublicClient(): ViemPublicClient {
   if (!_publicClient) {
-    const rpcUrl = process.env.ETHEREUM_RPC_URL || process.env.BASE_RPC_URL;
+    const rpcUrl = process.env.BASE_RPC_URL || process.env.ETHEREUM_RPC_URL;
     if (!rpcUrl) {
       // In a real application, you might have a fallback or a more robust config system
       console.error(
@@ -54,7 +58,7 @@ export function getPublicClient(): ViemPublicClient {
  * instead for deferred initialization.
  */
 function initializePublicClient(): ViemPublicClient {
-  const rpcUrl = process.env.ETHEREUM_RPC_URL || process.env.BASE_RPC_URL;
+  const rpcUrl = process.env.BASE_RPC_URL || process.env.ETHEREUM_RPC_URL;
   if (!rpcUrl) {
     // Return a client with a placeholder URL that will fail on actual use
     // This allows the module to load even when env vars aren't set (e.g., during testing)
@@ -87,3 +91,4 @@ export const provider = publicClient;
  * during the ethers.js to viem migration and will be removed in a future version.
  */
 export const getProvider = getPublicClient;
+

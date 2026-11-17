@@ -50,7 +50,7 @@
       "symbol": "ETH",
       "decimals": 18
     },
-    "blockTime": 2,
+    "blockTime": 0.2,
     "gasLimit": 30000000,
     "type": "OP_STACK",
     "gasOptimization": {
@@ -59,8 +59,8 @@
       "advantage": "1600x cheaper than Ethereum"
     },
     "features": {
-      "rollupBoost": true,
-      "flashblocks": true,
+      "rollupBoost": false,
+      "flashblocks": false,
       "websocket": true,
       "archive": true
     }
@@ -170,3 +170,4 @@
     "gasLimit": 30000000
   }
 }
+
