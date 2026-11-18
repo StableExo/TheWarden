@@ -11,19 +11,18 @@ export const FLASHSWAP_V2_ABI = [
 
 export const FLASHSWAP_ABI = FLASHSWAP_V2_ABI;
 
+// v6.0.0 (Contract #15): no tithe. No titheRecipient()/titheBps() views and no
+// TitheDistributed event exist on the deployed contract, so they are not listed here.
 export const FLASHSWAP_V3_ABI = [
   'function executeArbitrage(address borrowToken, uint256 borrowAmount, tuple(tuple(address pool, address tokenIn, address tokenOut, uint24 fee, uint256 minOut, uint8 dexType, address router, bool useDeadline)[] steps, uint256 borrowAmount, uint256 minFinalAmount) path, uint8 sourceOverride, address flashPool) external',
   'function selectOptimalSource(address token, uint256 amount) external view returns (uint8)',
   'function isBalancerSupported(address token, uint256 amount) external view returns (bool)',
   'function isDydxSupported(address token, uint256 amount) external view returns (bool)',
   'function owner() external view returns (address)',
-  'function titheRecipient() external view returns (address)',
-  'function titheBps() external view returns (uint16)',
   'function emergencyWithdraw(address token, uint256 amount) external',
   'event FlashLoanInitiated(uint8 indexed source, address indexed token, uint256 amount, address indexed initiator)',
   'event FlashLoanExecuted(uint8 indexed source, address indexed token, uint256 amountBorrowed, uint256 feePaid, uint256 grossProfit, uint256 netProfit)',
   'event SwapExecuted(uint256 indexed stepIndex, uint8 dexType, address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut)',
-  'event TitheDistributed(address indexed token, address indexed titheRecipient, uint256 titheAmount, address indexed owner, uint256 ownerAmount)',
 ];
 
 export const FLASHSWAP_V3_ABI_JSON = [
