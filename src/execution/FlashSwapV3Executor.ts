@@ -607,7 +607,8 @@ export class FlashSwapV3Executor {
 
       // S69: Feed MLP with actual priority fee used (online learning from execution context)
       try {
-        const latestBlock = await this.publicClient.getBlockNumber();
+        if (!this.viemPublicClient) throw new Error('viemPublicClient not initialized');
+        const latestBlock = await this.viemPublicClient.getBlockNumber();
         priorityFeePredictor.addObservation(
           Number(latestBlock),
           maxPriorityFeePerGas,
