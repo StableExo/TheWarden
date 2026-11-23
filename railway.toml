@@ -11,11 +11,13 @@ buildCommand = "npm install"
 startCommand = "npm start"
 restartPolicyType = "ON_FAILURE"
 
-# Required env vars, set in the Railway dashboard (values never live in git):
-#   PRIVATE_KEY         = <EOA private key>
+# Env vars, set in the Railway dashboard (values never live in git):
+#   WALLET_PRIVATE_KEY  = <EOA private key>       (required for startup validation)
+#   BASE_RPC_URL        = <Base RPC URL>          (required for startup validation)
+#   RPC_URL             = <Base RPC URL>          (optional; overrides BASE_RPC_URL)
+#   ENABLE_FLASHSWAP_V3 = false                   (optional; keep false until v6.0.0 is deployed)
 #   CDP_PAYMASTER_URL   = <Coinbase CDP paymaster RPC URL>
 #   CHAINSTACK_HTTPS    = <Chainstack HTTPS RPC URL>
-#   BASE_RPC_URL        = <Base RPC URL>
 #   BASE_WSS_URL        = <Base WSS URL>
 #
 # Beneficiary: 0xfBe1783869504e07052d57A39867f82D5e3563B5 (Taylor's Coinbase)
