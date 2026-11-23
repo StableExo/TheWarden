@@ -1,7 +1,8 @@
 [build]
 builder = "NIXPACKS"
 # GL-L29: No Hardhat needed — CounterSweeper bytecode is pre-compiled and embedded
-buildCommand = "npm install"
+# Prints TypeScript diagnostics into the build log but never fails the build (`|| true`).
+buildCommand = "npm install && (npx tsc --noEmit || true)"
 
 [deploy]
 # Base-native entrypoint (was: one-shot CounterSweeper deploy, then the Ethereum arb-loop).
