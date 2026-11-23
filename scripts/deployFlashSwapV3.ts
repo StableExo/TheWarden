@@ -2,113 +2,164 @@ import hre from "hardhat";
 import { ADDRESSES, NetworkKey, requireAddress } from "../src/config/addresses";
 
 /**
- * Deployment script for FlashSwapV3 contract
- * 
- * This script deploys the FlashSwapV3 contract with multi-source flash loan support:
- * - Balancer V2 (0% fee)
- * - dYdX Solo Margin (0% fee, Ethereum only)
- * - Aave V3 (0.09% fee)
- * - Hybrid execution modes
- * 
- * Network addresses are automatically selected based on the --network flag.
- * 
- * Features:
- * - Automatic verification on block explorers (BaseScan, Etherscan, etc.)
- * - Configurable tithe system (default: 7000 bps = 70% US debt reduction)
- * - Multi-network support (Base, Base Sepolia, Ethereum, etc.)
- * 
- * Environment Variables:
- *   VERIFY_CONTRACT=true     Enable automatic verification after deployment
- *   SKIP_CONFIRMATION=true   Skip waiting for block confirmations (faster, less safe)
- *   TITHE_RECIPIENT=0x...    Override tithe recipient address (defaults to deployer)
- *   TITHE_BPS=7000           Override tithe basis points (default: 7000 = 70%)
- * 
- * Usage:
- *   # Deploy to Base Sepolia testnet
- *   npx hardhat run scripts/deployment/deployFlashSwapV3.ts --network baseSepolia
- * 
- *   # Deploy with verification
- *   VERIFY_CONTRACT=true npx hardhat run scripts/deployment/deployFlashSwapV3.ts --network base
- * 
- *   # Deploy with custom tithe recipient
- *   TITHE_RECIPIENT=0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb TITHE_BPS=7000 \
- *     npx hardhat run scripts/deployment/deployFlashSwapV3.ts --network base
+ * FlashSwapV3 deployment (Contract #15, v6.0.0)
+ * Source of truth: contracts/FlashSwapV3.sol
+ *
+ * The constructor takes EXACTLY EIGHT arguments and there is no tithe:
+ * 100% of arbitrage profit routes to `owner` (GL-L52).
+ *
+ *   constructor(
+ *       address _uniswapV3Router,
+ *       address _sushiRouter,
+ *       address _balancerVault,
+ *       address _dydxSoloMargin,
+ *       address _aavePoolAddress,
+ *       address _aaveAddressesProvider,
+ *       address _v3Factory,
+ *       address payable _owner
+ *   )
+ *
+ * If you change this file, re-read the constructor in
+ * contracts/FlashSwapV3.sol first. An argument-count mismatch reverts the
+ * deploy transaction before anything reaches the chain, which is how the
+ * previous revision of this script failed.
+ *
+ * ---------------------------------------------------------------------------
+ * THE OWNER IS IMMUTABLE
+ * ---------------------------------------------------------------------------
+ * `address payable public immutable owner;` is set in the constructor and
+ * there is no transferOwnership(). The address passed as `_owner` is, forever:
+ *   - the only address allowed to call executeArbitrage() and
+ *     emergencyWithdraw() (`onlyOwner`, `require(msg.sender == owner)`)
+ *   - the address that receives 100% of arbitrage profit
+ * There is no recovery path. This script therefore refuses to guess an owner.
+ *
+ * ---------------------------------------------------------------------------
+ * Environment variables
+ * ---------------------------------------------------------------------------
+ *   FLASHSWAP_V3_OWNER=0x...       REQUIRED. The immutable owner. Must be a
+ *                                  wallet you control (recommended: the
+ *                                  Coinbase Smart Wallet, or a fresh
+ *                                  hardware-backed address). Never a key that
+ *                                  has ever been pasted into a chat or commit.
+ *   ALLOW_DEPLOYER_AS_OWNER=true   Opt in to using the deployer key's address
+ *                                  as owner. Only for throwaway testnet runs.
+ *   CONFIRM_MAINNET=true           Required to deploy to `--network base`
+ *                                  (chainId 8453). Base Sepolia needs nothing.
+ *   VERIFY_CONTRACT=true           Verify the source on Basescan after deploy.
+ *   SKIP_CONFIRMATION=true         Do not wait for block confirmations.
+ *
+ * ---------------------------------------------------------------------------
+ * Usage
+ * ---------------------------------------------------------------------------
+ *   # 1. Prove the whole path on free testnet gas
+ *   FLASHSWAP_V3_OWNER=0xYourOwner \
+ *     npx hardhat run scripts/deployFlashSwapV3.ts --network baseSepolia
+ *
+ *   # 2. Mainnet, only once step 1 is clean
+ *   FLASHSWAP_V3_OWNER=0xYourOwner CONFIRM_MAINNET=true VERIFY_CONTRACT=true \
+ *     npx hardhat run scripts/deployFlashSwapV3.ts --network base
+ *
+ * The deployer key is read from WALLET_PRIVATE_KEY by hardhat.config.ts. The
+ * deployer funds the deploy transaction only; it gets no rights afterwards,
+ * unless it is also the owner.
  */
 
-// Configuration from environment
 const VERIFY_CONTRACT = process.env.VERIFY_CONTRACT === "true";
 const SKIP_CONFIRMATION = process.env.SKIP_CONFIRMATION === "true";
-const TITHE_BPS = process.env.TITHE_BPS ? parseInt(process.env.TITHE_BPS) : 7000; // 70% default
-const MAX_TITHE_BPS = 10000; // 100%
+const ALLOW_DEPLOYER_AS_OWNER = process.env.ALLOW_DEPLOYER_AS_OWNER === "true";
+const CONFIRM_MAINNET = process.env.CONFIRM_MAINNET === "true";
 
-async function main() {
-  // Connect to network to get NetworkConnection with networkName (Hardhat v3 API)
+const BASE_MAINNET_CHAIN_ID = 8453n;
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+/** True for a 20-byte hex address. Kept dependency-free on purpose. */
+function looksLikeAddress(value: string): boolean {
+  return /^0x[0-9a-fA-F]{40}$/.test(value);
+}
+
+async function main(): Promise<void> {
   const networkConnection = await hre.network.connect();
   const networkName = networkConnection.networkName;
   const [deployer] = await hre.ethers.getSigners();
-  
-  console.log("Deploying FlashSwapV3 with account:", deployer.address);
-  const balance = await hre.ethers.provider.getBalance(deployer.address);
-  console.log("Account balance:", hre.ethers.formatEther(balance), "ETH");
-  
-  // Determine which network we're deploying to
+
   const networkInfo = await hre.ethers.provider.getNetwork();
-  console.log("Deploying to network:", networkName, "chainId:", networkInfo.chainId);
-  
-  // Get addresses from centralized config
-  const netName = networkName as NetworkKey;
-  const addresses = ADDRESSES[netName];
-  
-  if (!addresses) {
+  const chainId = networkInfo.chainId;
+  const isBaseMainnet = chainId === BASE_MAINNET_CHAIN_ID;
+
+  console.log("FlashSwapV3 deploy (Contract #15, v6.0.0, 8 constructor args)");
+  console.log("=".repeat(64));
+  console.log(`Network:   ${networkName} (chainId ${chainId})`);
+  console.log(`Deployer:  ${deployer.address}`);
+  console.log(
+    `Balance:   ${hre.ethers.formatEther(
+      await hre.ethers.provider.getBalance(deployer.address)
+    )} ETH`
+  );
+
+  // Mainnet is irreversible and the owner is immutable. Make it deliberate.
+  if (isBaseMainnet && !CONFIRM_MAINNET) {
     throw new Error(
-      `No address configuration found for network: ${networkName}\n` +
-      `Please add addresses to src/config/addresses.ts for this network.`
+      "Refusing to deploy to Base Mainnet (chainId 8453).\n" +
+        "  Deploy to Base Sepolia first, confirm the owner, then re-run with\n" +
+        "  CONFIRM_MAINNET=true."
     );
   }
-  
-  // Validate required addresses exist
+
+  const netName = networkName as NetworkKey;
+  if (!ADDRESSES[netName]) {
+    throw new Error(
+      `No address configuration for network: ${networkName}. ` +
+        `Add it to src/config/addresses.ts first.`
+    );
+  }
+
+  // Protocol addresses, from the single source of truth.
   const uniswapV3Router = requireAddress(netName, "uniswapV3Router");
   const sushiRouter = requireAddress(netName, "sushiRouter");
   const balancerVault = requireAddress(netName, "balancerVault");
   const aavePool = requireAddress(netName, "aavePool");
   const aaveAddressesProvider = requireAddress(netName, "aaveAddressesProvider");
   const uniswapV3Factory = requireAddress(netName, "uniswapV3Factory");
-  
-  // dYdX is only available on Ethereum mainnet, use zero address otherwise
-  const dydxSoloMargin = addresses.dydxSoloMargin || "0x0000000000000000000000000000000000000000";
-  
-  // Tithe recipient: use env var if provided, otherwise deployer
-  const titheRecipient = process.env.TITHE_RECIPIENT || deployer.address;
-  
-  // Validate tithe configuration
-  if (TITHE_BPS < 0 || TITHE_BPS > MAX_TITHE_BPS) {
-    throw new Error(`Invalid TITHE_BPS: ${TITHE_BPS}. Must be between 0 and ${MAX_TITHE_BPS}`);
+
+  // dYdX Solo Margin exists on Ethereum mainnet only. The constructor does not
+  // reject the zero address, so zero is the correct value off-mainnet.
+  const dydxSoloMargin = ADDRESSES[netName].dydxSoloMargin || ZERO_ADDRESS;
+
+  // ---- Owner: the one decision that cannot be undone -----------------------
+  const ownerEnv = (process.env.FLASHSWAP_V3_OWNER || "").trim();
+  let owner: string;
+  let ownerSource: string;
+
+  if (ownerEnv) {
+    if (!looksLikeAddress(ownerEnv)) {
+      throw new Error(`FLASHSWAP_V3_OWNER is not a valid address: ${ownerEnv}`);
+    }
+    owner = ownerEnv;
+    ownerSource = "FLASHSWAP_V3_OWNER";
+  } else if (ALLOW_DEPLOYER_AS_OWNER) {
+    owner = deployer.address;
+    ownerSource = "ALLOW_DEPLOYER_AS_OWNER (deployer key)";
+  } else {
+    throw new Error(
+      "FLASHSWAP_V3_OWNER is not set.\n" +
+        "  The owner is immutable and receives 100% of profit. Set it, for example:\n" +
+        "  FLASHSWAP_V3_OWNER=0xYourWallet npx hardhat run scripts/deployFlashSwapV3.ts --network baseSepolia\n" +
+        "  If you really mean the deployer key, set ALLOW_DEPLOYER_AS_OWNER=true."
+    );
   }
-  
-  if (TITHE_BPS > 0 && titheRecipient === "0x0000000000000000000000000000000000000000") {
-    throw new Error("TITHE_RECIPIENT cannot be zero address when TITHE_BPS > 0");
+
+  if (owner.toLowerCase() === ZERO_ADDRESS) {
+    throw new Error("Owner cannot be the zero address (FSV3:IOW on chain).");
   }
-  
-  console.log("\n📋 Deployment Configuration:");
-  console.log("━".repeat(60));
-  console.log("Addresses from config/addresses.ts:");
-  console.log("  - Uniswap V3 Router:", uniswapV3Router);
-  console.log("  - SushiSwap Router:", sushiRouter);
-  console.log("  - Balancer Vault:", balancerVault);
-  console.log("  - dYdX Solo Margin:", dydxSoloMargin, dydxSoloMargin === "0x0000000000000000000000000000000000000000" ? "(Not available on this network)" : "");
-  console.log("  - Aave Pool:", aavePool);
-  console.log("  - Aave Addresses Provider:", aaveAddressesProvider);
-  console.log("  - Uniswap V3 Factory:", uniswapV3Factory);
-  console.log("\nTithe Configuration:");
-  console.log("  - Tithe Recipient:", titheRecipient);
-  console.log("  - Tithe BPS:", TITHE_BPS, `(${TITHE_BPS / 100}%)`);
-  console.log("  - Operator Share:", MAX_TITHE_BPS - TITHE_BPS, `bps (${(MAX_TITHE_BPS - TITHE_BPS) / 100}%)`);
-  console.log("━".repeat(60));
-  
-  // Deploy FlashSwapV3
-  console.log("\n🚀 Starting deployment...");
-  const FlashSwapV3 = await hre.ethers.getContractFactory("FlashSwapV3");
-  const flashSwapV3 = await FlashSwapV3.deploy(
+  if (owner.toLowerCase() === deployer.address.toLowerCase()) {
+    console.log(
+      "\nWARNING: owner == deployer. The deploy key becomes the only operator\n" +
+        "         and the profit recipient. Fine for a throwaway test; not for mainnet."
+    );
+  }
+
+  const args = [
     uniswapV3Router,
     sushiRouter,
     balancerVault,
@@ -116,108 +167,93 @@ async function main() {
     aavePool,
     aaveAddressesProvider,
     uniswapV3Factory,
-    titheRecipient,
-    TITHE_BPS
-  );
-  
-  // ethers v6: Use waitForDeployment() instead of deployed()
+    owner,
+  ];
+
+  console.log("-".repeat(64));
+  console.log("Constructor arguments (8):");
+  console.log(`  1 _uniswapV3Router       ${uniswapV3Router}`);
+  console.log(`  2 _sushiRouter           ${sushiRouter}`);
+  console.log(`  3 _balancerVault         ${balancerVault}`);
+  console.log(`  4 _dydxSoloMargin        ${dydxSoloMargin}${dydxSoloMargin === ZERO_ADDRESS ? "  (not on this network)" : ""}`);
+  console.log(`  5 _aavePoolAddress       ${aavePool}`);
+  console.log(`  6 _aaveAddressesProvider ${aaveAddressesProvider}`);
+  console.log(`  7 _v3Factory             ${uniswapV3Factory}`);
+  console.log(`  8 _owner                 ${owner}  <- IMMUTABLE, receives 100% of profit`);
+  console.log(`      owner source:         ${ownerSource}`);
+  console.log("-".repeat(64));
+
+  console.log("\nDeploying...");
+  const FlashSwapV3 = await hre.ethers.getContractFactory("FlashSwapV3");
+  const flashSwapV3 = await FlashSwapV3.deploy(...args);
   await flashSwapV3.waitForDeployment();
-  
-  // ethers v6: Use getAddress() to get contract address
+
   const contractAddress = await flashSwapV3.getAddress();
-  
-  console.log("\n✅ FlashSwapV3 deployed successfully!");
-  console.log("━".repeat(60));
-  console.log("Contract address:", contractAddress);
-  console.log("Owner address:", deployer.address);
-  console.log("Tithe recipient:", titheRecipient);
-  console.log("Tithe split:", `${TITHE_BPS / 100}% debt reduction / ${(MAX_TITHE_BPS - TITHE_BPS) / 100}% operator`);
-  console.log("━".repeat(60));
-  
-  // Wait for a few blocks before verification
-  if (!SKIP_CONFIRMATION) {
-    console.log("\n⏳ Waiting for 5 block confirmations...");
-    const deployTx = flashSwapV3.deploymentTransaction();
-    if (deployTx) {
-      await deployTx.wait(5);
-      console.log("✅ 5 confirmations received");
-    } else {
-      console.log("⚠️  Deployment transaction not available, skipping confirmation wait");
-    }
-  } else {
-    console.log("\n⚡ Skipping block confirmations (SKIP_CONFIRMATION=true)");
+  const deployTx = flashSwapV3.deploymentTransaction();
+
+  console.log("\nFlashSwapV3 deployed.");
+  console.log("=".repeat(64));
+  console.log(`Contract: ${contractAddress}`);
+  console.log(`Owner:    ${owner}`);
+  if (deployTx) {
+    console.log(`Tx:       ${deployTx.hash}`);
   }
-  
-  // Automatic contract verification
+  console.log("=".repeat(64));
+
+  if (!SKIP_CONFIRMATION && deployTx) {
+    console.log("\nWaiting for 5 confirmations...");
+    await deployTx.wait(5);
+    console.log("5 confirmations received.");
+  } else if (SKIP_CONFIRMATION) {
+    console.log("\nSkipped confirmation wait (SKIP_CONFIRMATION=true).");
+  }
+
+  const manualVerifyLines = [
+    `npx hardhat verify --network ${networkName} ${contractAddress}`,
+    ...args,
+  ];
+
   if (VERIFY_CONTRACT) {
-    console.log("\n🔍 Starting automatic contract verification...");
+    console.log("\nVerifying source on Basescan...");
     try {
       const verifyModule = await import("@nomicfoundation/hardhat-verify/verify");
-      await verifyModule.verifyContract({
-        address: contractAddress,
-        constructorArgs: [
-          uniswapV3Router,
-          sushiRouter,
-          balancerVault,
-          dydxSoloMargin,
-          aavePool,
-          aaveAddressesProvider,
-          uniswapV3Factory,
-          titheRecipient,
-          TITHE_BPS
-        ],
-        contract: "contracts/FlashSwapV3.sol:FlashSwapV3",
-      }, hre);
-      console.log("✅ Contract verified successfully!");
+      await verifyModule.verifyContract(
+        {
+          address: contractAddress,
+          constructorArgs: args,
+          contract: "contracts/FlashSwapV3.sol:FlashSwapV3",
+        },
+        hre
+      );
+      console.log("Verified.");
     } catch (verifyError: unknown) {
-      const errorMessage = verifyError instanceof Error ? verifyError.message : String(verifyError);
-      if (errorMessage.includes("Already Verified") || errorMessage.includes("already verified")) {
-        console.log("✅ Contract is already verified!");
+      const message =
+        verifyError instanceof Error ? verifyError.message : String(verifyError);
+      if (/already verified/i.test(message)) {
+        console.log("Already verified.");
       } else {
-        console.error("⚠️  Verification failed:", errorMessage);
-        console.log("\n📝 You can manually verify later using:");
-        console.log(`npx hardhat verify --network ${networkName} ${contractAddress} \\`);
-        console.log(`  ${uniswapV3Router} \\`);
-        console.log(`  ${sushiRouter} \\`);
-        console.log(`  ${balancerVault} \\`);
-        console.log(`  ${dydxSoloMargin} \\`);
-        console.log(`  ${aavePool} \\`);
-        console.log(`  ${aaveAddressesProvider} \\`);
-        console.log(`  ${uniswapV3Factory} \\`);
-        console.log(`  ${titheRecipient} \\`);
-        console.log(`  ${TITHE_BPS}`);
+        console.error(`Verification failed: ${message}`);
+        console.log("\nVerify manually with:");
+        console.log(manualVerifyLines.join(" \\\n  "));
       }
     }
   } else {
-    console.log("\n📝 To verify the contract later, run:");
-    console.log(`VERIFY_CONTRACT=true npx hardhat run scripts/deployment/deployFlashSwapV3.ts --network ${networkName}`);
-    console.log("\nOr manually verify with:");
-    console.log(`npx hardhat verify --network ${networkName} ${contractAddress} \\`);
-    console.log(`  ${uniswapV3Router} ${sushiRouter} ${balancerVault} ${dydxSoloMargin} \\`);
-    console.log(`  ${aavePool} ${aaveAddressesProvider} ${uniswapV3Factory} \\`);
-    console.log(`  ${titheRecipient} ${TITHE_BPS}`);
+    console.log("\nTo verify later, re-run with VERIFY_CONTRACT=true, or manually run:");
+    console.log(manualVerifyLines.join(" \\\n  "));
   }
-  
-  console.log("\n💾 Save these details to your .env file:");
-  console.log("━".repeat(60));
+
+  console.log("\nAdd these to .env (and to the Railway service that runs the bot):");
+  console.log("-".repeat(64));
   console.log(`FLASHSWAP_V3_ADDRESS=${contractAddress}`);
-  console.log(`FLASHSWAP_V3_OWNER=${deployer.address}`);
-  console.log(`FLASHSWAP_V3_TITHE_RECIPIENT=${titheRecipient}`);
-  console.log(`FLASHSWAP_V3_TITHE_BPS=${TITHE_BPS}`);
-  console.log("━".repeat(60));
-  
-  console.log("\n✨ Deployment complete!");
-  console.log("\n📖 Next steps:");
-  console.log("  1. Add FLASHSWAP_V3_ADDRESS to your .env file");
-  console.log("  2. Configure ENABLE_FLASHSWAP_V3=true in .env to use V3");
-  console.log("  3. Test the deployment with: npm run test:integration");
-  console.log("  4. Update OpportunityExecutor to use FlashSwapV3Executor");
-  console.log("\n📚 See docs/FLASHSWAPV3_INTEGRATION_GUIDE.md for integration instructions");
+  console.log(`FLASHSWAP_V3_OWNER=${owner}`);
+  console.log(`ENABLE_FLASHSWAP_V3=true`);
+  console.log("-".repeat(64));
+  console.log("\nNext: allowlist this contract in the CDP paymaster before any");
+  console.log("gasless UserOp will be sponsored. Testnet sponsorship is free;");
+  console.log("mainnet sponsorship costs gas plus a 7% fee.");
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});
