@@ -75,7 +75,7 @@ export class HealthCheckServer {
 
   constructor(config?: Partial<HealthCheckConfig>) {
     this.config = {
-      port: config?.port || parseInt(process.env.HEALTH_CHECK_PORT || '3001'),
+      port: config?.port || parseInt(process.env.PORT || process.env.HEALTH_CHECK_PORT || '3001'),
       enabled: config?.enabled !== undefined ? config.enabled : true,
     };
 
@@ -133,6 +133,19 @@ export class HealthCheckServer {
    * Get health status
    */
   private async getHealthStatus(): Promise<HealthCheckResponse> {
+    // Boot-time: components are attached only after slow initialization finishes.
+    // Report a non-failing status so the liveness probe stays green while we start up.
+    if (!this.components) {
+      return {
+        status: 'degraded',
+        timestamp: new Date().toISOString(),
+        uptime: Date.now() - this.startTime,
+        components: {
+          initialization: { status: 'degraded', message: 'Components still initializing' },
+        },
+      };
+    }
+
     const components: HealthCheckResponse['components'] = {};
     let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 
