@@ -11,6 +11,7 @@ buildCommand = "npm install && (npx tsc --noEmit || true)"
 # override to let this Base entrypoint take effect.
 startCommand = "npm start"
 restartPolicyType = "ON_FAILURE"
+healthcheckPath = "/health"
 
 # Env vars, set in the Railway dashboard (values never live in git):
 #   WALLET_PRIVATE_KEY  = <EOA private key>       (required for startup validation)
