@@ -9,6 +9,7 @@
 1. Read these notes, then the recent memory records in the Nexus brain (below).
 2. Run the deterministic boot: `python3 boot.py` at the repo root. It reads `boot.config.json` and the keys file, connects to the Nexus brain, pulls session lineage and recent boot records, and prints a boot card. If it reports no lineage, run `python3 boot.py --init-state` once.
 3. Restore context from the boot card, then continue the work.
+4. For the current engineering picture (arbitrage system, deploys, branches, open items), read `SESSION_HANDOFF.md`.
 
 ---
 
