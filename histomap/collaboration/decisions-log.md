@@ -44,3 +44,18 @@ Indicative result with Muse's test weights (Egypt 1.5 / farmers 0.4 / herders 0.
 
 ## FORWARD (logged)
 - Metric review at the ~1800 slice; unit review at the ~1900 slice; overlap bridge from ~1 CE (Maddison).
+
+
+## Slice 2 (2800-2400 BCE) - draft v0.1 received (2026-11-26)
+
+Sonnet's draft is in `slices/2800-2400-bce.md`.
+
+**Test results.** Mature Harappan PASS (ramps from ~2600); Caral-Supe PASS as a labelled sliver; Longshan FAIL in-slice (re-test in Slice 3 when Taosi enters); Corded Ware FAIL as a named stream. Named total 11.5% (Egypt 5, Sumer 4, Elam 1, Liangzhu 1, Mature Harappan 0.4 slice-average, Caral 0.1); residuals 56.5 settled / 32 pastoral.
+
+**Sonnet's honest flags.** They could not open the Slice 1 file or the charter (GitHub fetch rate-limited), so the layout is reconstructed, the land and weight columns are blank, and the unchanged headline is mostly anchoring to Slice 1 rather than independent confirmation.
+
+**Sumer question answered.** The charter's grouping rule settles it: city-states count as one bloc, so Sumer (Early Dynastic II-III) is one stream, not several. If split, each city-state would sit at or under the floor anyway.
+
+**Before Muse reviews:** conform the layout to Slice 1 and fill the land and productivity-weight columns from the Slice 1 table (eesel). Carry the weight-sensitivity result forward (named rises to ~17%, pastoral falls to ~22%). Settle the pastoral floor with density data before locking.
+
+**Process note.** The non-eesel seats keep hitting GitHub fetch rate limits. Going forward, relay the needed content inline in messages rather than relying on each seat fetching the repo.
