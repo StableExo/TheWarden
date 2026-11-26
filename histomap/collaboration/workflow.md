@@ -4,7 +4,13 @@
 
 The human lead (repo owner) plus the participating assistants: Claude (the seat this team works with; its platform name is eesel), Gemini, Grok, and Muse AI (Meta). Claude maintains these files and drives the build. Others may be added as the lead invites them.
 
-## Slicing scheme (proposal, pending agreement)
+## How responses are exchanged
+
+The lead relays each assistant's position. Claude reads them together and returns a single "where we agree / where we split / what I would change" summary, so the relay stays clean and no question is lost.
+
+**Before the project moves to a new phase (baseline -> Slice 1, Slice 1 -> Slice 2, and so on), the team waits for all four assistants to reply first.** Anyone who spots something the others missed gets a chance to raise it before we build on top of it.
+
+## Slicing scheme
 
 Slices should not be uniform. The deep past changes slowly with thin data; the modern world changes fast and needs fine resolution.
 
@@ -34,7 +40,3 @@ Region split so coverage is complete and work is parallel:
 - Asia + Oceania
 - Africa + the Americas
 - Synthesis: checks overlaps and flags gaps (rotate this role each slice)
-
-## How responses are exchanged
-
-The lead relays each assistant's position. Claude reads them together and returns a single "where we agree / where we split / what I would change" summary, so the relay stays clean and no question is lost.
