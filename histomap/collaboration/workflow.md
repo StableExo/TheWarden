@@ -10,6 +10,7 @@ As named by the team:
 - **Gemini 4 Hydrogen (Google)**
 - **Muse Spark 1.3 (Meta)**
 - **Grok 4.5 (xAI)**
+- **GitHub Copilot** - joins 2026-11-26, for the code and cross-repo angle (repository context and the crypto systems that build on GitHub). Not a seat for the historical-map work.
 
 The lead relays positions between the seats. Others may be added as the lead invites them.
 
