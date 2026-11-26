@@ -1,25 +1,38 @@
 # Histomap Rebuild
 
-A collaborative redesign of John B. Sparks' 1931 Histomap: a fixed-width world-history chart where the full width represents 100% of the relevant world, and each civilization or cultural-political bloc is drawn as a stream whose width is its estimated share of that world.
+A collaborative redesign of John B. Sparks' 1931 Histomap: a fixed-width world-history chart where the full width represents 100% of the relevant world, and each civilization or cultural-political bloc is drawn as a stream whose width is its estimated share. The goal is a more rigorous and globally complete chart than the original.
 
-Goal: a more rigorous and globally complete chart than the original, built by a four-way collaboration (the repo owner plus the participating assistants: eesel, Gemini, Grok) working territory by territory in chronological slices.
+**Collaborators:** the repo owner (human lead) plus four assistants - Claude (this assistant seat; platform name eesel), Gemini, Grok, and Muse AI (Meta).
 
-## Status (as of 2026-11-26)
+## Status (2026-11-26)
 
-- Phase: baseline definition. The rules are proposed but not yet locked.
-- Current artifact: `baseline/charter.md` (v0.1, eesel's proposal).
+Baseline nearly locked. Every rule is confirmed except one item, the width metric, which three of four assistants support and one is still to confirm.
 
-## Structure
+## The baseline, in full
 
-- `baseline/` - the agreed rules every slice follows. `charter.md` holds the baseline questions, positions and open decisions.
-- `collaboration/` - how we work: slicing scheme, per-slice template, division of labour, participants.
-- `slices/` - one file per chronological slice once the baseline is locked. `_slice-template.md` is the blank form.
-- `sources/` - research sources and data as they are gathered.
+### Locked
+- **Start:** the chart begins ~3200-3000 BCE. Slice 1 = 3200-2800 BCE.
 
-## How work moves
+### Confirmed rules
+- **Inclusion:** one test - a group holds, or seriously contests, effective control over a meaningful share of the relevant world, as a settled state, a city-network, or a nomadic/pastoral confederation. No writing requirement. Systemic complexity beyond a single village required. Unit = cultural-political bloc, not ethnic label.
+- **Grouping:** city-states count as one bloc. Sumer is one stream in 3200-2800 BCE, not Uruk vs Ur vs Lagash.
+- **Residuals:** explicit "Other" streams so the widths sum to 100%. Slice 1 has "Other settled farming peoples" and "Other pastoralist / mobile peoples". They dominate the early slices by design.
+- **Scope:** global, test-gated. A group earns its own stream only by passing the test; everything else falls into the residuals.
+- **Measurement:** the denominator expands over time; estimates are ranges, not false precision; contested land is counted once, assigned to the dominant controller.
 
-1. Lock the baseline in `baseline/`.
-2. Build one slice at a time to the template, region by region.
-3. Merge, check overlaps, commit.
+### One item awaiting final confirmation - the width metric
+- **Proposed:** controlled productive land weighted by estimated agricultural productivity. A single land-based measure that also tracks population. Population recorded per stream in the notes only. Raw area where productivity data is missing.
+- **Support:** Claude, Grok and Gemini.
+- **Outstanding:** Muse preferred raw productive land; confirmation awaited.
 
-Maintained by eesel. These are living documents; expect edits.
+### Slice 1 roster (draft)
+Sumer, Egypt, Proto-Elamite / Elam, Early Harappan, plus the two residuals.
+
+## Files
+- `baseline/charter.md` - the agreed rules and open items.
+- `baseline/positions.md` - each collaborator's stance.
+- `collaboration/workflow.md` - participants, slicing scheme, per-slice template, roles.
+- `slices/` - the slices as we build them.
+- `sources/` - references and data.
+
+Maintained by Claude (the eesel agent seat).
