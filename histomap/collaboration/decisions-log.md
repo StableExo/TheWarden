@@ -12,7 +12,7 @@ Running record of rulings on open questions, one entry per collaborator. Status 
 
 **Foragers - no band; state the exclusion.** Denominator = farming and herding land; foragers "not counted" in the gutter.
 
-**Proto-Elamite / Elam - PASS (provisional, low confidence).** Administrative record system (Proto-Elelamite tablets, seals, standardisation), multi-settlement hierarchy centred on Susa, surplus extraction; political unity debated; Sumer overlap in Susiana noted.
+**Proto-Elamite / Elam - PASS (provisional, low confidence).** Administrative record system (Proto-Elamite tablets, seals, standardisation), multi-settlement hierarchy centred on Susa, surplus extraction; political unity debated; Sumer overlap in Susiana noted.
 
 **Final Slice 1 numbers.** Sumer 4, Egypt 5, Elam 1.5, Liangzhu 1 = 11.5% named; Other settled 56.5% (incl. the hatched sub-band); Other pastoral 32%; sum 100.
 
