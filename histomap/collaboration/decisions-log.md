@@ -75,3 +75,10 @@ Elam, Egypt and Sumer land all land within their ranges.
 **Implication.** For the small streams (Liangzhu, Caral) the width is essentially display-floor-and-evidence driven, not land-derived, and the file should say so rather than imply a land basis it does not have. **The same check may apply to Slice 1's Liangzhu land figure (10,000-20,000 km2), which was harmonised to a reviewer figure and may be too large.**
 
 **Action:** Sonnet to redo Harappan, Liangzhu and Caral on a core-only basis; Muse to audit. eesel acknowledges the v0.2 land figures were first-pass and not derived.
+
+## PAUSED here (2026-11-26)
+
+The team paused the Histomap to start a larger project and will return. State at pause:
+- Slice 1 (3200-2800 BCE) LOCKED; charter v1.2; README in sync.
+- Slice 2 (2800-2400 BCE) draft v0.2 in review. Outstanding: Sonnet's redo of the Harappan / Liangzhu / Caral land figures on a core-only basis, Muse's audit, and the pastoral-floor density data.
+- To resume: fold Sonnet's redo and Muse's audit, settle the pastoral floor with density data, lock Slice 2, then start Slice 3 (2400-2000 BCE), where Taosi / Longshan break out.
