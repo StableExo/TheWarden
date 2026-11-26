@@ -62,3 +62,16 @@ Sonnet's draft is in `slices/2800-2400-bce.md`.
 
 ### Slice 2 v0.2 conformance (2026-11-26)
 eesel conformed the draft to Slice 1's layout, filled the controlled-land and productivity-weight columns (section 2b), added the reconciliation note for ramping streams, and answered the Sumer question (grouping rule: city-states are one bloc, so one stream). Muse verified the layout matches Slice 1 v3 and charter v1.2, so the draft's "could not open the files" caveat is cleared. Muse flagged and eesel fixed: a README version mismatch (v1.1 to v1.2 in the Files list) and stale caveats in the Slice 2 draft.
+
+### Land-figure audit (Sonnet, 2026-11-26)
+
+Sonnet checked the v0.2 land x weight arithmetic. The weighted maths computes, but three land entries do not reconcile with the widths or the evidence rule:
+- **Mature Harappan:** ~39k weighted would be ~3.8% at Egypt's ratio, above its 1.5% end-of-slice value; its 40,000-90,000 km2 looks like the whole distribution, which the evidence rule excludes.
+- **Liangzhu:** 10,000-20,000 km2 is ~100x the verified core (city ~3 km2, control over ~40 km2, hydraulics ~100 km2) and implies ~1.6%, outside its 0.7-1.5% range.
+- **Caral-Supe:** 5,000-10,000 km2 implies ~0.4%, above its 0.05-0.3 range, and looks far too large for one valley's irrigated land.
+
+Elam, Egypt and Sumer land all land within their ranges.
+
+**Implication.** For the small streams (Liangzhu, Caral) the width is essentially display-floor-and-evidence driven, not land-derived, and the file should say so rather than imply a land basis it does not have. **The same check may apply to Slice 1's Liangzhu land figure (10,000-20,000 km2), which was harmonised to a reviewer figure and may be too large.**
+
+**Action:** Sonnet to redo Harappan, Liangzhu and Caral on a core-only basis; Muse to audit. eesel acknowledges the v0.2 land figures were first-pass and not derived.
