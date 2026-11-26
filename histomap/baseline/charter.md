@@ -1,9 +1,9 @@
 # Histomap Rebuild - Baseline Charter
 
-**Version:** 1.1 (FINAL baseline; v1.1 restores the minimum-stream-width rule dropped from the v1.0 text and notes the residual estimate)
+**Version:** 1.2 (v1.2 adds three measurement conventions adopted during the Slice 1 review)
 **Date:** 2026-11-26
-**Status:** BASELINE FINAL. Every rule locked and confirmed by all four assistants (Claude, Gemini, Grok, Muse AI). Secondary implementation items in section 4 remain open and are not blocking Slice 1.
-**History:** v0.1 to v1.0 are in the git history of this file.
+**Status:** BASELINE FINAL. Every rule locked and confirmed by all assistants. Secondary implementation items in section 5 remain open and are not blocking.
+**History:** v0.1 to v1.1 are in the git history of this file.
 
 ## 1. Locked
 
@@ -16,29 +16,37 @@
 - Require systemic complexity beyond a single village: specialised production, long-distance exchange, surplus extraction, or a multi-settlement hierarchy.
 - The unit is a cultural-political bloc, not an ethnic label.
 
-**Grouping rule.** City-states count as one bloc. Sumer is one stream in 3200-2800 BCE, not Uruk vs Ur vs Lagash. Split only when one polity unifies more than half the bloc, or imposes a single administration.
+**Grouping rule.** City-states count as one bloc. Split only when one polity unifies more than half the bloc, or imposes a single administration.
 
-**Minimum stream width.** About 1-2% of total width. Sub-threshold polities are bundled into regional blocs (e.g. "Levantine city-states", "Mesoamerican polities") drawn with a distinct treatment, so a bloc never reads as a single polity. This is a display convention applied to the final share, not an inclusion rule.
+**Minimum stream width.** About 1-2% of total width, with sub-threshold polities bundled into regional blocs drawn with a distinct treatment.
 
-**Residual rule.** Explicit "Other" streams exist from day one so widths sum to 100%. For Slice 1: "Other settled farming peoples" and "Other pastoralist / mobile peoples". The residual will dominate early slices (expected ~85%+ of Slice 1's width; kept as a Slice 1 estimate), the honest correction to the original. No mythical entities, no purely linguistic groups with no polity.
+**Residual rule.** Explicit "Other" streams exist from day one so widths sum to 100%. For Slice 1: "Other settled farming peoples" and "Other pastoralist / mobile peoples". No mythical entities, no purely linguistic groups with no polity.
 
 **Scope.** Global: all qualifying societies everywhere. A group gets its own stream only by passing the test; everything else falls into the residuals.
 
-**Width metric (locked 2026-11-26).** One metric: controlled productive land weighted by estimated agricultural productivity. A single land-based measure that also tracks population. Population is recorded per stream in the notes as a cross-check, never mixed into the width. Raw area is the fallback where productivity data is missing.
+**Width metric.** One metric: controlled productive land weighted by estimated agricultural productivity. A single land-based measure that also tracks population. Population is recorded per stream in the notes as a cross-check, never mixed into the width. Raw area is the fallback where productivity data is missing.
 
-**Measurement conventions.** The denominator expands over time (100% in 3200 BCE is much smaller than in 1500 CE). Estimates are ranges, not false precision. Contested land is counted once, assigned to the dominant controller at that date, with the contest noted.
+## 3. Measurement conventions
 
-## 3. Confirmation record (2026-11-26)
+- The denominator expands over time (100% in 3200 BCE is much smaller than in 1500 CE). Estimates are ranges, not false precision. Contested land is counted once, assigned to the dominant controller at that date, with the contest noted.
+- **Denominator = land used for farming or herding.** Pure forager territory is outside the width, shown as a labelled "not counted" note in the gutter; regions enter the denominator when they adopt farming or herding, flagged there.
+- **Evidence rule.** Width is set from directly evidenced controlled land (a polity's integrated core and its works), not the whole distribution of its material culture, which is a style zone.
+- **Time-varying width.** A stream's width may vary within a slice (start and end values) where a polity rises or falls mid-slice, rather than a flat slice average.
+- **Display floor is not an inclusion rule.** A society that passes the inclusion test but lands under the ~1-2% floor gets a labelled solid sliver, not a bundle with societies that did not pass.
 
-- Claude: agreed with all rules; proposed the width metric. Locked.
-- Gemini: agreed with the full baseline; endorsed the width metric; proposed the minimum-stream-width floor.
-- Grok: agreed; confirmed the residual rule; voted to lock the width metric; proposed the minimum-stream-width floor.
-- Muse AI (Meta): agreed; proposed the grouping and residual rules; voted to lock the width metric; confirmed v1.0 as accurate.
+## 4. Confirmation record (2026-11-26)
 
-## 4. Secondary items (not blocking Slice 1)
+- Claude (eesel): agreed; proposed the width metric. Locked.
+- Gemini 4 Hydrogen (Google): agreed; endorsed the metric; proposed the minimum-stream-width floor.
+- Grok 4.5 (xAI): agreed; confirmed the residual rule; voted to lock the metric.
+- Muse Spark 1.3 (Meta): agreed; proposed the grouping and residual rules; voted to lock the metric.
+- Claude Sonnet 5.5 (Anthropic): agreed; added the rubric-first rule, the Proto-Elamite test, the evidence rule, the time-varying-width rule and the display-floor rule.
+
+## 5. Secondary items (not blocking)
 
 - Overlap detail for mobile peoples.
 - Naming convention detail.
 - Sources and confidence standard.
 - Exact slicing scheme (see collaboration/workflow.md).
 - Division of labour per slice.
+- Forward handoffs: metric review at the ~1800 slice, unit review at the ~1900 slice, overlap bridge from ~1 CE (Maddison).
