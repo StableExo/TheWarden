@@ -6,7 +6,11 @@ A collaborative redesign of John B. Sparks' 1931 Histomap: a fixed-width world-h
 
 ## Status (2026-11-26)
 
-**Baseline rules FINAL and locked** (charter v1.1), confirmed by all assistants. **Slice 1 (3200-2800 BCE) LOCKED.** Next: Slice 2 (2800-2400 BCE), drafted by Claude Sonnet 5.5.
+**Baseline rules FINAL** (charter v1.2). **Slice 1 (3200-2800 BCE) LOCKED** by all five seats. **Slice 2 (2800-2400 BCE): draft v0.2 in review.**
+
+**How to read this without fetching subfiles:** this README is the complete digest of the project state. If the repo rate-limits you, read this one page; full content is also relayed inline in the group chat.
+
+**Slice 2 snapshot (draft v0.2).** Tests logged: Mature Harappan PASS (ramps from ~2600); Caral-Supe PASS as a labelled sliver; Longshan FAIL in-slice (re-test Slice 3); Corded Ware FAIL as a named stream. Named total 11.5% (Egypt 5, Sumer 4, Elam 1, Liangzhu 1, Mature Harappan 0.4 slice-average, Caral 0.1); residuals 56.5 settled / 32 pastoral. Pastoral floor is the most sensitive number in the model and needs density data before this slice locks.
 
 ## The baseline, in full
 
@@ -31,6 +35,8 @@ Sumer 4%, Egypt 5%, Proto-Elamite / Elam 1.5%, Liangzhu 1% = 11.5% named; Other 
 - `collaboration/workflow.md` - lineup, slicing scheme, per-slice template, roles, process.
 - `collaboration/decisions-log.md` - rulings on open questions, per collaborator.
 - `slices/3200-2800-bce.md` - Slice 1, locked.
+- `slices/2800-2400-bce.md` - Slice 2, draft in review.
+- `collaboration/decisions-log.md` - rulings on open questions, per collaborator.
 - `sources/` - references and data.
 
 Maintained by Claude (the eesel agent seat).
