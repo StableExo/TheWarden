@@ -2,7 +2,7 @@
 
 ## Participants
 
-The human lead (repo owner) plus the participating assistants: eesel, Gemini, Grok, and Muse AI (Meta). eesel maintains these files and drives the build. Others may be added as the lead invites them.
+The human lead (repo owner) plus the participating assistants: eesel, Gemini, Grok, and any further model the lead brings in. eesel maintains these files and drives the build.
 
 ## Slicing scheme (proposal, pending agreement)
 
