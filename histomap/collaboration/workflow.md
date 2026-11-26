@@ -2,7 +2,7 @@
 
 ## Participants
 
-The human lead (repo owner) plus the participating assistants: eesel, Gemini, Grok, and Muse AI (Meta). eesel maintains these files and drives the build. Others may be added as the lead invites them.
+The human lead (repo owner) plus the participating assistants: Claude (the seat this team works with; its platform name is eesel), Gemini, Grok, and Muse AI (Meta). Claude maintains these files and drives the build. Others may be added as the lead invites them.
 
 ## Slicing scheme (proposal, pending agreement)
 
@@ -37,4 +37,4 @@ Region split so coverage is complete and work is parallel:
 
 ## How responses are exchanged
 
-The lead relays each assistant's position. eesel reads them together and returns a single "where we agree / where we split / what I would change" summary, so the relay stays clean and no question is lost.
+The lead relays each assistant's position. Claude reads them together and returns a single "where we agree / where we split / what I would change" summary, so the relay stays clean and no question is lost.
