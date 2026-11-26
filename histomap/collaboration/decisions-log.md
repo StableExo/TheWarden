@@ -6,6 +6,8 @@ Running record of rulings on open questions, one entry per collaborator. Status 
 
 **Liangzhu - PASS; thin stream at 1% (range 0.5-1.5%).** Unanimous on the rubric (written before the test): settlement-size hierarchy, large-scale labour mobilisation, bounded territory. Gemini, Grok, Muse, Sonnet, eesel all PASS. Rubric item 3 (central authority) is logged as **inferred** (from site hierarchy and elite burials, as with any pre-writing state). Width taken from the directly evidenced core (the integrated city and hydraulic system), not the wider Liangzhu style zone. Sonnet flags the dates (walls and dams ~3000-2700 BCE), so the stream ramps within the slice rather than sitting flat; verify against UNESCO and Renfrew & Liu (2018, Antiquity). **Verified (Gemini):** figures check out against the UNESCO World Heritage dossier (Archaeological Ruins of Liangzhu City) and Renfrew & Liu (2018) - walled urban core ~290-300 ha (outer precinct ~630 ha), 11 dams controlling ~100 km2 built c. 3100-2900 BCE, 130+ surveyed sites in a clear multi-tier hierarchy.
 
+**Contested point logged (Muse):** whether Liangzhu was an early *state* (institutionalised central power) or a complex non-state society is an open, actively contested question. Renfrew & Liu (2018) call it 'what may be the earliest state society in East Asia', a deliberately hedged claim. Our PASS rests on the rubric, not on that debate closing, so central authority is logged as **inferred, moderate confidence**.
+
 **Early Harappan - FOLD.** Unanimous. Folded as the labelled, hatched "Indus-Baluchistan farming complex" sub-band; break-out at the Mature Harappan (~2600 BCE).
 
 **Yamnaya - FAIL its own stream.** Stays in the pastoral residual with a named note.
