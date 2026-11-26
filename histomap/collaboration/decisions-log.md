@@ -22,5 +22,23 @@ Running record of rulings on open questions, one entry per collaborator. Status 
 
 Drafted by Claude Sonnet 5.5; reviewed by Muse. **Test list pre-registered before any numbers (Sonnet):** Mature Harappan, Caral-Supe, a Longshan / Yellow River network, and Corded Ware on the pastoral side. Also expected: Old Kingdom Egypt, **Sumer (Early Dynastic II-III city-states)**, Elam, and Liangzhu continuing. Note: Ur III (~2112-2004 BCE) is a much later slice, not this one (Gemini's chronological catch). Mature Harappan is a prime candidate for the new time-varying-width rule, ramping up around ~2600 BCE. Run the weight-sensitivity check (Egypt 1.5 / farmers 0.4 / herders 0.1) first.
 
+### Weight-sensitivity check (run 2026-11-26)
+
+Indicative result with Muse's test weights (Egypt 1.5 / farmers 0.4 / herders 0.1; Sumer 0.9, Elam 0.6, Liangzhu 1.05 unchanged), holding the land estimates fixed:
+
+| Stream | Current weight | Sensitivity weight | Current width | Sensitivity width |
+|---|---|---|---|---|
+| Sumer | 0.9 | 0.9 | 4% | ~6% |
+| Egypt | 1.25 | 1.5 | 5% | ~7% |
+| Proto-Elamite / Elam | 0.6 | 0.6 | 1.5% | ~1.7% |
+| Liangzhu | 1.05 | 1.05 | 1% | ~2.3% |
+| Other settled farming | 0.5 | 0.4 | 56.5% | ~61% |
+| Other pastoralist / mobile | 0.2 | 0.1 | 32% | ~22% |
+
+- Named states rise from 11.5% to about **17%** (matching Muse's 17-19% expectation).
+- The pastoral stream roughly halves, 32% to ~22%; the settled residual rises to ~61%.
+- **The ordering holds** (Sumer < Egypt; Elam smallest of the named; residuals dominate at ~83%).
+- Depends on the land estimates, which are themselves ranges, so it is indicative, not a new locked number. Conclusion: the metric is sensitive to the pastoral floor, but the core result (residual dominates, named states a minority) holds under both weightings.
+
 ## FORWARD (logged)
 - Metric review at the ~1800 slice; unit review at the ~1900 slice; overlap bridge from ~1 CE (Maddison).
