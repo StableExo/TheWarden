@@ -59,3 +59,6 @@ Sonnet's draft is in `slices/2800-2400-bce.md`.
 **Before Muse reviews:** conform the layout to Slice 1 and fill the land and productivity-weight columns from the Slice 1 table (eesel). Carry the weight-sensitivity result forward (named rises to ~17%, pastoral falls to ~22%). Settle the pastoral floor with density data before locking.
 
 **Process note.** The non-eesel seats keep hitting GitHub fetch rate limits. Going forward, relay the needed content inline in messages rather than relying on each seat fetching the repo.
+
+### Slice 2 v0.2 conformance (2026-11-26)
+eesel conformed the draft to Slice 1's layout, filled the controlled-land and productivity-weight columns (section 2b), added the reconciliation note for ramping streams, and answered the Sumer question (grouping rule: city-states are one bloc, so one stream). Muse verified the layout matches Slice 1 v3 and charter v1.2, so the draft's "could not open the files" caveat is cleared. Muse flagged and eesel fixed: a README version mismatch (v1.1 to v1.2 in the Files list) and stale caveats in the Slice 2 draft.
