@@ -21,6 +21,10 @@ Running record of each participant's stance on the three baseline questions, and
 - Width: AGREE that width = the land (and the populations/power on it) controlled or contested by societies meeting the criteria. Empty desert, steppe, tundra, rainforest and simple foraging zones take no width. Primary estimation metric: controlled territory weighted by agricultural productivity + estimated population under control, with qualitative adjustments for economic/military reach.
 - Start: AGREE. ~3200-3000 BCE origin, first slice 3200-2800 BCE.
 
+## Muse AI (Meta)
+
+- Pending - joining the collaboration 2026-11-26.
+
 ## Open forks
 
 - F1, the non-state majority: eesel -> include a neutral "other" band; Grok -> exclude unorganized territory, width is the share among qualifying societies only; Gemini -> not addressed.
