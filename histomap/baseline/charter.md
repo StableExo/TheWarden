@@ -1,44 +1,41 @@
 # Histomap Rebuild - Baseline Charter
 
-**Version:** 0.2
+**Version:** 0.3
 **Date:** 2026-11-26
-**Status:** Largely converged. All three assistant replies in. Two forks open (F1, F2 below).
-**History:** v0.1 (the original questions and eesel's proposals) is in the git history of this file.
+**Status:** Locked start, converged rules, one fork open (F3, the width metric).
+**History:** v0.1 and v0.2 are in the git history of this file.
 
 ## 1. Locked
 
-- **Start date.** The chart begins ~3200-3000 BCE. Slice 1 is 3200-2800 BCE. Agreed by eesel, Gemini and Grok.
+- **Start date.** The chart begins ~3200-3000 BCE. Slice 1 is 3200-2800 BCE. Agreed by eesel, Gemini, Grok and Muse.
 
-## 2. Converged (subject to the two open forks)
+## 2. Converged
 
 **Inclusion criteria.** One test: a group gets a stream if it holds, or seriously contests, effective political control over a meaningful share of the relevant world at that time, as a settled state, a city-network, or a nomadic/pastoral confederation.
-- Writing is not a requirement. Writing is a regional accident, and requiring it would erase the Andes (Caral) and the steppe confederations (Xiongnu, Scythians, Mongols).
+- Writing is not a requirement (it would erase the Andes and the steppe confederations).
 - Require systemic complexity beyond a single village: specialised production, long-distance exchange, surplus extraction, or a multi-settlement hierarchy.
 - The unit is a cultural-political bloc, not an ethnic label.
 
-**Minimum stream width.** About 1-2% of total width. Sub-threshold polities are bundled into regional blocs (e.g. "Levantine city-states", "Mesoamerican polities") drawn with a distinct treatment so a bloc never reads as a single polity. This is a display convention on the final share, not an inclusion rule.
+**Grouping rule.** City-states count as one bloc. Sumer is one stream in 3200-2800 BCE, not Uruk vs Ur vs Lagash. Split only when one polity unifies more than half the bloc or imposes a single administration.
 
-**Width metric.** A composite.
-- Primary measure: controlled territory weighted by agricultural productivity and estimated population under control.
-- Landed as a two-term blend: controlled habitable land + population share, starting at 50/50, both normalised to the same scope.
-- No subjective "complexity" index; at most a documented tiebreaker.
+**Residual rule (resolves F1).** Explicit "Other" streams exist from day one so widths sum to 100%. For Slice 1: "Other settled farming peoples" and "Other pastoralist / mobile peoples". The residual will dominate early slices (Muse estimates 85%+ in Slice 1), which is the honest correction to the original. No mythical entities, no purely linguistic groups with no polity.
 
-## 3. Open forks
+**Scope (resolves F2).** Global: all qualifying societies everywhere. A group gets its own stream only by passing the test; everything else falls into the residuals. This reconciles the wider global roster with the caution about speculative widths.
 
-**F1 - The non-state majority.** At 3200 BCE most humans lived outside any qualifying polity.
-- eesel: include a neutral "other" band, however wide.
-- Grok: exclude unorganized territory; width is the share among qualifying complex societies only.
-- Gemini: not addressed.
-- Proposed resolution: width = share among qualifying societies, plus a per-slice annotation recording the non-state share of humanity.
+**The denominator expands over time.** 100% in 3200 BCE is much smaller than 100% in 1500 CE. Width is a share of the expanding controlled world, not a fixed area.
 
-**F2 - Scope.** "Globally complete" means either the connected world growing over time, or all qualifying societies everywhere from antiquity.
-- Grok's Slice 1 focus is the Near East.
-- Gemini's Slice 1 list adds early Harappan / Kot Diji, Caral-Supe and Longshan.
-- Proposed resolution: all qualifying societies everywhere, accepting the heavier data cost.
+**Estimates as ranges,** not false precision. **Contested land is counted once**, assigned to the dominant controller at that date, with the contest noted.
+
+## 3. Open - the width metric (F3)
+
+- Muse: width = share of controlled productive / habitable land area only. Population goes in the notes, not the width (mixing metrics muddies it).
+- eesel + Gemini: a composite of controlled land + population share (start 50/50), so dense river valleys are not dwarfed by empty steppe.
+- Grok: controlled territory weighted by agricultural productivity + estimated population under control.
+- **Proposed resolution:** one metric, controlled productive land weighted by estimated agricultural productivity. That is a single land-based measure (clean, as Muse wants) that also tracks population (what eesel and Gemini want), and it is essentially Grok's formula. Raw area is the fallback where productivity data is missing. Population is recorded per stream in the notes as a cross-check, never mixed into the width.
 
 ## 4. Still to settle
 
-- Overlap/contestation convention (nomads, frontiers, tributary zones).
+- Overlap detail for mobile peoples.
 - Naming convention detail.
 - Sources and confidence standard.
 - Exact slicing scheme (see collaboration/workflow.md).
