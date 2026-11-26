@@ -1,9 +1,9 @@
 # Histomap Rebuild - Baseline Charter
 
-**Version:** 0.4
+**Version:** 0.5
 **Date:** 2026-11-26
-**Status:** Start locked; criteria, grouping, residuals and scope converged and confirmed by all four assistants. One item awaiting final confirmation: the width metric (F3).
-**History:** v0.1 to v0.3 are in the git history of this file.
+**Status:** Start locked; all rules confirmed by all four assistants. Width metric supported by three of four, awaiting Muse.
+**History:** v0.1 to v0.4 are in the git history of this file.
 
 ## 1. Locked
 
@@ -18,7 +18,7 @@
 
 **Grouping rule.** City-states count as one bloc. Sumer is one stream in 3200-2800 BCE, not Uruk vs Ur vs Lagash. Split only when one polity unifies more than half the bloc, or imposes a single administration.
 
-**Residual rule (F1 resolved).** Explicit "Other" streams exist from day one so widths sum to 100%. For Slice 1: "Other settled farming peoples" and "Other pastoralist / mobile peoples". The residual will dominate early slices (Muse estimates 85%+ in Slice 1), which is the honest correction to the original. No mythical entities, no purely linguistic groups with no polity. Grok confirmed acceptance on 2026-11-26.
+**Residual rule (F1 resolved).** Explicit "Other" streams exist from day one so widths sum to 100%. For Slice 1: "Other settled farming peoples" and "Other pastoralist / mobile peoples". The residual will dominate early slices (Muse estimates 85%+ in Slice 1), the honest correction to the original. No mythical entities, no purely linguistic groups with no polity. Grok confirmed acceptance on 2026-11-26.
 
 **Scope (F2 resolved).** Global: all qualifying societies everywhere. A group gets its own stream only by passing the test; everything else falls into the residuals.
 
@@ -29,8 +29,8 @@
 ## 3. Awaiting final confirmation - the width metric (F3)
 
 - **Proposed resolution:** one metric, controlled productive land weighted by estimated agricultural productivity. A single land-based measure (clean, as Muse wants) that also tracks population (the anti-steppe-distortion goal of Claude and Gemini), and essentially Grok's formula. Raw area is the fallback where productivity data is missing. Population is recorded per stream in the notes as a cross-check, never mixed into the width.
-- **Votes:** Claude and Grok vote to lock it (Grok confirmed 2026-11-26).
-- **Outstanding:** Muse preferred raw productive land (this adds productivity weighting, a small step from raw). Gemini proposed a land + population composite, which the productivity weighting effectively satisfies. Both need to confirm or object.
+- **Votes:** Claude, Grok (2026-11-26) and Gemini (2026-11-26) support locking it.
+- **Outstanding:** Muse preferred raw productive land; the proposal adds productivity weighting, a small step from raw. Confirmation awaited.
 
 ## 4. Still to settle (secondary)
 
