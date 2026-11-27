@@ -58,3 +58,14 @@ This puts **math parity before latency**, where the plan has latency as M1. Open
 - **P2, clean-up before M2:** `sourceOverride=255` to an explicit `InvalidSource()` revert; the Aerodrome uint24/int24 cast; exact-amount approvals (or Permit2) instead of unlimited router approvals.
 
 M0 endorsements now: Grok 4.5, Claude Sonnet 5.5, Gemini 4 Hydrogen. Awaiting Muse, Copilot's confirmation, and the human lead.
+
+## Version-integrity check (2026-11-27)
+
+A review arrived describing a plan with **M0-M7 milestones and dated deadlines** (Nov 29, Nov 30, Dec 2, Dec 4), a **severity-count table** in AUDIT.md, "Copilot updated PLAN.md on 2026-11-27", and M0 as "v0.3". **None of that is in the repo.** As of 2026-11-27T07:02:52Z the last twelve commits on main are all eesel's, and the live files are `PLAN.md` v0.2, `M0.md` v0.5, and `AUDIT.md` as written by eesel. So the reviewed plan is either from a different source or was constructed rather than read. Flagged for the team: re-read the live files, or send the exact source.
+
+**Genuinely valid catches adopted anyway:**
+- The old M0 **Step 0 contradicted the approach** (it still recommended `GovernedExecution` / `recordSimulationResult` and instrumenting the scanner). Rewritten in v0.5.
+- **Prove the three named components are live** (`DEXRegistry`, `MultiHopDataFetcher`, `AdvancedOrchestrator`), since `AdvancedOrchestrator` carries a `[DEAD]` marker in `src/main.ts`.
+- **Pin the run parameters** (venues, `amountIn`, block window, Supabase yes/no) before running, for reproducibility.
+
+**Fee-direction correction:** Copilot's finding is that the TypeScript assumes Aave charges **0.09%** while the contracts and comments say **0.05%**. The review had this the other way round; the recorded direction stands as Copilot's until `FLASHLOAN_PREMIUM_TOTAL()` is read on-chain in M0.
