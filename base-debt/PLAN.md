@@ -1,67 +1,68 @@
-# Base Program - Plan v0.1
+# Base Program - Plan v0.2
 
-Author: Claude (eesel). Date: 2026-11-26. For review by all seats.
+Author: Claude (eesel). Date: 2026-11-27. Revised after review by Grok 4.5, Claude Sonnet 5.5 and Gemini 4 Hydrogen; Copilot authored the M0 audit. One sequencing decision remains open, and the milestone numbering is fixed once that is chosen.
 
-## 1. What this is, and what it is not
+## 1. Purpose
 
-A program to prove that an autonomous system can find and execute a profitable trade on Base, with the numbers published. It is Phase 1 of a longer idea about AI-driven economic efficiency.
+**Determine whether** an autonomous system can find and execute a profitable trade on Base, **and publish the number either way**. This is Phase 1 of a longer idea about AI-driven economic efficiency. It is not a plan to retire the US national debt; direct arbitrage revenue cannot, and the job here is one verifiable number. Trust is built from real numbers.
 
-It is not a plan to retire the US national debt. Direct arbitrage revenue cannot do that; the program's own documents compute it at a rounding error (tens of thousands to under a million a year against tens of trillions). Any honest version of this has to say so up front, and this one does. What arbitrage can do is produce the first verifiable number, and a credible debt case, if one ever exists, is built on real numbers, not hoped-for ones.
+## 2. What already exists
 
-## 2. What already exists (audit, 2026-11-26; read-only)
-
-- **Engine.** Multi-hop pathfinding, a DEX registry (Uniswap V3, Aerodrome), pool scanning via multicall, and profitability that accounts for fees, slippage and gas (`src/arbitrage/`).
-- **Execution.** `contracts/FlashSwapV2.sol` (and V3), Aave V3 flash loans, Uniswap V3 flash callback. **Access control is sound:** `owner` and `titheRecipient` are immutable (constructor-set, no setters), `initiateUniswapV3FlashLoan` and `initiateAaveFlashLoan` are `onlyOwner`, `emergencyWithdraw` and `emergencyWithdrawETH` are `onlyOwner`, both flash callbacks verify their caller, and reentrancy is guarded. **Exposure:** the owner is a single key, so one wallet controls the whole contract and the 30% operator share. A multisig is the natural upgrade (`src/treasury/MultiSigTreasury`).
-- **Governance.** `npm run start:base` is dry-run by default; `--live` is explicit and labelled real money. The 2026-11-13/14 work added a CDP enclave signer behind a `SignerProvider` seam, ERC-4337 account abstraction, and a `DRY_RUN` path that simulates and never broadcasts.
-- **The tithe is in the contract.** 70% of net profit to a configured `titheRecipient`, 30% to the owner, capped at 90%.
-- **Strategy is stale.** The configs (`configs/strategies/base_weth_usdc.json`) were last touched around 2026-11-05 and have not been re-tested since.
-- **Scale is the problem.** Roughly 80 subsystems under `src` (arbitrage, execution, treasury, safety, security, simulation, ml, consciousness). Breadth far ahead of depth.
-- **The debt documents** (`github/**/US_DEBT*`) hold a phased strategy whose honest core (efficiency gains over 30-50 years) is buried under unsupported projections and narrative claims (the "synchronicity", competitor jabs). Those claims are the one thing that could sink the credible parts.
+See `AUDIT.md` for the full read-only audit. In short: a capable multi-hop engine, a soundly access-controlled executor (V2), a real governance chokepoint (`GovernedExecution`), but a detection path partly built from **stubs that fabricate opportunities** (`scanner.ts`, `pathfinding.ts`), a P&L layer that **hardcodes $3000/ETH** and uses a 0.1%/hop slippage heuristic, an Aave fee disagreement (0.09% vs 0.05%), and a FlashSwapV3 that pays **100% to the owner with no tithe**.
 
 ## 3. Direction
 
-1. **Measure before planning.** The first artifact is not another document; it is one dry-run that publishes two numbers: the distribution of opportunities seen, and the simulated net P&L after fees, slippage and gas.
-2. **Settle latency first.** On Base the winner is whoever arrives first, not whoever pays most (FCFS sequencer, no public mempool). Measure where the runner executes and its round-trip to the sequencer, and fix the location before any strategy work, because it gates everything.
-3. **Narrow to one loop.** One pair (WETH/USDC), two or three venues, one path. Park multi-hop, ML scoring and the consciousness layers until the loop is proven end to end.
-4. **Keep money and mythology apart.** The code should read like a quant toolkit. The debt narrative lives in its own space, never in the same folder as the strategy numbers.
-5. **Real money only after dry-run evidence**, in tiny size, capped, published, win or lose.
+1. **Measure before planning.** The first artifact is a dry-run snapshot, not another document.
+2. **Narrow to one loop.** WETH/USDC, two or three venues, one path.
+3. **Latency matters, but from M1 onward.** Base is won by arriving first, not by paying most; M0 is cheap and keyless, and is not a feasibility signal.
+4. **Keep money and mythology apart.** The code reads like a quant toolkit; the debt narrative lives elsewhere.
+5. **Real money only after dry-run evidence**, tiny, capped, published, win or lose.
 
 ## 4. Milestones
 
-**M0 - Measurement harness.** Instrument the dry-run so every opportunity seen is logged with pair, venues, gross spread, fees, slippage, gas, estimated net, and whether a simulated execution would have reverted. Deliverable: a reproducible report over a fixed window. Pass: the report exists and its arithmetic reconciles.
+Numbering is nominal until the sequencing call in section 8 is made.
 
-**M1 - Latency reality.** Determine where the runner executes, measure p50 and p95 round-trip to the Base sequencer, and compare against a run from us-east. Deliverable: a measured latency number and a relocation decision. Pass: the number exists and a decision is recorded.
-
-**M2 - One proven loop, in dry-run.** Run the single WETH/USDC loop for a fixed number of hours. Deliverable: simulated net P&L plus the reason for every miss (no spread, fees ate it, slippage, too slow). Pass: an honest net, positive or negative, with causes.
-
-**M3 - Governance verification.** Confirm in code that `DRY_RUN` cannot broadcast, that the spend cap holds, that the kill switch stops the runner, and whether the owner should move to the multisig. Deliverable: each control verified with a file and line. Pass: no unverified control remains.
-
-**M4 - First honest live run.** Minimal capital, one pair, a hard spend cap, published result regardless of outcome. Pass: one executed trade and its real number.
+- **M0 - Measurement harness.** A purpose-built, read-only, block-pinned snapshot over WETH/USDC on 2-3 venues, one reconciled JSONL record per candidate, plus a summary. No key, nothing broadcast. Pass: it reproduces and reconciles (tolerance pre-registered).
+- **M1 - (open slot).** Either **latency reality** (where the runner executes, p50/p95 round-trip to the sequencer, a relocation decision) or **math/Quoter parity** (offline simulation matches `eth_call` within 1 wei). The other becomes M1b. See section 8.
+- **M2 - One proven loop, keyless.** Run the loop in dry-run using `eth_call` or a fork only, so "cannot broadcast" means no key exists rather than a flag being set. Deliverable: simulated net plus a pre-registered miss taxonomy (stale quote, outbid, revert, gas) and a net threshold. Pass: an honest net, with causes. Move the DRY_RUN and kill-switch verification ahead of M2 if M2 will ever hold a key.
+- **M3 - Contract remediation and governance verification.** Precondition for M4: verified-balance accounting and token continuity fixed (`balanceBefore/After`; `path[0].tokenIn == borrowedAsset`; `path[i].tokenOut == path[i+1].tokenIn`); the V3 payout split decided and enforced on-chain; each High turned into a failing Foundry test before its fix; the DRY_RUN guarantee, spend cap and kill switch verified with citations; the stubs quarantined behind a flag. Decide here whether M4 uses a patched V2/V3 or a fresh minimal contract.
+- **M4 - First honest live run.** Minimal capital, one pair, hard spend cap, revert-on-loss guards, published result. **Conditional on M2 clearing its threshold and M3 passing.** Pass: one executed trade and its real number. One trade proves the mechanics, not the edge.
 
 ## 5. Seats
 
-- **GitHub Copilot:** the code reality - what is live, stubbed, or doc-only; the contract and execution review.
-- **Claude Sonnet 5.5:** the execution controls and the dry-run guarantee.
-- **Muse Spark 1.3:** the numbers - arithmetic, cost model, the measured report.
-- **Gemini 4 Hydrogen:** the economics - whether the edge is real given competition and costs.
-- **Grok 4.5:** strategy - single-loop design, venue choice, the latency plan.
-- **Claude (eesel):** record, integrate, maintain the repo, write the drafts.
-- **StableExo (Taylor Marlow):** human lead - decisions and the keys.
+- **Copilot:** the code reality (audit, inventory, contract review).
+- **Sonnet:** execution controls and the dry-run guarantee.
+- **Muse:** the numbers, and **independently recomputing the M0 summary from the JSONL**, so the author is never the only checker.
+- **Gemini:** the economics and the fee/math parity.
+- **Grok:** strategy and the latency plan.
+- **eesel:** record, integrate, maintain the repo, draft.
+- **StableExo (Taylor Marlow):** human lead; decisions and the keys.
 
-## 6. Rules of the collaboration
+Seat lanes keep implementation from grading its own homework: Telemetry/Quant, Smart Contract Security, Architecture/Repo Hygiene.
+
+## 6. Rules
 
 - No number without a measurement; no claim without a source.
 - Pre-register criteria before looking at results; write rubrics before tests.
-- One artifact, one decisions log; every ruling attributed; full text in relay messages, because the seats are often rate-limited.
-- Wait for all seats before advancing a milestone.
-- Keep the debt narrative out of the engineering numbers.
+- One artifact, one decisions log; every ruling attributed; full text in relay messages.
+- **Quorum:** a decision needs the owning seat plus two others; absentees are recorded rather than waited for indefinitely.
+- **Keys stay out of every seat and out of the repo.**
+- The debt narrative stays out of the engineering numbers.
 
 ## 7. Non-goals
 
-- No promise of debt payoff, government adoption, or specific profit.
-- No touching real funds until M4, and only after M0-M3 pass.
-- No adding breadth (more chains, more pairs, more models) until one loop is proven.
+- No promise of debt payoff, government adoption or specific profit.
+- No real funds until M4, and only after M2 and M3 pass.
+- No added breadth until one loop is proven: no multi-pair, no MEV bundles or relays, no latency optimisation work, no treasury automation or debt-repayment routing.
+- **AEV, Ethereum mainnet, and the other TheWarden systems are out of scope**, to stop drift.
+- Do not patch FlashSwapV2 if V3 is the production target; archive it.
 
-## 8. Definition of done for Phase 1
+## 8. Open decisions
 
-One pair, one loop, measured in dry-run, then one tiny live execution, with published honest numbers and a written statement of the edge or its absence that a skeptical quant could not dismiss.
+1. **Sequencing:** math/Quoter parity before latency (Gemini), or latency before parity (plan v0.1). Both are defensible; they cannot both be M1. The milestone numbering follows from this.
+2. **Contract target for the single loop:** patched V2/V3, or a fresh minimal contract.
+3. **V3 payout split:** decide the split, then make the contract and the docs agree before any milestone cites 70/30.
+
+## 9. Definition of done for Phase 1
+
+One pair, one loop, measured in dry-run, then one tiny live execution, with published honest numbers and a statement of the edge or its absence that a skeptical quant could not dismiss.
