@@ -14,7 +14,7 @@ See `AUDIT.md` for the full read-only audit. In short: a capable multi-hop engin
 
 1. **Measure before planning.** The first artifact is a dry-run snapshot, not another document.
 2. **Narrow to one loop.** WETH/USDC, two or three venues, one path.
-3. **Latency matters, but from M1 onward.** Base is won by arriving first, not by paying most; M0 is cheap and keyless, and is not a feasibility signal.
+3. **Latency matters, but from M1 onward.** Base has no public mempool; arrival decides which block you can join and priority fee decides order within it, so both matter. M0 is cheap and keyless, and is not a feasibility signal.
 4. **Keep money and mythology apart.** The code reads like a quant toolkit; the debt narrative lives elsewhere.
 5. **Real money only after dry-run evidence**, tiny, capped, published, win or lose.
 
