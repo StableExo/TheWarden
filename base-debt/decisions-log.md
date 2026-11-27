@@ -100,3 +100,11 @@ Confirmed against the live text: the Aave direction is TypeScript 0.09% vs contr
 **Sequencing: parity-first carries it, 4 of 5 seats** (Grok, Gemini, Muse, eesel); Sonnet's vote and the human lead's endorsement are outstanding.
 
 Grok's words: "If the offline sim doesn't match on-chain Quoter/`eth_call` within the pre-registered tolerance, every latency number is just measuring how fast we reach a phantom edge."
+
+## Sequencing DECIDED - parity first, 2026-11-27 (5-0)
+
+Grok 4.5, Claude Sonnet 5.5, Gemini 4 Hydrogen, Muse Spark 1.3 and eesel all vote **parity before latency**. Sonnet: if the simulation cannot match on-chain `eth_call` within the pre-registered tolerance, every latency number measures how fast we reach an edge that may not exist; parity is also keyless, deterministic and reproducible, while latency needs infrastructure decisions not yet due. Grok: "every latency number is just measuring how fast we reach a phantom edge."
+
+**Adopted from Sonnet:** collect cheap latency data in parallel (p50/p95 round-trip from the current box) but hold the relocation decision until parity passes; and pre-register a fallback - if V3 or Aerodrome cannot reach parity within tolerance, evaluate those venues Quoter-only rather than stalling.
+
+**M0 v0.5 endorsed by all five seats.** Sonnet's endorsement is on the substance, noting it could not open the files (robots.txt blocked the fetch) and asking for the text inline to confirm. Human lead's endorsement still outstanding.
