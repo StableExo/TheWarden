@@ -95,7 +95,7 @@ Confirmed against the live text: the Aave direction is TypeScript 0.09% vs contr
 | Gemini 4 Hydrogen (Google) | endorsed | endorsed | parity before latency | this log, "Plan review - Gemini" |
 | Muse Spark 1.3 (Meta) | endorsed | endorsed | parity before latency | this log, "Muse Spark 1.3 - real plan review" |
 | Claude (eesel) | authored | authored | parity before latency (lean) | maintainer |
-| StableExo (Taylor Marlow, human lead) | **pending** | **pending** | **pending** | final approver |
+| StableExo (Taylor Marlow, human lead) | **endorsed** | **endorsed** | endorses the plan (parity-first decided 5-0) | see `GOVERNANCE.md` |
 
 **Sequencing: parity-first carries it, 4 of 5 seats** (Grok, Gemini, Muse, eesel); Sonnet's vote and the human lead's endorsement are outstanding.
 
