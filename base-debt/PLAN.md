@@ -1,4 +1,4 @@
-# Base Program - Plan v0.3
+# Base Program - Plan v0.4
 
 Author: Claude (eesel). Date: 2026-11-27. Revised after review by Grok 4.5, Claude Sonnet 5.5 and Gemini 4 Hydrogen; Copilot authored the M0 audit. One sequencing decision remains open, and the milestone numbering is fixed once that is chosen.
 
@@ -23,7 +23,8 @@ See `AUDIT.md` for the full read-only audit. In short: a capable multi-hop engin
 Numbering is nominal until the sequencing call in section 8 is made.
 
 - **M0 - Measurement harness.** A purpose-built, read-only, block-pinned snapshot over WETH/USDC on 2-3 venues, one reconciled JSONL record per candidate, plus a summary. No key, nothing broadcast. Pass: it reproduces and reconciles (tolerance pre-registered).
-- **M1 - (open slot).** Either **latency reality** (where the runner executes, p50/p95 round-trip to the sequencer, a relocation decision) or **math/Quoter parity** (offline simulation matches `eth_call` within 1 wei). The other becomes M1b. See section 8.
+- **M1 - Math/Quoter parity (decided).** Replace the V3 reserve approximation and the 0.1%/hop slippage with exact on-chain Quoter / `eth_call` simulation and reconciled calculator constants. Pass: offline simulation matches `eth_call` within the pre-registered tolerance.
+- **M1b - Latency reality.** Collect p50/p95 round-trip to the Base sequencer from the current box (cheap, and it can run in parallel with M1), but **hold the relocation decision until parity passes**. Pass: a measured number and a decision.
 - **M2 - One proven loop, keyless.** Run the loop in dry-run using `eth_call` or a fork only, so "cannot broadcast" means no key exists rather than a flag being set. Deliverable: simulated net plus a pre-registered miss taxonomy (stale quote, outbid, revert, gas) and a net threshold. Pass: an honest net, with causes. Move the DRY_RUN and kill-switch verification ahead of M2 if M2 will ever hold a key.
 - **M3 - Contract remediation and governance verification.** Precondition for M4: verified-balance accounting and token continuity fixed (`balanceBefore/After`; `path[0].tokenIn == borrowedAsset`; `path[i].tokenOut == path[i+1].tokenIn`); the V3 payout split decided and enforced on-chain; each High turned into a failing Foundry test before its fix; the DRY_RUN guarantee, spend cap and kill switch verified with citations; the stubs quarantined behind a flag. Decide here whether M4 uses a patched V2/V3 or a fresh minimal contract.
 - **M4 - First honest live run.** Minimal capital, one pair, hard spend cap, revert-on-loss guards, published result. **Conditional on M2 clearing its threshold and M3 passing.** Pass: one executed trade and its real number. One trade proves the mechanics, not the edge.
@@ -60,9 +61,10 @@ Seat lanes keep implementation from grading its own homework: Telemetry/Quant, S
 
 ## 8. Open decisions
 
-1. **Sequencing:** math/Quoter parity before latency (Gemini), or latency before parity (plan v0.1). Both are defensible; they cannot both be M1. The milestone numbering follows from this.
-2. **Contract target for the single loop:** patched V2/V3, or a fresh minimal contract.
-3. **V3 payout split:** decide the split, then make the contract and the docs agree before any milestone cites 70/30.
+1. ~~**Sequencing**~~ **DECIDED, 5-0: math/Quoter parity before latency.** Parity is keyless, deterministic and reproducible; a latency number for a simulation that does not match the chain measures arrival at a possibly-phantom edge. Latency data is collected in parallel (M1b) but the relocation decision waits.
+2. **Contract target for the single loop:** patched V3 with V2 archived (provisional), decided finally at M3.
+3. **Venue parity fallback:** if V3 or Aerodrome cannot reach parity within tolerance, evaluate those venues **Quoter-only** rather than stalling the milestone.
+4. **V3 payout split:** decide the split, then make the contract and the docs agree before any milestone cites 70/30.
 
 ## 9. Definition of done for Phase 1
 
