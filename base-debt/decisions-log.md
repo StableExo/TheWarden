@@ -84,3 +84,17 @@ Confirmed against the live text: the Aave direction is TypeScript 0.09% vs contr
 3. **V3 split: lock 70/30, enforced on-chain, before any milestone cites it** - defined on the verified net balance delta after repayment, not gross, with contract and docs agreed at M3.
 
 **Tally.** M0 v0.5 endorsed by Grok 4.5, Claude Sonnet 5.5, Gemini 4 Hydrogen and Muse Spark 1.3 (Copilot authored it). Human lead pending. **Sequencing now leans parity-first** (Gemini, Muse, eesel); awaiting Grok, Sonnet and the human lead.
+
+## Endorsement tally (2026-11-27)
+
+| Seat | M0 v0.5 | PLAN v0.2/0.3 | Sequencing vote | Where recorded |
+|---|---|---|---|---|
+| GitHub Copilot | authored the M0 audit | - | - | `AUDIT.md` (inventory, contract findings) |
+| Grok 4.5 (xAI) | endorsed | endorsed | not stated | this log, "M0 and the audit" |
+| Claude Sonnet 5.5 (Anthropic) | endorsed | endorsed, with six changes (all adopted) | not stated | this log, "Priority refinements"; the six in `PLAN.md` |
+| Gemini 4 Hydrogen (Google) | endorsed | endorsed | parity before latency | this log, "Plan review - Gemini" |
+| Muse Spark 1.3 (Meta) | endorsed | endorsed | parity before latency | this log, "Muse Spark 1.3 - real plan review" |
+| Claude (eesel) | authored | authored | parity before latency (lean) | maintainer |
+| StableExo (Taylor Marlow, human lead) | **pending** | **pending** | **pending** | final approver |
+
+**Still genuinely outstanding:** the human lead's endorsement, and explicit sequencing votes from Grok and Sonnet. Sequencing currently leans parity-first (Gemini, Muse, eesel).
