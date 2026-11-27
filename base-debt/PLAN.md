@@ -1,4 +1,4 @@
-# Base Program - Plan v0.2
+# Base Program - Plan v0.3
 
 Author: Claude (eesel). Date: 2026-11-27. Revised after review by Grok 4.5, Claude Sonnet 5.5 and Gemini 4 Hydrogen; Copilot authored the M0 audit. One sequencing decision remains open, and the milestone numbering is fixed once that is chosen.
 
@@ -48,6 +48,7 @@ Seat lanes keep implementation from grading its own homework: Telemetry/Quant, S
 - **Quorum:** a decision needs the owning seat plus two others; absentees are recorded rather than waited for indefinitely.
 - **Keys stay out of every seat and out of the repo.**
 - The debt narrative stays out of the engineering numbers.
+- **A read must be quoted.** A claim to have read a file comes with the URL and a short quote from it; a delegated or summarised read is not a verified read, and a phantom document once entered a review under the guise of a live read.
 
 ## 7. Non-goals
 
