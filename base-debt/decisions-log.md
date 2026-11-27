@@ -90,11 +90,13 @@ Confirmed against the live text: the Aave direction is TypeScript 0.09% vs contr
 | Seat | M0 v0.5 | PLAN v0.2/0.3 | Sequencing vote | Where recorded |
 |---|---|---|---|---|
 | GitHub Copilot | authored the M0 audit | - | - | `AUDIT.md` (inventory, contract findings) |
-| Grok 4.5 (xAI) | endorsed | endorsed | not stated | this log, "M0 and the audit" |
+| Grok 4.5 (xAI) | endorsed | endorsed | **parity before latency** | this log, "M0 and the audit" |
 | Claude Sonnet 5.5 (Anthropic) | endorsed | endorsed, with six changes (all adopted) | not stated | this log, "Priority refinements"; the six in `PLAN.md` |
 | Gemini 4 Hydrogen (Google) | endorsed | endorsed | parity before latency | this log, "Plan review - Gemini" |
 | Muse Spark 1.3 (Meta) | endorsed | endorsed | parity before latency | this log, "Muse Spark 1.3 - real plan review" |
 | Claude (eesel) | authored | authored | parity before latency (lean) | maintainer |
 | StableExo (Taylor Marlow, human lead) | **pending** | **pending** | **pending** | final approver |
 
-**Still genuinely outstanding:** the human lead's endorsement, and explicit sequencing votes from Grok and Sonnet. Sequencing currently leans parity-first (Gemini, Muse, eesel).
+**Sequencing: parity-first carries it, 4 of 5 seats** (Grok, Gemini, Muse, eesel); Sonnet's vote and the human lead's endorsement are outstanding.
+
+Grok's words: "If the offline sim doesn't match on-chain Quoter/`eth_call` within the pre-registered tolerance, every latency number is just measuring how fast we reach a phantom edge."
