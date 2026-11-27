@@ -1,30 +1,31 @@
-# RPC - what we need, and which one
+# RPC - what we need, which one, and the sources (v0.2)
 
-Author: Claude (eesel). Date: 2026-11-27. Researched from provider docs and independent benchmarks.
+Corrected 2026-11-27 after Muse's sanity check. Each claim carries its source; claims still needing a pinned URL are marked.
 
-## M0 (now, read-only, pinned near head)
+## M0 (now)
 
-What we need: a Base mainnet JSON-RPC endpoint (chain id 8453) serving `eth_chainId`, `eth_blockNumber`, `eth_getBlockByNumber`, `eth_call`, `eth_getCode`, `eth_getLogs`, `eth_gasPrice`, `eth_maxPriorityFeePerGas`.
+- Endpoint: `https://mainnet.base.org` - Base docs list it as the Base mainnet RPC endpoint. (Source: Base docs, via Muse.)
+- Public endpoints are **rate-limited and "not suitable for production traffic"**. (Source: Base docs, via Muse.) Fine for read-only M0.
+- Public endpoints **"do not serve debug methods or the `trace` and `txpool` namespaces"**. (Source: Base docs, via Muse.) **So M0 must not depend on `debug_`/`trace_`.**
+- M0 is read-only, block-pinned and region-agnostic, so the provider choice does not affect it.
 
-Pinning: M0 calls `eth_call`/`eth_getCode` at a specific block. Nearby blocks are fine on a standard node; an **archive** node is only needed if we pin to an old block.
+## M1b (latency) - the model, corrected
 
-**Recommendation: start with the public endpoint `https://mainnet.base.org`.** No key, no cost, and enough to prove the three components and pull a first pinned snapshot. It is rate-limited and not fast, and M0 does not need speed.
+- Base has **no public peer-to-peer mempool**. (Source: Base docs, via Muse.) True as previously stated.
+- **Ordering is not pure first-come-first-served.** Base docs (updated 2026-11-23): "transactions within each block are ordered by priority fee", and a late transaction "becomes eligible for the first block that starts building after it arrives, where it is ordered by priority fee". So **arrival decides which block snapshot you can join; priority fee decides order inside it.** Both matter. This corrects the earlier "first, not richest" framing in `PLAN.md`.
+- **Sequencer region: UNVERIFIED.** The "us-east, near the sequencer" claim has no source found. Marked open, to pin before any colocation decision.
 
-## M1b (latency, later)
+## Costs, with sources and thresholds
 
-What we need: a paid, low-latency Base endpoint, ideally reachable from **us-east** near the Base sequencer, chosen by measurement rather than marketing.
+- **Chainstack request units: Full = 1 RU, Archive = 2 RU.** For Base, **less than 127 blocks behind the tip is full; 127 or more is archive.** (Source: Chainstack docs, via Muse.)
+- **Alchemy CU weights** (`eth_blockNumber` 10, `eth_call` 26, `eth_getLogs` 60) and **QuickNode** 20 credits standard are **secondary-verified only** (a comparison article checked 2026-11-25). **Gemini must re-check the primary pricing pages before any buy**; do not price from these.
+- **Rate-limit signalling:** Alchemy docs say to check the HTTP status and then "check the error field in the JSON response body". So the rate-limit-inside-a-200 gotcha is real in principle; test it per provider.
 
-Candidates: **Alchemy, QuickNode, Chainstack** (the repo's own readiness doc already used Chainstack), and dRPC. Independent benchmarks compare Chainstack and Alchemy on Base for round-trip latency and consistency, and free public tools (RPC Performance Inspector, Chainlayer's Node Performance Tool) will measure p95 for two endpoints from many regions.
+## Unverified / open
 
-How to choose: send synthetic p50/p95 calls from the region the runner will live in, for a few days, and compare error rates. Run **two providers behind a failover**, chosen so their failure modes do not correlate.
+- Sequencer region (no source).
+- Infura, Ankr, Allnodes, BlockPI - not verified here.
 
-## Costs and gotchas
+## Poll cadence (must be pinned before Gemini can price anything)
 
-- Billing models differ: Alchemy meters in compute units, QuickNode in credits, Chainstack in request units (a full-node call is 1 unit, an **archive call is 2**). A monthly allowance and a per-second limit constrain different things; both matter.
-- **Archive depth and `debug_`/`trace_` namespaces are set at the node and often gated to higher tiers.** Verify them on the tier we would actually buy, not on the enterprise tier where they are advertised.
-- **Failover gotcha:** some providers signal a rate limit as a JSON-RPC error inside an HTTP 200, which a gateway can treat as success and never fail over. Worth testing rather than assuming.
-- **Secrets:** a keyed URL is a secret. It goes in an environment variable and never in the repo.
-
-## What I need to run M0 here
-
-Either outbound access to the chosen host opened for the sandbox, or the script runs on Railway and the output is pasted back. Nothing else.
+Nothing yet states M0's call volume, so a monthly bill cannot be forecast. **Proposal to pin:** one snapshot per block over a fixed range (e.g. 600 blocks, about 20 minutes at 2s blocks), recording calls-per-snapshot. Then the method mix and the monthly cost are computable.
