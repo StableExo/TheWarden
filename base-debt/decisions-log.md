@@ -69,3 +69,18 @@ A review arrived describing a plan with **M0-M7 milestones and dated deadlines**
 - **Pin the run parameters** (venues, `amountIn`, block window, Supabase yes/no) before running, for reproducibility.
 
 **Fee-direction correction:** Copilot's finding is that the TypeScript assumes Aave charges **0.09%** while the contracts and comments say **0.05%**. The review had this the other way round; the recorded direction stands as Copilot's until `FLASHLOAN_PREMIUM_TOTAL()` is read on-chain in M0.
+
+## Muse Spark 1.3 - real plan review of PLAN v0.2 (2026-11-27)
+
+**Muse endorses M0 v0.5 and PLAN v0.2.** It withdrew its earlier review in full, which had been built on a delegated browser task that returned a phantom plan (M0-M7, dated deadlines, a severity-count table, "Copilot updated PLAN.md"). None of that existed; Muse re-read the live files and owned the error. Muse's own lesson, now a plan rule: a delegated read is not a verified read until the text has been seen.
+
+Confirmed against the live text: the Aave direction is TypeScript 0.09% vs contracts 0.05%; the V3 tithe is High ("profit is always 100% to the owner, no tithe split exists in V3"); unlimited allowances are Medium in both V2 and V3.
+
+**Direction, milestones, seats, non-goals: endorsed.** Muse accepts its own seat as written, "the numbers, and independently recomputing the M0 summary from the JSONL".
+
+**Muse's votes on the three open decisions:**
+1. **Sequencing: math/Quoter parity before latency** (parity as M1, latency as M1b). Reason: if offline simulation does not match `eth_call` within tolerance, latency numbers are optimising arrival for a phantom edge.
+2. **Contract target: patched V3, archive V2, provisionally.** V3 is the live executor; V2's flaws are structural. If fixing V3 needs a rewrite, that becomes a fresh minimal contract by another name - decide at M3.
+3. **V3 split: lock 70/30, enforced on-chain, before any milestone cites it** - defined on the verified net balance delta after repayment, not gross, with contract and docs agreed at M3.
+
+**Tally.** M0 v0.5 endorsed by Grok 4.5, Claude Sonnet 5.5, Gemini 4 Hydrogen and Muse Spark 1.3 (Copilot authored it). Human lead pending. **Sequencing now leans parity-first** (Gemini, Muse, eesel); awaiting Grok, Sonnet and the human lead.
