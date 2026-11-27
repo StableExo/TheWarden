@@ -108,3 +108,15 @@ Grok 4.5, Claude Sonnet 5.5, Gemini 4 Hydrogen, Muse Spark 1.3 and eesel all vot
 **Adopted from Sonnet:** collect cheap latency data in parallel (p50/p95 round-trip from the current box) but hold the relocation decision until parity passes; and pre-register a fallback - if V3 or Aerodrome cannot reach parity within tolerance, evaluate those venues Quoter-only rather than stalling.
 
 **M0 v0.5 endorsed by all five seats.** Sonnet's endorsement is on the substance, noting it could not open the files (robots.txt blocked the fetch) and asking for the text inline to confirm. Human lead's endorsement still outstanding.
+
+## Muse sanity check on the RPC note (2026-11-27)
+
+Muse verified some claims, corrected one, and flagged the sourcing. Adopted:
+
+- **M0 on `mainnet.base.org`: verified.** Public endpoints are rate-limited, "not suitable for production traffic", and **do not serve `debug_`, `trace` or `txpool`**, so M0 must not depend on them.
+- **Ordering model was wrong.** Base has no public mempool, but ordering within a block is **by priority fee**, and arrival decides which block a transaction can join. This corrects "first, not richest" in `PLAN.md` and in the M1b rationale. Both arrival and priority fee matter.
+- **Chainstack archive threshold:** under 127 blocks behind the tip is full (1 RU), 127 or more is archive (2 RU).
+- **Alchemy/QuickNode weights are secondary-verified only**; Gemini must re-check primary pricing pages before any buy.
+- **Sequencer region is unverified**; "us-east near the sequencer" has no source. Marked open.
+- **RPC.md failed the sourcing rule** as first written (no URLs, quotes or numbers). Rewritten as v0.2 with sources and with the unverified claims marked.
+- **Blocker for pricing:** no poll cadence was stated anywhere. Proposal to pin: one snapshot per block over the pinned range, recording calls-per-snapshot.
