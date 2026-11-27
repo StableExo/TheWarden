@@ -34,3 +34,27 @@ Reason: the existing path is contaminated by stubs (`scanner`, `pathfinding`, `e
 - **Quarantine the stubs** behind a flag or banner so fabricated output cannot be read as evidence; the README still labels the stack "Production", which the audit contradicts.
 
 M0 is now v0.3. Endorsements: Grok 4.5 and Claude Sonnet 5.5. Awaiting Gemini, Muse and the human lead.
+
+## Plan review - Gemini 4 Hydrogen (2026-11-27)
+
+**Endorses the revised M0, with two guardrails** (now in M0 v0.4). Direction endorsed: build an uncorrupted measurement harness before touching execution, because you cannot tune routing or tithe mechanics until you know whether real post-gas, post-fee spreads exist on Base WETH/USDC at the target sizes.
+
+**Proposed milestone sequence (a real disagreement with the plan's ordering):**
+- M0 read-only block-pinned snapshotter; exit = 24-48h of clean logs showing whether gross spreads ever clear the flash fee + gas + DEX fees.
+- M1 Math and Quoter parity: replace the V3 reserve approximation and the 0.1%/hop slippage with exact on-chain Quoter / eth_call simulation and reconciled calculator constants; exit = offline simulation matches eth_call within 1 wei.
+- M2 Contract hardening and economics: fix the V2/V3 high-severity bugs and align the V3 tithe split; exit = forked-mainnet Foundry/Hardhat suite passing against historically profitable blocks from M0/M1.
+- M3 Canary execution: live private-RPC with revert-on-loss guards and minimal capital.
+
+This puts **math parity before latency**, where the plan has latency as M1. Open decision for the team.
+
+**Seat lanes (keep implementation from grading its own homework):** Telemetry/Quant (owns the M0/M1 schema, block pinning, and whether edge exists before any deployment); Smart Contract Security (V2/V3 remediation and invariant tests); Architecture/Repo Hygiene (delete or isolate the STUB and MOCK/DEMO modules so nothing can import fake data).
+
+**Non-goals for M0-M1 (Gemini):** multi-pair beyond WETH/USDC; MEV bundles, custom relays or latency optimisation; treasury automation or debt-repayment routing; and patching FlashSwapV2 if V3 is the production target (archive V2 rather than maintain two vulnerable contracts).
+
+**Re-prioritised findings (Gemini):**
+- **P0, blocks M0/M1:** fee and math mismatches - the Aave 0.09% vs 0.05% (4 bps, larger than most net margins on Base WETH/USDC arbs), the $3000/ETH hardcode, the V3 reserve approximation, and the 0.1%/hop slippage.
+- **P1, blocks M2:** V3 balance-delta accounting and token continuity (`balanceBefore/After` checks; `path[0].tokenIn == borrowedAsset`; `path[i].tokenOut == path[i+1].tokenIn`); archive V2 rather than patch.
+- **P1-governance:** V3's 100%-to-owner is not a leak, it is a broken commitment - if 70/30 is core, enforce the split on-chain (immutable or with a floor/cap), not off-chain in a promise.
+- **P2, clean-up before M2:** `sourceOverride=255` to an explicit `InvalidSource()` revert; the Aerodrome uint24/int24 cast; exact-amount approvals (or Permit2) instead of unlimited router approvals.
+
+M0 endorsements now: Grok 4.5, Claude Sonnet 5.5, Gemini 4 Hydrogen. Awaiting Muse, Copilot's confirmation, and the human lead.
