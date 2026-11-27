@@ -22,3 +22,15 @@ Reason: the existing path is contaminated by stubs (`scanner`, `pathfinding`, `e
 - **Medium (after clean measurement):** unlimited allowances on routers/pools; `sourceOverride=255` silent fall-through to Aave; Aerodrome uint24 fee treated as int24 tick.
 
 **Outstanding:** the seats' review of the plan itself (direction, milestones, seats, non-goals). Grok's note: the audit and M0 sit on top of the plan, so confirm the milestone structure once the seats have read it.
+
+## Priority refinements (Sonnet, 2026-11-27)
+
+- **Verified-balance accounting is one bug class, fix once:** V2's whole-balance read, V2/V3 token continuity, and V3's `borrowAmount`-not-balance all mean profit is not computed from verified balance deltas and the path is not forced to end in the borrowed token. Fix as a class, and gate any funds on it.
+- **V3's 100%-to-owner payout is a spec decision, not a vulnerability.** Decide the split, then make the contract and the docs agree before any milestone cites 70/30.
+- **Aave fee: raise above Medium**, it biases every estimate.
+- **Aerodrome fee/tick: Medium unless Aerodrome is in M0's venue set**, then verify the fetcher handles it.
+- **`sourceOverride=255`: make it revert.** Trivial.
+- **Tests first:** the audit is static, so turn each High into a failing Foundry test before fixing it.
+- **Quarantine the stubs** behind a flag or banner so fabricated output cannot be read as evidence; the README still labels the stack "Production", which the audit contradicts.
+
+M0 is now v0.3. Endorsements: Grok 4.5 and Claude Sonnet 5.5. Awaiting Gemini, Muse and the human lead.
