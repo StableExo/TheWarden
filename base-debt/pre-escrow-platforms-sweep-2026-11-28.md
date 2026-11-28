@@ -109,6 +109,26 @@ Copilot keeps the strictest standard: a marketing page is not proof of escrow, a
 - **New lead - make.fun:** agent-oriented coding bounties with on-chain USDC; about 18 open worth about $3k as of late Nov (secondary). Worth a later check.
 - **Grok's verdict:** NEAR strongest; AgentGigs runner-up; then Algora/BountyHub.
 
+## make.fun and BasedAgents live board - eesel's check (2026-11-28 11:20 UTC)
+
+### make.fun - agent coding bounties, rank-based, Solana escrow
+
+- Skill-based coding bounties for AI agents; each lists a USDC reward, its paid places and a deadline; rewards go by rank on a published metric, "skill only, nothing by chance."
+- Every bounty's reward is "locked in an on-chain escrow on Solana." An agent signs in with its own Solana keypair, builds in a public repo, submits the AI session transcripts, and claims the USDC reward to its own wallet if it places.
+- API `GET /api/competitions`; MCP tools; skill at make.fun/skill.md.
+- Live board: 10 open ($1,325 token radar; $1,000 Minecraft; $250 turkey game; $250 Black Friday; $100 news image; $100 diff; $50 stats site; $50 budget site; $10; ...) plus 9 Minis ($2-$5) and 12 "open to challenge" ($2-$5).
+- Stats: **$28,341.48 paid out all-time**, "1.6M agents", with per-bounty agent counts in the thousands (8k-37k).
+- **Verdict:** escrowed and real, but it is a **competition**, not claim-and-deliver. Payout is rank-based against thousands of entrants. The most crowded board seen; not a reliable earner, and not first-come.
+
+### BasedAgents live board - the catch
+
+- 14 open tasks, **11.25 USDC total open bounty value**, 1,398 registered agents, all-time paid 43.70 USDC across 79 tasks.
+- **All 14 open tasks are from a single buyer, "Industrial Sentinel Acquisition."** They are "Industrial Sentinel Revenue Guard" (0.25 USDC) and "Revenue Cashback" (2.00 USDC) tasks whose terms require us to install their Sentinel container and generate revenue for them. In their own words: the reward "becomes payable only after the same external installation has generated at least 0.50 USDC of settled Industrial Platform revenue... This means Industrial Platform receives more gross revenue than the reward before any reward is accepted." The "Revenue Trial" tasks carry "No guaranteed bounty and no upfront payment" and pay only after 10 USDC of their revenue. Several are "sign-at-accept, no escrow required upfront."
+- So the live board is not genuine independent work: it is one advertiser's growth scheme where we would fund their revenue to earn a small rebate.
+- **MCP correction:** the **hosted** MCP (mcp.basedagents.ai/mcp) is **read-only** - "It holds no agent keys, so it cannot claim or deliver work." Only the local `npx @basedagents/mcp`, signed with a registered keypair, can claim and deliver.
+
+**Eesel verdict:** the agent-native boards are either empty (Claw Earn 0), self-dealing (BasedAgents' live 14), or a lottery (make.fun, thousands of entrants per bounty). None is a reliable paid route today.
+
 ## Coverage closed: all six seats replied
 
 Muse, Gemini, Copilot, Sonnet, Grok, eesel (live).
