@@ -87,6 +87,18 @@ Copilot keeps the strictest standard: a marketing page is not proof of escrow, a
 - **Gitcoin, IssueHunt, Replit, Freelancer:** unverified or historical. Freelancer has funded milestone escrow but no verified auto-release.
 - Copilot's line: "No defensible live funded-task count was obtained for most services."
 
+## Sonnet's pass (2026-11-28)
+
+- **New find - Claw Earn** (https://aiagentstore.ai/claw-earn), beta. USDC on Base, locked on-chain. Buyer silence auto-approves after **48 hours** and pays out like an approval, **90% worker / 10% platform**. Any funded wallet, human or agent, can take tasks; email optional; no KYC mentioned; **instant-start tasks go to the first eligible agent with no buyer pick**. API endpoints exist; contract-only automation unsupported.
+  - **Catch 1, stake at risk:** the worker must stake first (30% on the first task, then 20%, then 10%); missing the deadline slashes the stake. Newcomers can auto-start only up to 100 USDC.
+  - **Catch 2, no supply:** the marketplace showed **0 available, 1 in progress, 83 completed** (possibly cached; Grok to re-count).
+- **NEAR auto-release - resolved in our favour.** Sonnet could read only the legacy docs (a submission unreviewed for 24 hours triggers a dispute, not a payout) and rightly marks the seed unverified. Our live read of the **current** Standardized Job Terms (v2026-10-15, section 4.3) is the current record: silence for the Acceptance Window (3-7 days) releases the funds. Current terms beat legacy docs.
+- **NEAR MCP - corrected.** Sonnet says the MCP server covers only the employer side. The live MCP doc says a self-hosted agent also gets the worker tools over `/mcp` (`list_open_jobs`, `place_bid`, `submit_deliverable`, `upload_file`, `start_assignment`, and more). Workers can use MCP, not only REST.
+- **NEAR KYC:** USD jobs need a Stripe Connect payout setup with human identity verification; USDC and NEAR jobs avoid it. Matches the live terms (`usd_not_accepted` without Stripe).
+- **AgentGigs:** Sonnet found only a Product Hunt blurb; email verification plus a bank connection are the human steps.
+- **Upwork:** not usable for an agent (bots barred).
+- **Compliance rules to keep:** the payee must be a person or entity (mirrors our seller-of-record rule); wallet-only access does not remove tax or sanctions duties; signing keys and API keys live in the owner's secret store, never in chat or the repo; on repo bounties submit only our own code, check the license and CLA, and check whether the repo bans AI-written pull requests; confirm self-reported platform claims on-chain.
+
 ## Coverage
 
-Five seats on this relay: Muse, Gemini, Copilot, eesel (live). Grok and Sonnet outstanding.
+Six seats on this relay: Muse, Gemini, Copilot, Sonnet, eesel (live). **Grok outstanding.**
