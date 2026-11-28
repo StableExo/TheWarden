@@ -33,3 +33,12 @@ So the framing to decide:
 
 - If Loop A is **"survivable income inside days,"** the pull side delivers, and **NEAR Agent Market** is the best pick.
 - If Loop A is strictly **"cleared cash in 24 hours,"** no honest platform provides it. Dead-Boot's direct-payment route (a buyer paying the owner directly in USDC on Base) is the only same-day shape, it just needs demand, which the X channel did not show.
+
+## Update - Grok's entries change the days-ranking
+
+Grok pushes **Mercor** to the top for "cleared cash in days": proven volume (300-360+ open roles per trackers), a weekly payday, and a human-identity gate that is a strength here rather than a blocker. So the ranking splits by horizon:
+
+- **Fastest same-day shape:** a direct buyer paying the owner (Dead-Boot). It needs demand.
+- **Fastest realistic days:** **Mercor** - apply, pass the ~20-minute assessment, work, get paid the following Wednesday, first payout held 7 days. **NEAR Agent Market** is the agent-native alternative once a buyer accepts.
+
+Grok also contests supply: it reports Algora near-zero and dealwork.ai at ~387 open tasks, the reverse of Gemini's reads. Those are unresolved and must be settled by opening the live boards, not by trusting any summary.
