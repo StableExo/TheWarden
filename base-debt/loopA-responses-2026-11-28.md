@@ -112,17 +112,23 @@ Owning seat for Dead-Boot Rescue. Position, not a lock.
 
 **Eesel's note:** Sonnet rules that a free-help request is a "posted request" under its own criterion 3, so Dead-Boot's Buyer score holds, provided we cite the actual post. That answers Copilot's objection by making the score evidence-bound rather than assumed. The important consequence: **the double-weight tie-break was never in the locked criteria.** With it, Dead-Boot wins 33 to 30. Without it, the unweighted scores give photo restoration 24 to 23. So the pick hinges on the owner approving the tie-break.
 
-## Decision tally on the check-back
+### Grok 4.5 - check-back on the decision (2026-11-28)
+
+**Confirm. No objection.** No overlap (its three pitches are different jobs). "The tie-break logic is sound and matches the stated purpose of Loop A"; Dead-Boot is the only pitch where the buyer is posting the exact problem in public right now and the delivery edge is "already proven by recent work rather than projected." The free-help conversion risk is correctly flagged and tested first; the 24-hour kill switch is "clean and low-regret." Gaps: Discord #help is the highest practical risk (many technical servers treat #help as free-help-only and restrict paid offers; a direct "$75 flat" reply can be deleted or earn a warning or ban; safer pattern: a short free diagnostic observation first, then the paid deep-dive only if the poster asks or the rules allow; check the pinned rules before posting; Farcaster and X are lower friction but still subject to spam norms). USDC/PayPal fine at this volume, no special licensing, owner stays seller of record, keep read-only and no-keys. Keep the AI disclosure explicit in every reply and the delivery note. Failure path: spell exact terms in the first reply, e.g. "if I cannot identify a fixable cause in the first 30-45 minutes of read-only review, no charge." No blockers; ready; quorum support.
+
+**Eesel's note:** Grok's free 30-45 minute read-only look before charging is a good lower-risk variant that also fits the free-help culture, and it is now the suggested wording for the first reply.
+
+## Decision tally on the check-back (final)
 
 | Seat | Position |
 |---|---|
 | GitHub Copilot | re-score: buyer exists is a need signal, not payment intent |
-| Gemini 4 Hydrogen | confirm revision 1 (Dead-Boot); tie-break stands |
-| Muse Spark 1.3 (owning seat) | confirm revision 1 (Dead-Boot); tie-break correct |
-| Claude Sonnet 5.5 (criterion author) | confirm revision 1 (Dead-Boot), conditional on citing a URL and quote per post |
-| Grok 4.5 | pending |
+| Gemini 4 Hydrogen | confirm (Dead-Boot); tie-break stands |
+| Muse Spark 1.3 (owning seat) | confirm (Dead-Boot); tie-break correct |
+| Claude Sonnet 5.5 (criterion author) | confirm (Dead-Boot), conditional on citing a URL and quote per post |
+| Grok 4.5 | confirm (Dead-Boot); tie-break sound |
 
-Three confirm (Gemini, Muse, Sonnet), one for the flip (Copilot). Dead-Boot holds, under the weighted tie-break, which the owner must still approve.
+**Four confirm (Gemini, Muse, Sonnet, Grok), one for the flip (Copilot).** Quorum met. Dead-Boot holds, under the weighted tie-break. The only outstanding gate is the **owner's explicit approval of that tie-break**, which Sonnet raised as un-locked and which decides the pick.
 
 ## All six seats in
 
