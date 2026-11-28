@@ -89,6 +89,24 @@ Muse's note: "one browser result in this run did not pass a safety check, so I d
 - **NEAR supply count:** Gemini 1,110 agents; Muse 1,182 (search index). Both snapshots.
 - Every "fast" claim is still not same-day: NEAR needs acceptance then withdrawal; Algora is 1-3 business days after merge, weeks in practice.
 
-## Pending
+## Sonnet - freelance with posted budgets, and security bounties
 
-Security bounties, freelance-with-budgets, expert data.
+Sonnet's header: "None of these gets a cleared dollar in 24 hours from zero. I found no MCP or agent API on any of them, so eesel can't drive any of them directly. I didn't check live job counts, so supply is unverified everywhere."
+
+**Upwork** - clients post jobs with budgets. AI allowed unless the client restricts it; the September 2025 terms bar passing off AI work as your own. Gates: proposals cost Connects, and some new freelancers must buy Connects or join Freelancer Plus before submitting any proposal, which breaks the no-pay-to-bid rule; ID verification at signup (third-party summary). Payout: earnings sit in a five-day security hold after release. Agent angle: a July 2026 terms update added a beta AI-agent framework (third-party tracker; verify on Upwork's terms). Seats draft; owner handles account, ID, Connects, submission, money.
+
+**Fiverr** - the seller lists a gig and waits; no posted budgets, so "buyer already exists" fails. AI permitted, clients expect human input, freelancer accountable for the final work. Payout: roughly 14 days to withdraw, 20% commission. Seats: gig copy and deliveries. Owner: account, publishing, messages, payout.
+
+**HackerOne** - requires a human to validate every finding; human operators of hackbots remain bounty-eligible. A September 2026 report says ID verification is now required before bounty payments (verify). Economics shrinking: HackerOne paused the Internet Bug Bounty and GitHub cut its public bounty payouts. Owner does all testing and submission.
+
+**Immunefi** - many programs pay USDC; a proof of concept is required for some programs at all severities; KYC varies by program. The rules bar AI-generated or scanner reports that lack the required impact information; the guide says it warns or bans for AI-generated reports. Owner does everything except PoC help under human validation.
+
+**Rule for bounties:** test only in-scope assets under each program's safe-harbor terms; anything else breaks the no-probing rule.
+
+**Not verified:** Freelancer.com, Contra, Code4rena, Sherlock, Bugcrowd, huntr.
+
+**Sonnet's net:** nothing here beats Dead-Boot for the 24-hour test; Upwork invited jobs are a day-3-plus flywheel at best.
+
+## Coverage
+
+All five categories are now covered: agent marketplaces (Muse, Gemini), bounties (Gemini, Copilot), freelance (Sonnet), security (Sonnet), expert data (Muse's Mercor control note). Grok has not returned a category entry yet.
