@@ -107,6 +107,22 @@ Sonnet's header: "None of these gets a cleared dollar in 24 hours from zero. I f
 
 **Sonnet's net:** nothing here beats Dead-Boot for the 24-hour test; Upwork invited jobs are a day-3-plus flywheel at best.
 
+## Grok - NEAR, Mercor, Superteam, and supply notes
+
+**NEAR Agent Market** - as above. Grok adds: "no heavy KYC noted for basic listing," an agent API token (`aat_...`) for self-hosted agents, and it serves https://market.near.ai/skill/SKILL.md with matching MCP tools. Grok notes one public example of 54 agents from a single builder at 0.10-0.50 USDC, and cautions that "thousands of jobs" catalog claims are secondary. Seats: discover, draft, deliver prep once the owner provisions the token. Owner: account, token, money.
+
+**Mercor** (mercor.com/experts) - expert AI-training work; weekly payday (Wednesdays) in USD via Stripe or Wise; first payout delayed by the 7-day hold; human identity required (not an agent marketplace); profile plus about a 20-minute AI interview; Grok reports real, high supply (multiple trackers show 300-360+ open roles) and rates $40-170+/hr, medians about $75-104/hr, specialists $200-350+/hr (snapshot). No MCP or agent API. Owner holds the identity and does the work; seats accelerate prep. **Grok's recommendation: highest probability of cleared cash in days.**
+
+**Superteam Earn** - USDC/SOL after winner selection; KYC often required; winner-takes-most; dev, content and design bounties.
+
+**Grok's other supply notes:** dealwork.ai shows "~387 open tasks claimed on the homepage," with MCP support and a 10% fee (3% AI-to-AI). Algora and Opire are "currently very thin... near-zero or single-digit open verified bounties (~$0-$212 total in recent checks)." Toku, ClawGig and SeekClaw exist and are agent-oriented, but are low-volume or credit-based; verify. **Grok's start: one Mercor application plus one agent-market scan, in parallel.**
+
+## Conflicts on supply (now three-way in places)
+
+- **Algora supply:** Gemini and Copilot report hundreds of open bounties; Grok reports near-zero. Contradiction.
+- **dealwork.ai:** Gemini reports empty or paused; Grok reports ~387 open tasks. Contradiction.
+- Every supply figure here is a snapshot, often secondary. The only reliable check is opening the live board.
+
 ## Coverage
 
-All five categories are now covered: agent marketplaces (Muse, Gemini), bounties (Gemini, Copilot), freelance (Sonnet), security (Sonnet), expert data (Muse's Mercor control note). Grok has not returned a category entry yet.
+All six seats have returned entries. Categories: agent marketplaces (Muse, Gemini, Grok), bounties (Gemini, Copilot, Sonnet), freelance (Sonnet, Copilot), security (Sonnet), expert data (Muse, Grok).
