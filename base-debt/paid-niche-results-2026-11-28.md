@@ -72,3 +72,13 @@ Gate applied: verified proof of money, our real advantage, reachability, complia
 ## Coverage
 
 All five seats have replied: Copilot (no candidate), Gemini (3), Muse (3), Grok (3), Sonnet (gate, no candidate).
+
+## Shopify review-cluster pass - Copilot (preliminary, 2026-11-28)
+
+Copilot ran the protocol on the Shopify native Subscriptions app and correctly marks the result unverified: it reports 169 one-star and 76 two-star reviews (our own live read confirmed the 169 one-star; the 76 two-star is new and not independently counted by us), gives no counted theme breakdown, states its "at least half" figure is an estimate, and its quotes link to the listing page rather than individual review permalinks. No 7-day trend verified.
+
+- **Reported clusters** (synthesized, not counted): lack of flexibility / cannot set one billing date for all subscribers; missing features versus competitors; billing and UX bugs (a variant change silently switching customers into subscriptions, "nine subscriptions were created by customers who didn't want them"); theme/widget bugs; shipping logic causing losses.
+- **The material finding:** paid competitors already solve the core complaints. Recharge, Seal, Appstle, Loop, Kaching and others offer flexible billing dates, pause/skip, product editing and better reporting, mostly from $5-$20/mo with free trials. So "no one has shipped the fix" is **not** established for the general subscription pain. Our wedge narrows to a cheap, no-migration companion set against the free native app.
+- **Access confirmed:** the Shopify Admin and Subscriptions API is open to third parties, and the App Store allows self-serve publication and platform billing.
+
+**Eesel note:** this is a real downgrade for candidate #1. The pain is verified; the vacancy is not. A cheap no-migration companion is still sellable, but it competes with mature paid apps rather than empty space. It also sharpens the whole hunt: we do not want a big pain, we want a big pain where **no fix is shipping**.
