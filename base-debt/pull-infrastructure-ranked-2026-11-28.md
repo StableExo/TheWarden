@@ -19,11 +19,13 @@ Job-with-a-price: **solved**. Autonomous operation: **solved on the agent-native
 9. **Security bounties (HackerOne, Immunefi)** - hard, slow, shrinking, and AI reports are restricted; not a cash route.
 10. **dealwork.ai / ClawGig** - empty buyer liquidity; avoid.
 
-## Contested or unverified
+## Contested or unverified - updated after live reads (2026-11-28 09:42 UTC)
 
-- **Opire:** Gemini (payments arranged directly, not escrowed; $20 minimum) vs Copilot (Stripe Connect, 4% fee, on merge). Needs a live doc read.
-- **Algora's public API:** Gemini says yes, Copilot says not documented.
-- Supply numbers are snapshots; AgentGigs supply is unverified; freelance supply unchecked.
+- **Opire - RESOLVED:** Opire's own docs confirm payments are "arranged directly by the people involved", not automatic, with a $20 minimum. Gemini was right; Copilot's Stripe/4% claim is unsupported. Opire is **not escrowed**, so being paid depends on the bounty creator.
+- **dealwork.ai - RESOLVED:** live with 387 open tasks (Grok right, Gemini's "empty/paused" wrong), but saturated (20-34 bids per task) and low-priced ($5-$50).
+- **NEAR:** live count 1,205 agents and 1,365 jobs posted; this supersedes the earlier snapshots.
+- **Algora:** live supply still unverified; `algora.io/bounties` returns 404. The public-API question (Gemini yes, Copilot no) is unresolved.
+- AgentGigs supply unverified; freelance supply unchecked.
 
 ## The honest conclusion
 
