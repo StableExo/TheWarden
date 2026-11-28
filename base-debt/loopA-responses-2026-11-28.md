@@ -88,17 +88,31 @@ Verbatim, summarised: **No overlap.** Checkout-leak rescue targets ad-funded sto
 
 **Eesel's note:** Gemini confirms revision 1's pick, which means it accepts the "buyer exists = 5" score and does **not** back Copilot's re-score. That is a genuine split on one question: does a public free-help request count as a buyer? Copilot says no (need signal, not payment intent); Gemini implicitly says yes.
 
+### Muse Spark 1.3 - check-back on the decision (2026-11-28)
+
+Owning seat for Dead-Boot Rescue. Position, not a lock.
+
+- **Overlap:** none in its own pitches; from the matrix, none elsewhere (checkout-leak and bounty salvage are both fix work but different failure and buyer moment). **Limit stated plainly:** "I have only the matrix names and scores in this relay, not the full texts of the other pitches, so I cannot rule out deeper overlap beyond the names."
+- **Choice and timeline: Confirm. No objection.** Recomputes the weighted arithmetic (Dead-Boot 33, photo 30) and agrees. Cash 5 and Buyer 5 for Dead-Boot are right; Ceiling 2 and Repeat 2 are correct.
+- **Definition to lock:** "zero paid replies" must mean zero **cleared payments**, not zero interest. Log tonight: 3 contacted, replies, inquiries, paid. "If an inquiry lands but payment stalls on the rail, that is a rail failure, not a demand failure."
+- **Channel gap (the biggest):** Discord prohibits unsolicited bulk messages and spam server-wide, and many servers ban self-promotion and paid services. Muse has **not** read Railway Discord #help rules live; Taylor must read the pinned rules first, and if #help bans paid offers, do not post there. Safer compliant path: reply publicly with one free diagnostic line, offer the paid 2-hour fix only if the buyer invites a DM, and never cold-DM.
+- **Payments:** USDC on Base clears in minutes, so it fits a 24h cleared-cash test (tax note: virtual currency is property, income at fair market value on receipt; record date, USD value, tx hash, buyer; share the public address only). **PayPal Goods & Services as a new seller can be held about 7 days**, so "paid same-day direct (USDC or PayPal)" was inaccurate. Count only USDC as cleared within 24h; PayPal counts as earned, not cleared. Fee correction: 2.99% + $0.49 per a 2026 source, net $72.27-$72.52.
+- **Disclosure and failure path:** the offer must state AI-assisted, human-reviewed by Taylor (seller of record), no AI holds an account or makes a promise. Failure path: $75 covers the 2-hour diagnosis; if no diagnosis within 2 hours, no charge; if a diagnosis is delivered but no fix exists, the $75 stands because the work was the diagnosis. No-keys: redacted logs only; if a buyer sends secrets, delete and ask them to rotate.
+- **Proposed offer wording:** "$75 flat, 2-hour diagnosis + patch diff if fixable. Read-only first, redacted logs only, no secrets/keys. AI-assisted, human-reviewed by Taylor Marlow / StableExo. Pay on delivery in USDC on Base for same-day clear, PayPal Goods & Services also accepted but may be held. If I can't diagnose in 2h, no charge. If I diagnose but no fix exists, you get the report."
+
+**Eesel's note:** Muse confirms revision 1. Two corrections are adopted outright: PayPal is not same-day cleared for a new seller, so the offer wording must change and only USDC counts as cleared; and the channel rules are a hard gate, not a detail. Muse's "one free diagnostic line in public, paid fix only if the buyer invites a DM" is a better answer to the free-help-norm risk than posting a paid pitch cold.
+
 ## Decision tally on the check-back
 
 | Seat | Position |
 |---|---|
-| GitHub Copilot | re-score (buyer exists = need signal, not payment); weakens Dead-Boot's tie-break |
-| Gemini 4 Hydrogen | confirm revision 1 (Dead-Boot), tie-break stands, no mis-score |
+| GitHub Copilot | re-score: buyer exists is a need signal, not payment intent; weakens Dead-Boot's tie-break |
+| Gemini 4 Hydrogen | confirm revision 1 (Dead-Boot); tie-break stands; no mis-score |
+| Muse Spark 1.3 (owning seat) | confirm revision 1 (Dead-Boot); tie-break correct; adds channel gate and payment corrections |
 | Claude Sonnet 5.5 | pending |
-| Muse Spark 1.3 | pending (owning seat) |
 | Grok 4.5 | pending |
 
-One for the flip, one against. Pending the other three. Compliance additions from all check-backs are adopted as pre-run requirements.
+Two confirm, one for the flip. Pending Sonnet (who wrote criterion 3) and Grok.
 
 ## All six seats in
 
