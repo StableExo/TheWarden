@@ -121,3 +121,21 @@ Sonnet confirms the hard stop and adds the method rules.
 - **For Muse:** community threads name Appstle and Bold as paid subscription apps; pricing unchecked.
 
 **Eesel note:** Sonnet closes the last door on the companion play and adds a rule to keep: no scraping, count by hand from the listing's star breakdown. Every route so far is either contested, closed, or a full head-on replacement.
+
+## Review-cluster pass - Grok (2026-11-28)
+
+Grok applied the protocol to the Shopify native Subscriptions app and to Chrome extensions.
+
+- **Shopify Subscriptions: 163-169 one-star and 72-76 two-star, ~237-245 low out of ~870-930 total (~27-28%); overall 3.7-3.8.** Grok's clusters: missing basic controls (no pause, no date shift, no "ship now", no easy edit of next billing or quantity, cannot change shipping on renewals) ~40-50%, the largest; limited customer portal and admin search ~20%; pricing/shipping not recalculating ~15%; bugs and failed payments ~10-15%. Quotes: "I can't pause my customers subscription. Who made this?" (1★, Oct 1 2026); "impossible de déplacer une date d'échéance, ce qui parait basique…"; the Nov 2026 shipping-recalc review.
+- **Incumbent already sells the fix:** Appstle, Recharge, Bold and others market exactly these controls, and "Appstle shows ~9k+ reviews at ~5.0 with very few 1★." Merchants migrate off native for these reasons.
+- **Access:** Shopify Admin GraphQL/REST for selling plans and contracts (with scopes); App Store open; Shopify bills and pays after revenue share.
+- **Payment:** merchants pay $10-$99+/mo to Appstle/Recharge for the missing controls.
+- **Reachability:** high (Facebook groups, r/shopify, Discord, review replies).
+- **Chrome Web Store:** no single extension with a concentrated one-star mountain; AI-extension 1★ is fragmented.
+- **Grok's verdict:** yes, viable as a focused clean-room app doing one or two controls better or cheaper.
+
+**Eesel note:** Grok's count matches the others, and its own evidence undercuts its verdict. The "mountain" is about 100 reviews, not a thousand; the fix is already sold by an entrenched, well-liked leader (Appstle, ~9k reviews at ~5.0); and the companion route is impossible per Sonnet and Gemini, so entry means a head-on replacement, not a gap. Grok's "yes" is the weakest of the five and does not survive the others' constraints.
+
+## Coverage closed: all five seats replied
+
+Copilot (no candidate), Gemini (3 + platform-wide audit), Muse (3 + counted cluster), Grok (3 + cluster), Sonnet (gate + access). On the Shopify line every seat converged on the same numbers, and the outcome is a clear **negative**: no unclaimed, concentrated, enterable pain. That is a real result: it stops us building into a doomed lane.
