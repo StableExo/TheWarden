@@ -1,8 +1,8 @@
 # Loop A scoring matrix and the pick - 2026-11-28
 
-Built by Claude (eesel) seat from all six seats' replies to `relay-survival-2026-11-28.md` (Copilot, Gemini, Muse, Sonnet, Grok, eesel). Raw replies: `loopA-responses-2026-11-28.md`. Criteria locked per Muse and Sonnet. Quorum met (six seated, none absent).
+Built by Claude (eesel) seat from all six seats' replies to `relay-survival-2026-11-28.md` and the decision check-back. Raw replies: `loopA-responses-2026-11-28.md`. Quorum met (six seated, none absent).
 
-**Revision 2, 08:43 UTC:** re-scored after Copilot's check-back objection (see the bottom section). The lead flips from Dead-Boot Rescue to photo restoration. Revision 1's reasoning is kept below so the change is auditable.
+**Revision 3 (final, 08:45 UTC):** the check-back is in, three seats confirm and one re-scores. Dead-Boot Rescue holds, under the weighted tie-break, which the owner must still approve. See the decision section.
 
 ## The locked criteria
 
@@ -11,23 +11,25 @@ Built by Claude (eesel) seat from all six seats' replies to `relay-survival-2026
 2. **Start from zero.** No audience, capital or reputation required.
 3. **Buyer exists.** A live listing, posted request or price someone is paying today, with a URL and a short quote.
 4. **Delivery edge.** Hours of AI-seat work that a normal person takes days to do.
-5. **24h ceiling.** Gross, fee and net; inputs (price, conversion, hours) labelled as assumptions with a source; ceiling (all slots fill) separated from expected (conversion stated).
+5. **24h ceiling.** Gross, fee and net; inputs labelled as assumptions with a source; ceiling separated from expected.
 6. **Repeatability.** Day 2 and day 10.
+
+Not in the locked criteria: the double-weight tie-break (below). Sonnet flagged this; the owner should approve it explicitly.
 
 ## Gate results, run first
 
-- **OUT - Gemini Pitch 1, "Escheatment Triage" (unclaimed property).** Fails the gate. Finder work is licensed or fee-capped in many US states, verified 2026-11-28: Illinois requires a finder licence and a bond (up to $100,000) with a 10% fee cap and penalties up to $10,000 per violation; Arkansas caps at 10% and states that circumventing the cap is referred to the Attorney General under the Deceptive Trade Practices Act; Tennessee requires a licensed private investigator and a Treasury-approved contract (10% or $50 cap); Connecticut caps at 10% and mandates a free-claim disclosure. Its flat-fee workaround is the named illegal move.
-- **PASS, pending a platform-rule URL per pitch.** Every other pitch is service work under the owner's own identity, with disclosure of AI assistance, and none rests on other people's money or data.
+- **OUT - Gemini Pitch 1, "Escheatment Triage" (unclaimed property).** Fails the gate. Finder work is licensed or fee-capped in many US states: Illinois requires a finder licence and a bond with a 10% fee cap and penalties up to $10,000 per violation; Arkansas caps at 10% and refers cap-circumvention to the Attorney General under the Deceptive Trade Practices Act; Tennessee requires a licensed private investigator and a Treasury-approved contract (10% or $50 cap); Connecticut caps at 10% and mandates a free-claim disclosure. Its flat-fee workaround is the named illegal move.
+- **PASS, pending a platform-rule URL per pitch.** Every other pitch is service work under the owner's own identity, with disclosure of AI assistance.
 
-## The matrix (revision 2)
+## The matrix (final)
 
-Scored 1 (weak) to 5 (strong). Criterion 3 in revision 2 means **payment intent**, not a need signal (Copilot's correction).
+Scored 1 to 5. Criterion 3 counts a "posted request" (a live post asking for help), per Sonnet's ruling, provided it is cited with a URL and quote.
 
 | Pitch | Seat | 1 Cash | 2 Zero | 3 Buyer | 4 Edge | 5 Ceiling/Expected | 6 Repeat | Total |
 |---|---|---|---|---|---|---|---|---|
-| Same-day photo restoration, sold direct | eesel | 4 | 5 | 3 | 4 | 4 | 5 | **25** |
+| Same-day photo restoration, sold direct | eesel | 4 | 5 | 2 | 4 | 4 | 5 | **24** |
+| Dead-Boot Rescue ($75 app-boot fix) | Muse | 5 | 4 | 5 | 5 | 2 | 2 | **23** |
 | Messy-tracker / Notion rebuild | Grok | 3 | 4 | 4 | 4 | 3 | 4 | **22** |
-| Dead-Boot Rescue ($75 app-boot fix) | Muse | 5 | 4 | 3 | 5 | 2 | 2 | **21** |
 | Checkout-leak rescue | Gemini | 4 | 4 | 3 | 4 | 3 | 3 | 21 |
 | README vs Reality measurement | Muse | 3 | 4 | 2 | 5 | 3 | 3 | 20 |
 | Vendor-bill drift check | Copilot | 2 | 4 | 3 | 4 | 2 | 4 | 19 |
@@ -40,33 +42,49 @@ Gate: all pass except Gemini Pitch 1 (out).
 
 ## The top two, argued
 
-**Same-day photo restoration (eesel)** and **Messy-tracker / Notion rebuild (Grok)** now lead, with **Dead-Boot Rescue (Muse)** third after the correction.
+**Same-day photo restoration (eesel)** and **Dead-Boot Rescue (Muse)** are the top two, one point apart.
 
-- **Photo restoration** wins because a live paid market already exists (studios charge $30-$60; Fiverr retouchers $15-$30), so payment intent is demonstrated at the market level, not inferred. The delivery edge is real (about $0.60 of AI against a $30-$60 studio price), it needs no special community or domain skill, it is evergreen, and it sells direct for same-day cash.
-- **Messy-tracker rebuild** is second: buyers are posting "help me organise my sheet" requests and paid gigs exist on Upwork/Fiverr, the delivery edge is real, and it templates well. It loses narrowly because Fiverr's 14-day hold means the fast dollar only comes from off-platform, direct jobs, which is a smaller flow.
-- **Dead-Boot Rescue** still has the fastest theoretical cash and the only proven delivery edge (the owner just debugged the exact failure), but its "buyer" is asking for free help, so its conversion to a paid offer is the hardest step on the board, and its pool is narrow and lumpy.
+- **Photo restoration** wins the raw totals (24 vs 23) on breadth and repeatability, a live paid market for payment intent, the largest price gap, no special skill, and evergreen demand. Weak point: the specific buyer must be prompted, so conversion is unmeasured.
+- **Dead-Boot Rescue** wins on the money criteria: the fastest theoretical cash, the only proven delivery edge (the owner just debugged the exact failure), and a buyer asking in public. Weak points: narrow, lumpy, and the free-help-to-paid conversion is the hardest step.
 
-## Revision 2 decision: Same-day photo restoration (eesel), with Dead-Boot Rescue as the standing fallback
+## The decision
 
-**Winner, first scoped step, run tonight:**
-1. In two or three local community groups where selling is permitted, post a simple offer: one free photo restoration, no strings.
-2. Deliver that one photo within the hour using the seats.
-3. To the same household, offer the rest of the batch at $15-$20 a photo, colourised and upscaled, print-ready, paid direct (PayPal/Venmo/cash). Deliver the full batch the same day.
-4. Do not build anything else until one payment clears. Record zero if nothing is paid within 24 hours.
+**Pick: Dead-Boot Rescue (Muse), under the weighted tie-break, pending the owner's explicit approval of that tie-break.**
 
-**Fallback trigger, T + 24h:** if no payment clears, run Dead-Boot Rescue Muse's way, but only on a surface that permits paid offers: three replies to fresh boot-failure posts, exact offer, read-only first.
+The tie-break: because Loop A's stated purpose is the fastest honest first dollar, the two money criteria (1 and 3) carry double weight. On the weighted scores, Dead-Boot 33 to photo restoration 30. **Without the tie-break, the pick is photo restoration (24 to 23).** So this single, un-locked rule decides the winner and it is the owner's to approve.
 
-**Standing rule for whichever runs:** the owner is the seller of record under his own identity; the seats draft, a human reviews everything before it reaches a buyer; no AI holds an account or makes a promise; each offer states its refund or failure path (Sonnet).
+Check-back tally: Gemini, Muse (owning seat) and Sonnet (criterion author) confirm Dead-Boot; Copilot re-scores criterion 3 and would flip it. Three to one.
 
-**Compliance gaps to close before posting (Copilot):** confirm the group or channel permits commercial offers; no unsolicited DMs or copy-paste promotion; define the deliverable, the clock and the failure path; read-only first, no secrets or keys; name the seller and currency, confirm amount and refund terms; do not treat a payment as cleared until it has cleared; disclose AI assistance and say a human reviews the work.
+## Conditions to meet before it runs
 
-## Revision 1 (superseded)
+1. **Owner approves the double-weight tie-break** (otherwise photo restoration is the pick).
+2. **A URL and quote for each of the three posts**, or the Buyer score does not hold (Sonnet).
+3. **Channel rules read first.** Discord #help is not cleared: quote the server rule that permits a priced offer, or skip it. X is cleared only as individual, human-typed replies, three at most, no identical text, no DMs unless they message first. Farcaster is not cleared.
+4. **"Three slots" is real capacity**, not manufactured urgency.
+5. **One offer per channel at a time**, since the README and Launch pitches share the same channels and a platform flag would hit both.
+6. **Discord rule-clear path:** reply with one free diagnostic line in public, and offer the paid fix only if the buyer invites a DM (Muse).
+7. **The photo fallback clears the gate too**, or its groups' rules checked first, since free restores are self-promotion as well (Sonnet).
+8. Standing rule: owner is the seller of record under his own identity; a human reviews everything before it reaches a buyer; no AI holds an account or makes a promise.
 
-Revision 1 scored Dead-Boot Rescue's "buyer exists" as 5, on the argument that a buyer is publicly asking today, and broke the tie toward it on weighted money criteria (33 to 30). Copilot's objection showed that a free-help request is a need signal, not payment intent, so that 5 became a 3 and the tie-break argument collapsed. Kept here for the record.
+## Exact offer to post (only once the conditions above are met)
+
+"$75 flat, 2-hour diagnosis plus a patch diff if fixable. Read-only first, redacted logs only, no secrets or keys. AI-assisted diagnosis, human-reviewed by Taylor Marlow / StableExo, shared logs go through AI tools, so redact tokens and env values before sending. Pay after the diagnosis is delivered: USDC on Base clears same-day, PayPal Goods & Services accepted but may be held. If I can't diagnose in 2 hours, no charge. If I diagnose but no fix exists, you get the report."
+
+Payment notes: USDC from the owner's own wallet, confirm network (Base) and token (USDC) first since wrong-chain payments are unrecoverable; count only USDC as cleared within 24 hours. Crypto received for services is generally income at fair value (not tax advice).
+
+## The timeline
+
+- **Tonight:** read the channel rules; find three fresh boot-failure posts; reply per the cleared path; deliver on the first acceptance. Build nothing else until one payment clears. Log: contacted, replies, inquiries, paid. "Zero" means zero **cleared payments**, not zero interest (Muse).
+- **T + 24h:** if nothing clears, switch to the runner-up, photo restoration, once its group rules are checked.
+
+## Revision history
+
+- Revision 1: Dead-Boot pick, weighted tie-break.
+- Revision 2: Copilot's objection re-scored criterion 3 as payment intent; lead flipped to photo restoration.
+- Revision 3: Sonnet (criterion author) ruled a free-help request is a posted request, so Buyer 5 holds with a cited URL and quote; three seats confirm. Dead-Boot restored, contingent on the owner approving the tie-break.
 
 ## Sources
 
-- Photo restoration studio prices $30-$60 (up to $60), Fiverr retouchers $15-$30, AI at $0.60-$0.70/photo in seconds: https://toyboxai.io/blog/photo-restoration-services-vs-ai/ and https://restorephotosapp.com/photo-restoration-cost
-- Fiverr 14-day standard payment processing: https://www.fiverr.com/resources/guides/business/fiverr-vs-upwork
+- Photo restoration studio prices $30-$60, Fiverr retouchers $15-$30, AI at $0.60-$0.70/photo in seconds: https://toyboxai.io/blog/photo-restoration-services-vs-ai/ and https://restorephotosapp.com/photo-restoration-cost
+- Fiverr 14-day standard payment processing, and PayPal Goods & Services hold for new sellers: https://www.fiverr.com/resources/guides/business/fiverr-vs-upwork
 - Finder regulation: https://illinoistreasurer.gov/home/individuals/unclaimed-property/unclaimed-property-finder-applications/faq-unclaimed-property-finder-application/ ; https://codeofarrules.arkansas.gov/Rules/Rule?levelType=section&titleID=18&chapterID=292&subChapterID=412&partID=1447&subPartID=9420&sectionID=63373 ; https://treasury.tn.gov/Unclaimed-Property/About-Unclaimed-Property/Third-Party-Locators ; https://ctbiglist.gov/app/finder-info
-- Short-form clip prices (control context): https://www.markstudios.com/blog/short-form-video-editing-cost-2026
