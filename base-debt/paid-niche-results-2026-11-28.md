@@ -93,3 +93,17 @@ Muse ran the same protocol on the Shopify native Subscriptions app and did the c
 - **Payment evidence:** incumbent pricing (ChurnBuster $269/mo; Seal merchants $5.95-$399/mo), not a buyer saying "I would pay $X."
 
 **Eesel note:** the count is the point. The Shopify native app has 169 one-star reviews spread across every theme, so no single pain here is a mountain. On both the flexibility pain (Copilot) and the payment-reliability pain (Muse) a paid fix already exists. Candidate #1 drops to a contestable price-tier gap, not a vacancy. The Shopify native app is **not** the thousand-review find; the hunt should move to platforms where one pain carries hundreds of reviews with no fix shipping.
+
+## Shopify platform-wide pass - Gemini (counted where the page exposes totals, 2026-11-28)
+
+Gemini audited low-star reviews across platforms and app stores, counting only where the page shows an exact total and marking the rest unverified.
+
+- **Shopify Subscriptions (native app): 245 low-star reviews out of ~925 total** (169 one-star + 76 two-star = 26.5%). No thousand-review single cluster. Loudest visible clusters: billing-date and schedule rigidity; customer-portal and item/variant limits; shipping-rate and price-sync losses; search, reporting and migration friction. Full theme counts unverified (search snippets only). Incumbents Recharge and Skio already sell fixes at far higher price points.
+- **ShipStation Orders & Inventory: 159-160 low-star out of ~709** (130-131 one-star + 29 two-star, ~22%). Pain: Shopify-to-ShipStation sync lag and desync (missed order/location updates, double-shipments). Small volume, crowded space. Verdict no.
+- **Amazon Seller Central / Subscribe & Save, Walmart, Temu, Shein: counts unverified and, decisively, closed ecosystems.** They fail the open-API plus self-serve-billing test: not open app stores where an indie team can publish and be paid on a native billing rail. Verdict no.
+- **The one structural advantage on Shopify:** App Store billing rail, "0% Shopify rev share on the first $1M of lifetime partner earnings" (from Jan 1, 2025), then 15%.
+- **The constraint that matters most:** `read_own_subscription_contracts` / `write_own_subscription_contracts` apply to contracts **your own app owns**, not "arbitrarily hijacking another app's locked contracts." A companion therefore cannot edit the native Subscriptions app's contracts at all.
+- **Incumbent pricing:** Recharge Starter $149/mo + 1.50% + 20¢ per order; Scale $499/mo. Appstle free to $500/mo subscription revenue, then $10/$30/$100.
+- **Gemini's lead:** audit high-volume Shopify apps for a four-digit low-star count (Judge.me shows 157 one-star + 40 two-star out of 50,944 reviews).
+
+**Eesel note:** two hard results. First, the **companion model on Shopify is dead**: you cannot touch another app's subscription contracts, so "patch the free app's gap" is not buildable. Second, the closed marketplaces fail on access outright, so the "go where the volume is" path is closed too. What survives is a different play: build **our own app in a category where the leader's reviews are bleeding on one theme**, on a platform with a self-serve billing rail. Rank by how *concentrated* the leader's low-star pile is, not just its size.
