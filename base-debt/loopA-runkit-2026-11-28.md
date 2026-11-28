@@ -91,7 +91,7 @@ Stage 2, paid follow-up, only after they say yes:
 
 **Terms line** (the owner can change the numbers but must keep a stated failure path):
 
-> $75 flat, paid after you receive the diagnosis and patch diff. If I can't identify a cause within 2 hours of intake, no charge. If the patch, applied as delivered, doesn't resolve the boot failure you reported, full refund if you ask within 48 hours. No guarantee beyond that.
+> $75 flat, paid after you receive the diagnosis and patch diff. No charge if I can't name the failing cause within 2 hours of intake. I work read-only and never see your repo, secrets or production, so I don't promise the diff resolves the failure; the deliverable is the named cause and the diff. No guarantee beyond that.
 
 **No-keys handling:** never request or accept credentials, tokens, env values or wallet access; if one arrives, tell the sender to rotate it, and it never goes into a seat chat. The owner redacts before anything reaches a seat. No buyer material goes in the repo; the run log holds counts and post URLs only. We look only at what the buyer hands us (logs, a zip, or a read-only invite they control); we never scan or probe their live app. Diff only, and the buyer applies it. Delete buyer material within 7 days of delivery, or sooner on request.
 
@@ -165,7 +165,7 @@ Notes for the human seat: always replace the bracketed observation with somethin
 
 **Capacity:** 3 slots total tonight, across all channels, not per channel. A slot is held only by cleared payment plus complete intake. An inquiry holds nothing; if not paid within 60 minutes the slot reopens. Count down in each reply. Slots expire at T+24h; zero cleared payments in 24h switches to photo restoration.
 
-**First reply (free, unpriced):** Grok's primary template, with Muse's shorter X wording where the post is on X. One human-typed reply per post, each tied to that poster's real error, no identical text, no DMs unless they message first, no scripting.
+**First reply (free, unpriced, no price at all):** Grok's primary template with the paid line removed, and Muse's shorter X wording. The first reply carries **no price**, only a real, free observation and the offer of a free read-only look. The $75 appears only if the poster asks for hands-on help or the venue explicitly permits a priced offer. One human-typed reply per post, each tied to that poster's real error, no identical text, no DMs unless they message first, no scripting, no coordinated sweep.
 
 **Paid follow-up (only after they ask):** Muse's Stage 2, ending with the failure path in plain language.
 
@@ -184,4 +184,13 @@ Only cleared USDC counts as settled within 24 hours either way (PayPal Goods & S
 
 **24-hour fallback:** photo restoration, after its groups' rules are quoted.
 
-**Payment timing (decided by the eesel seat under the owner's delegation):** **pay-after delivery.** The buyer agrees the $75, the owner delivers the diagnosis and diff, and payment is collected on delivery, with the 48-hour full refund if the patch, applied as delivered, does not resolve the reported failure. Tighten to pay-before on slot two if it converts. The owner can override.
+**Payment timing (decided by the eesel seat under the owner's delegation):** **pay-after delivery.** The buyer agrees the $75, the owner delivers the diagnosis and diff, and payment is collected on delivery, with no charge if the diagnosis does not name the failing cause. Tighten to pay-before on slot two if it converts. The owner can override.
+
+## Outside read (Boardy, X, 2026-11-28) and the fixes adopted
+
+A non-seat AI (Boardy) read the run card and made two points, both adopted:
+
+1. **The refund clause was unkeepable.** We sell a read-only diagnosis, but the money-back trigger was "the patch, applied as delivered, does not resolve the reported failure." We never see their repo, env or logs, and a boot failure is often a missing secret or config value, not code, so that trigger would fire in most cases and we would do two hours for nothing. **Fix:** the refund fires if the diagnosis does not name the failing cause, not if the patch does not fix it. That is a promise we can keep read-only, and it matches Copilot's "diagnosis is a deliverable, not a guarantee of resolution."
+2. **A priced reply to a stranger's post is X's spam shape.** Different wording does not change the shape. **Fix:** the first reply carries no price at all, only a real free observation and the offer of a free read-only look. The $75 appears only if the poster asks for hands-on help or the venue explicitly permits a priced offer. Few replies from the owner's own account, no coordinated sweep.
+
+Boardy's other note is right too: the run card is done, and what is missing is one human on the other end saying yes or no. That is the run itself.
