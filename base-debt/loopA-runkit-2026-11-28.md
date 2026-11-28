@@ -32,7 +32,57 @@ Copilot's closing note: "Treat this as a diagnostic deliverable, not a guarantee
 
 **Eesel's note:** this is the strongest piece to have first, because it defines the product. It also tightens the failure terms: the diagnosis is a deliverable, the fix is a separate scope, agreed before any change is proposed. Adopt as the diagnostic standard.
 
-### Muse - offer and intake - PENDING
+### Muse - offer and intake
+
+Seller of record: Taylor Marlow / StableExo. Human reviews everything before it reaches a buyer. No AI holds an account or makes a promise.
+
+**Three-slot cap:** 3 slots total tonight, across all channels, not per channel. One offer per channel; max 3 replies total on X, human-typed. A slot is held only by cleared payment **plus** complete intake; an inquiry does not hold a slot; if a buyer inquires but does not pay within 60 minutes, the slot stays open. Count down in each reply ("3 slots tonight", then "2 left", then "1 left"). When all 3 fill, stop, no waitlist. Slots expire at T+24h from offer-live. Zero cleared payments in 24h = switch to photo restoration.
+
+*Arithmetic:* 3 x $75 = $225 gross. USDC on Base: $225 net, buyer covers gas. PayPal Goods & Services: net $216.80-$217.58 for three, fee $2.48-$2.73 per $75, and may be held. Only cleared USDC counts for the 24h test.
+
+**When the clock starts.** The clock does **not** start at reply, inquiry, or promise. **T0 = the later of** (a) cleared $75 USDC received on Base with the tx hash logged, and (b) complete intake received. Delivery due **T0 + 2 hours**: diagnosis plus patch diff if fixable, diff only, never touch production. If intake is incomplete 30 minutes after payment, the clock pauses and Taylor tells the buyer; the deadline extends by the waiting time. If no diagnosis is delivered by T0 + 2h, no charge / full refund. If a diagnosis is delivered but no fix exists, the buyer gets the report and the $75 stands, because the work was the diagnosis. This is the failure path to state in the offer; Sonnet's compliance block governs the full wording. PayPal does not start the clock for this test (Goods & Services can be held up to 7 days), so it is earned but not cleared in 24h.
+
+**Exact reply text, two stages, tailored each time, never copy-pasted identically.** Use Stage 1 first; send Stage 2 only if the poster asks or the rules allow a priced offer.
+
+Stage 1, free observation (Discord / Farcaster):
+
+> Hey, saw your post about [their exact error, e.g. Railway service crashing on boot with exit 1]. From what you posted, it looks like [one specific observation from their log, e.g. it exits before your start command runs].
+>
+> I just debugged the same kind of Railway boot failure on my own project. Happy to take a free 30-45 min read-only look at your redacted logs if you want, no keys, no access, no .env.
+>
+> If you want the full thing, I have 3 slots tonight for a $75 flat 2-hour diagnosis + patch diff. AI-assisted, I review everything myself. If I can't diagnose in 2h, no charge. Want me to take that free look? - Taylor / StableExo
+
+Stage 1, X (human-typed, short):
+
+> Saw your [error] - looks like [one observation]. Just fixed the same Railway boot loop on my own app. Happy to do a free 30-min read-only look, redacted logs only, no keys. I have 3 paid slots tonight, $75 for 2h diagnosis + diff if you want it. - Taylor
+
+Stage 2, paid follow-up, only after they say yes:
+
+> Great, here's how the paid slot works:
+> $75 flat, 2-hour diagnosis + patch diff if fixable. Read-only first, redacted logs only, no secrets or keys. AI-assisted, human-reviewed by me. Pay on delivery in USDC on Base, $75 USDC received, you cover gas. PayPal Goods & Services also accepted but may be held and does not count as cleared in 24h.
+> Clock starts when payment clears AND I have your intake below. Delivery in 2h from then. If I can't diagnose in 2h, no charge. If I diagnose but no fix exists, you get the report.
+> I have [3 / 2 / 1] slot(s) left tonight. Want one? If yes, I'll send the intake questions.
+
+**Public safety rules:** do not post a wallet address in a public reply, share the owner-held wallet only in DM after acceptance. Do not say "I can fix it", "guaranteed fix", or any outcome promise; say "diagnosis + diff if fixable".
+
+**Intake block (send after acceptance):**
+
+> Thanks, here is the intake for your slot. Redacted logs only, no .env, no API keys, no private keys. Diff only, I will not touch production.
+> 1. Public repo link, or minimal snippet?
+> 2. Platform and service name? Railway / Vercel / other?
+> 3. Build command and start command?
+> 4. Last 50 lines of logs, redacted, paste or link?
+> 5. When did it last work? What changed since? Deploy, env var, dependency, Node version?
+> 6. Runtime / Node version?
+> 7. Confirm you own this app or are authorized to share these logs, and you agree to redacted-logs only, no production access.
+> 8. Payment: can you pay $75 USDC on Base? If yes, I'll share the wallet address here in DM. If PayPal, note it may be held.
+> 9. Best place to send the diagnosis + diff? Same thread or a DM you open?
+>
+> Once I have this + cleared payment, your 2-hour clock starts.
+
+**Log fields for eesel:** for each of the 3 posts: post URL, exact quote, channel, channel-rules URL / status, time replied, Stage 1 text used, reply / inquiry / paid, tx hash if USDC, T0, delivery time, result.
+
+**Eesel's note:** Muse's Stage 1 already supplies the first-reply template, which overlaps Grok's lane. If Grok's comes back similar, we keep Muse's Discord/Farcaster wording and use Grok's as the short X variant. Blockers before posting: Sonnet's channel-rules checklist. Gemini's list is in and already holds Discord, so the run opens on X and Farcaster.
 ### Sonnet - compliance block and channel rules - PENDING
 ### Gemini - channel clearance list and payment wording
 
