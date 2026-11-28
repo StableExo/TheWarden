@@ -83,7 +83,30 @@ Stage 2, paid follow-up, only after they say yes:
 **Log fields for eesel:** for each of the 3 posts: post URL, exact quote, channel, channel-rules URL / status, time replied, Stage 1 text used, reply / inquiry / paid, tx hash if USDC, T0, delivery time, result.
 
 **Eesel's note:** Muse's Stage 1 already supplies the first-reply template, which overlaps Grok's lane. If Grok's comes back similar, we keep Muse's Discord/Farcaster wording and use Grok's as the short X variant. Blockers before posting: Sonnet's channel-rules checklist. Gemini's list is in and already holds Discord, so the run opens on X and Farcaster.
-### Sonnet - compliance block and channel rules - PENDING
+### Sonnet - compliance block and channel checklist
+
+**Disclosure line** (in the first reply and the offer, before any money moves):
+
+> AI-assisted, human-reviewed: AI tools help read your logs and draft the diagnosis, and [owner] reviews everything before it reaches you. What you share is processed by those tools, so redact tokens, env values and passwords first. Never send keys.
+
+**Terms line** (the owner can change the numbers but must keep a stated failure path):
+
+> $75 flat, paid after you receive the diagnosis and patch diff. If I can't identify a cause within 2 hours of intake, no charge. If the patch, applied as delivered, doesn't resolve the boot failure you reported, full refund if you ask within 48 hours. No guarantee beyond that.
+
+**No-keys handling:** never request or accept credentials, tokens, env values or wallet access; if one arrives, tell the sender to rotate it, and it never goes into a seat chat. The owner redacts before anything reaches a seat. No buyer material goes in the repo; the run log holds counts and post URLs only. We look only at what the buyer hands us (logs, a zip, or a read-only invite they control); we never scan or probe their live app. Diff only, and the buyer applies it. Delete buyer material within 7 days of delivery, or sooner on request.
+
+**Channel checklist** (each channel needs its rule URL and a quote from the owner before posting):
+1. **X: cleared with limits.** X bars bulk, aggressive, high-volume unsolicited replies, mentions and DMs. URL: https://help.x.com/en/rules-and-policies/manipulated-media (the slug looks mislabeled, so the owner should open it and confirm the spam text before posting). Limits: three human-typed replies at most, each tied to that poster's actual error; the first reply free and unpriced with a short AI-assisted tag; no DMs unless they message first; no scripting.
+2. **Railway Discord #help: not cleared.** No Railway rule text found; the baseline is https://discord.com/terms/guidelines, where unsolicited bulk messages are prohibited. The owner must quote the server's self-promotion or paid-services clause, or skip.
+3. **Railway Station forum: not cleared for priced offers.** Its code of conduct tells users to refrain from promotional content. URL: https://station.railway.com/community-code-of-conduct. A free on-topic answer is fine; a price needs a moderator's okay.
+4. **Farcaster: not cleared.** Acquired by Network School in October, with new "social smart contract" rules; no primary rule text found, and channel rules apply on top.
+5. **Photo fallback groups: not cleared.** Each group's own rules, quoted, before any post.
+
+**Sonnet's bottom line for tonight:** unless the owner quotes a permitting Discord rule, the run is effectively **X-only**, and the log should say so, so the 24-hour test is measuring X conversion only.
+
+**Eesel's note, two conflicts to resolve before posting:**
+1. **Farcaster.** Gemini lists it CLEARED (conditional); Sonnet lists it NOT cleared. Sonnet is the compliance authority and its read is the more conservative, so Farcaster is held and tonight stands as **X-only** unless the owner quotes Farcaster's rules.
+2. **Payment timing.** Muse has pay-before: T0 is cleared payment plus intake, and the clock starts on cleared payment. Sonnet recommends pay-after delivery: lower buyer risk and better conversion, but the owner delivers the diagnosis before any money arrives. These are different products and it is the owner's call.
 ### Gemini - channel clearance list and payment wording
 
 Two-step path for all public replies: lead with a genuine, free 30-45 minute read-only diagnostic observation first, and only introduce the paid $75 2-hour offer if the poster explicitly asks for hands-on help or the venue explicitly permits commercial offers.
