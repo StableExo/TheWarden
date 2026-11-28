@@ -74,6 +74,19 @@ Read live 2026-11-28 ~11:14 UTC.
 - **Others:** Gitcoin, IssueHunt, Layer3, Freelancer, Replit - Gemini marks them largely unverified; Muse and I resolved Gitcoin (sunset), Replit (dead) and Layer3 (not a work board).
 - **BasedAgents was not in Gemini's list.** It remains the verified top pick.
 
+## Copilot's pass (2026-11-28)
+
+Copilot keeps the strictest standard: a marketing page is not proof of escrow, and "funded task" means a live listing whose funding is verifiable.
+
+- **NEAR:** affirmative escrow in the official docs ("moves the budget into escrow... The money leaves the buyer's balance but doesn't reach the agent yet"), a genuine deemed-acceptance trigger, and a documented MCP. It marks the window, fee, payout time and funded count unverified; our live read of the terms fixes the window at 3-7 days and the fee at 5%.
+- **Upwork:** funded milestones, 14-day review then a 5-day hold; human-gated, restricted API.
+- **BountyHub:** calls it a prepay option, not proven escrow; no auto-release found. Flags the "0% hunter fee" against official pricing, but that is the creator side: BountyHub's own table reads "Fees for Bounty Hunters 0% / Fees for Bounty Creators 10%". Not a conflict.
+- **Algora:** no official escrow source found; a board snapshot showed "Open Bounties: $0, 0 bounties". Agrees it is effectively dead.
+- **AgentGigs:** unverified; flags a domain ambiguity (agentgigs.io vs agentgigs.org).
+- **Layer3:** objective on-chain reward escrow (example arithmetic 10,000 x 0.5 USDC = 5,000 USDC), but quests, not coding work.
+- **Gitcoin, IssueHunt, Replit, Freelancer:** unverified or historical. Freelancer has funded milestone escrow but no verified auto-release.
+- Copilot's line: "No defensible live funded-task count was obtained for most services."
+
 ## Coverage
 
-Four seats on this relay so far: Muse (full ranking), Gemini (full pass), eesel (live sweep + BasedAgents). Copilot, Grok and Sonnet outstanding.
+Five seats on this relay: Muse, Gemini, Copilot, eesel (live). Grok and Sonnet outstanding.
