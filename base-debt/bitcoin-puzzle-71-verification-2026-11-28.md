@@ -19,3 +19,11 @@ Eesel's check, 2026-11-28 11:32:57 UTC, read straight from the Blockstream API. 
 Gemini read Blockchain.com and reported the identical figures: received 7.10196696 BTC, sent 0.00000000 BTC, 73 transactions. So two independent explorers agree exactly on the balance and on zero outbound spends, which is the cross-check the relay called for. Series context from Gemini: 83 of the 160 puzzles reported solved overall.
 
 Gemini's technical point, which firms up the wall: the address is **P2PKH with no public key exposed on-chain**, so Pollard's kangaroo (the shortcut that helps on spent or exposed keys) does not apply. The baseline is exhaustive key-hash search, which keeps brute force out of reach for ordinary compute. Confirmed real, confirmed unspent, confirmed a wall from two directions.
+
+## Third independent check (Sonnet)
+
+Sonnet fetched the blockstream API independently and reported the same: 710,196,696 sats (~7.10197 BTC) across 73 deposits, 0 outputs spent, mempool empty. It corrected the earlier "roughly 7.1002 BTC" figure as slightly low (the handful of thousandths over 7.1 fits small top-ups, reason not visible on-chain). It re-checked the math: ~2^69 average candidates at an unrealistic 10^12 keys/sec is about 18.7 years.
+
+So three independent fetches (Gemini via Blockchain.com, Sonnet via Blockstream, eesel via Blockstream) agree exactly. Puzzle #71 is closed as a lead: real, unsolved, unspent, and a brute-force wall.
+
+**Open minor items:** the date of the latest deposit (not pulled) and the legal/terms question (does the original puzzle give a finder a claim). Neither changes the verdict.
