@@ -200,4 +200,23 @@ Boardy's other note is right too: the run card is done, and what is missing is o
 - **Railway MCP and Vercel MCP require authorization.** Railway uses CLI login or OAuth; Vercel requires user OAuth per connection, with no unauthenticated or automatic read-only access to account, project or deployment logs. Sources: https://docs.railway.com/ai/mcp-server and https://vercel.com/docs/agent-resources/vercel-mcp (Copilot's verification, 2026-11-28). **Consequence: intake stays manual.** We never take the buyer's credentials anyway; the buyer shares redacted logs, or explicitly authorizes access themselves. Public repos and genuinely public pages can still be read read-only.
 - **USDC on Base, verified from the official docs (2026-11-28, via the Base docs MCP):** native USDC is `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (issued by Circle); Base Sepolia is `0x036CbD53842c5426634e7929541eC2318f3dCF7e`; the bridged USDbC `0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA` is a **different** token and is not native USDC (warn buyers off it by name). Source: https://docs.base.org/base-chain/network-information/ecosystem-bridges . USDC uses 6 decimals, and the docs warn a direct transfer "has no escrow, authorization, or protocol-managed refund flow". **The earlier flag on this address is closed.**
 - **Escrow (Gemini): skip it tonight.** Standing up an AuthCaptureEscrow operator and collector flow adds integration overhead to a $75 micro-fix where speed matters; keep the direct transfer plus the stated failure path. Revisit only if the ticket size grows.
-- Pending from the MCP relay: GitHub MCP, browser MCP, web-search MCP, Farcaster/Neynar MCP; Sonnet's rule on which autonomous steps are allowed; Muse's T0 confirmation.
+- **Web-search MCP (Exa): VERIFIED** at https://mcp.exa.ai/mcp (Muse, 2026-11-28). Keyless search and fetch at a free rate limit; tools `web_search_exa` and `web_fetch_exa`; `agent_run` needs OAuth or a key. Read-only: it can find fresh public "won't boot" posts and fetch them, but it cannot read private Discord #help or X DMs, cannot read Railway/Vercel logs, cannot post, and cannot bypass a channel's rules. Source: https://exa.ai/docs/get-started/exa-mcp . Keyless tier is enough to test the scan.
+- **T0 (Muse): automation does not move it.** Scan and draft happen before T0; a found post creates no slot and starts no clock; drafts still need human review, which sits inside the 2 hours; and automation must not auto-post, auto-DM, auto-accept payment or make a promise. T0 stays: the later of cleared USDC and complete intake.
+- **GitHub MCP not verified by Muse** (its open returned the wrong document), so the GitHub, browser, Stripe and Farcaster/Neynar rows remain for their seats.
+
+## Sonnet ruling on autonomy (2026-11-28)
+
+The frame is right, but three of the "can be autonomous" steps trip the rules, and the stack needs two cuts:
+
+- **Scanning X: not autonomous.** X lists scripting the X site as prohibited non-API automation, with permanent suspension possible; a browser MCP pointed at x.com is exactly that, and the X API needs a key and costs money. The owner scans X by hand.
+- **Scanning Discord: not autonomous.** Discord's guidelines (an older version, confirm current text) say each account must belong to a human, not a bot; an agent reading channels through the owner's account is a self-bot. The owner reads and pastes leads.
+- **Scanning the open web: OK.** A search tool on public pages, as a lead source only, at human pace, no logged-in scraping.
+- **Watching for replies: not autonomous.** An agent monitoring the owner's X account is an AI holding an account, which the standing rule bars. The owner reads notifications and pastes the text.
+- **Reading buyer logs and repos: OK, with conditions.** If the GitHub MCP needs a token it fails the no-keys rule; use unauthenticated public fetch or a zip the buyer sends. Private repos stay manual.
+- **Browser MCP: OK for one URL only.** It opens the page the buyer linked, once, to read the error. No crawling, no endpoint testing, no form submits.
+- **Drafting and logging: OK.** Drafts go to a queue only; no connected tool may have post rights; the log holds counts and URLs only.
+- **Cuts:** Stripe is out for this run (it means holding an account and a key, and the rails we use do not need it). Neynar is held (Farcaster is not cleared and it needs a key).
+
+Two rulings for the owner: (1) any MCP that needs an API key fails "no keys" as written; Sonnet would stay strict for tonight; (2) the final relay said build nothing until one payment clears, and setting up this stack is building, so Sonnet would run tonight manually and verify the MCPs afterward. The Base docs MCP, which has no auth, is fine to use now.
+
+**Consequence:** the MCP stack setup is **deferred until after the run**. Tonight runs manually. Only the keyless Base docs MCP is in active use.
