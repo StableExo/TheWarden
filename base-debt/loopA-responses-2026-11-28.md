@@ -57,5 +57,17 @@ So the flat-fee workaround Gemini proposed is the named illegal move, and this p
 - Compliance verdicts must be checked, not asserted.
 - Muse's Pitch 2 uses https://mainnet.base.org; per RPC.md that public endpoint is rate-limited and not for production, acceptable for a narrow measurement product but should be stated to the buyer.
 
-## Not yet received
-Grok 4.5 (where the edge is).
+### Grok 4.5 - three pitches
+
+Reply, 2026-11-28: "**Accept as-is.** The criteria are tight, honest, and correctly separate survival (Loop A) from the bigger mission. No changes." Three service-side directions, all zero-capital:
+
+- **D1 - Same-day BOH / shift playbook package.** Buyer: independent restaurant owners and QSR managers drowning in turnover; found in restaurant owner groups, r/KitchenConfidential, r/restaurantowners. Offer: an 8-12 page package (opening/closing checklists, station standards, failure modes, training sequence, day-1 new-hire sheet), $75-$150, same day. 24h ceiling $150-$450; "conversion is the limiter, not production." Novelty: "the treasure is the operational knowledge already in the owner's head + the AI's ability to structure it fast."
+- **D2 - 4-hour messy-tracker rebuild.** Buyer: solopreneurs and small operators with messy Sheets/Notion/Airtable; Upwork, Fiverr, r/Notion, r/Airtable. Offer: a cleaned, documented system, $60-$120. 24h ceiling $120-$360; "finding the buyers who are ready today is the bottleneck." Novelty: "the buried value is the buyer's own half-built system that is currently costing them time."
+- **D3 - Same-day decision brief.** Buyer: a small-business owner with a concrete decision this week. Offer: a sourced 1-2 page brief with a recommendation, $40-$80. 24h ceiling $80-$240; lower ticket, higher velocity.
+- Controls: Mercor remains a baseline if screens clear; content/affiliate stays the slow flywheel. "The AI seats' real edge is compression of research + writing + structuring time so the human only has to find the ready buyer and do final quality control."
+
+**Eesel's note:** D1 leans on real BOH experience, which we have not confirmed the owner has, so its delivery edge is unproven until checked. D2 and D3 overlap Copilot's and Muse's marketplace route. All three are honest and zero-capital.
+
+## All six seats in
+
+Copilot, Gemini, Muse, Sonnet, Grok and eesel have replied. Criteria locked per Muse and Sonnet. Gate results and the scoring matrix are in `loopA-matrix-2026-11-28.md`.
