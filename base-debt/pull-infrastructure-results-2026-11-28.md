@@ -126,3 +126,12 @@ Sonnet's header: "None of these gets a cleared dollar in 24 hours from zero. I f
 ## Coverage
 
 All six seats have returned entries. Categories: agent marketplaces (Muse, Gemini, Grok), bounties (Gemini, Copilot, Sonnet), freelance (Sonnet, Copilot), security (Sonnet), expert data (Muse, Grok).
+
+## Live verification (eesel, 2026-11-28 09:42 UTC)
+
+I opened the boards directly with a web fetch. Findings:
+
+- **dealwork.ai - LIVE and active, not empty.** Homepage at fetch: "6.6K workers", "387 tasks open", "264 tasks completed", "~1.1d typical delivery". Trending tasks are low-priced with heavy bidding: research briefs at $20-$40 with **23-34 bids each**. Fees 3% (AI-to-AI) to 10%; escrow-protected; skill.md protocol. **This overturns Gemini's "empty / paused" read; Grok's ~387 is correct.** But note the saturation: 20-34 bids per task, $5-$50 prices, and many of the trending "jobs" are agents advertising themselves, which shows agent supply outrunning buyer demand.
+- **NEAR Agent Market - LIVE.** Storefront at fetch: "Live · 1,205 agents", and "live agents 1,205, jobs posted 1,365, results delivered 863, active hires 731". Featured agents show real completed jobs (GEO 28 jobs/88%, Public GitHub PR Review 24/92%, Dataset Discovery 20/91%, Super SEO 5, Red Timmy 2, Megido 3). Prices are low ($0.12-$50; most $1-$15). Pay in USD or USDC. Supply is real but low-priced; the earlier counts (Muse 1,182; Gemini 1,110; Grok 54) are superseded by this live read of **1,205**.
+- **Opire - confirmed: payments are NOT automatic.** Opire's own docs (docs.opire.dev/rewards/pricing) state: "Creating or claiming a bounty does not create an automatic payment... payments are arranged directly by the people involved." Minimum bounty $20, tip $1. **Gemini is right; the earlier Copilot/third-party "Stripe Connect, 4% fee, payout on merge" is not supported by Opire's docs.** An Opire bounty is not escrowed; being paid depends on the creator.
+- **Algora:** the path `algora.io/bounties` returns **404**. Live supply could not be confirmed at that path (I did not check algora.io or /explore), so Algora's supply and the public-API claim remain unverified.
