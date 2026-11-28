@@ -102,17 +102,27 @@ Owning seat for Dead-Boot Rescue. Position, not a lock.
 
 **Eesel's note:** Muse confirms revision 1. Two corrections are adopted outright: PayPal is not same-day cleared for a new seller, so the offer wording must change and only USDC counts as cleared; and the channel rules are a hard gate, not a detail. Muse's "one free diagnostic line in public, paid fix only if the buyer invites a DM" is a better answer to the free-help-norm risk than posting a paid pitch cold.
 
+### Claude Sonnet 5.5 - check-back on the decision (2026-11-28)
+
+**Verdict: confirm Dead-Boot Rescue, with conditions.**
+
+1. **Overlap:** the job is unique, but Muse's README-vs-Reality and Launch-teardown target the same builders on the same channels, so one platform flag would hit both. Run one offer per channel at a time.
+2. **Choice and timeline:** confirms the 24-hour test. Four notes: the double-weight tie-break "wasn't in the locked criteria", the arithmetic checks (33 vs 30) but **the owner should approve it explicitly since it decides the pick**; Dead-Boot's Buyer 5 "depends on the URL-and-quote rule" so the matrix needs a URL and quote for each post, not just the pattern; "three slots" must be real capacity or it is manufactured urgency; the photo fallback has not been through the gate, since free restores in local groups are self-promotion too.
+3. **Compliance:** Discord #help is **not cleared** (could not retrieve Railway's rules; Discord prohibits unsolicited bulk messages; Railway's forum code of conduct asks people to refrain from promotional content; the owner must quote the server rule that permits a priced offer, or skip the channel). X is OK **only as individual, human-typed replies** (no bulk/high-volume unsolicited; three replies at most, each tied to that person's error, no identical text, no DMs unless they message first, no scripting; AI-generated automated replies need X's prior approval and cannot impersonate humans). Farcaster was not checked, so it is not cleared. Disclosure: "AI-assisted" alone is too thin; say the diagnosis is AI-assisted with human review, that shared code and logs go through AI tools, and that buyers must redact tokens and env values; ask for sanitized logs or read-only repo access, never Railway or wallet credentials; deliver the diff only and never touch production. Payment (terms unverified): USDC from the owner's own wallet, confirm network and token first since wrong-chain payments are usually unrecoverable, net out gas and off-ramp fees, and crypto received for services is generally income at fair value (not tax advice); PayPal Goods & Services, not Friends & Family, expect holds. Failure path: name it, since USDC cannot be reversed; Sonnet suggests pay after the diagnosis is delivered with no charge if no cause is found, which also lowers the buyer's risk and helps conversion. Owner's call.
+
+**Eesel's note:** Sonnet rules that a free-help request is a "posted request" under its own criterion 3, so Dead-Boot's Buyer score holds, provided we cite the actual post. That answers Copilot's objection by making the score evidence-bound rather than assumed. The important consequence: **the double-weight tie-break was never in the locked criteria.** With it, Dead-Boot wins 33 to 30. Without it, the unweighted scores give photo restoration 24 to 23. So the pick hinges on the owner approving the tie-break.
+
 ## Decision tally on the check-back
 
 | Seat | Position |
 |---|---|
-| GitHub Copilot | re-score: buyer exists is a need signal, not payment intent; weakens Dead-Boot's tie-break |
-| Gemini 4 Hydrogen | confirm revision 1 (Dead-Boot); tie-break stands; no mis-score |
-| Muse Spark 1.3 (owning seat) | confirm revision 1 (Dead-Boot); tie-break correct; adds channel gate and payment corrections |
-| Claude Sonnet 5.5 | pending |
+| GitHub Copilot | re-score: buyer exists is a need signal, not payment intent |
+| Gemini 4 Hydrogen | confirm revision 1 (Dead-Boot); tie-break stands |
+| Muse Spark 1.3 (owning seat) | confirm revision 1 (Dead-Boot); tie-break correct |
+| Claude Sonnet 5.5 (criterion author) | confirm revision 1 (Dead-Boot), conditional on citing a URL and quote per post |
 | Grok 4.5 | pending |
 
-Two confirm, one for the flip. Pending Sonnet (who wrote criterion 3) and Grok.
+Three confirm (Gemini, Muse, Sonnet), one for the flip (Copilot). Dead-Boot holds, under the weighted tie-break, which the owner must still approve.
 
 ## All six seats in
 
