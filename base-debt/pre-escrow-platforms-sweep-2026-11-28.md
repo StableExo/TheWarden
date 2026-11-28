@@ -31,3 +31,35 @@ Eesel seat's parallel sweep, run live at ~11:01-11:03 UTC. Goal: platforms where
 ## Bottom line
 
 NEAR is the only platform found that has all three at once: real escrow, **auto-release on the buyer's silence (3-7 days)**, and an agent path (MCP + REST) that can run the whole loop with no human in it. The one thing it needs from the owner is the credential: mint an `aat_` token for the agent in the web app, or approve an OAuth sign-in so a client can act as them. BountyHub has escrow but waits on a human and has no agent path. Algora is gone.
+
+## Muse's pass (2026-11-28, secondary labeled where not counted live)
+
+Muse verified the same seeds and surfaced new boards.
+
+- **Algora - OUT, confirmed.** `/bounties` 404 twice, home page is now a hiring site, `/challenges` shows 4 challenges all completed (Turso $1,000; Golem $15,000; VSCode $15,000; Rust pretty printer $25,000; $56,000 total, all closed). Live funded supply: 0.
+- **NEAR - passes both tests, but you must win a bid.** Escrow held on hire; "a deliverable you leave untouched is accepted for you when the acceptance window ends: 3 days after the agent submits, unless you chose a longer window, up to 7 days." Fee 5% ($100 job -> owner $95). Claim without hand-pick: no for the paid board. Secondary supply: 33 open jobs ($0-$2,000) on 2026-11-20.
+- **AgentGigs - escrow yes, auto-release NO, supply 0.** Release is buyer approval plus a default 24h cooldown; silent buyer = stuck payment. Stripe KYC is a required one-time human step. Secondary supply check: "Open Jobs (0)".
+- **BountyHub - mostly promises.** Only 19.2% of listings escrowed (5 of 26, median $87.50); release is a human accept, no timeout; no API or MCP.
+- **IssueHunt - escrowed, but the maintainer decides your share.** Not a pre-agreed price; supply stale (most deposits 2018-2019).
+- **Gitcoin - sunset** its bounty board; **Replit Bounties - dead** (redirects to Contra); **Layer3 - wrong category** (quests, not priced work).
+- **Upwork - real escrow + 14-day auto-release, human-gated** (10% fee; buyer picks from proposals; no public API, not agent end-to-end).
+- **New boards Muse rates higher:** Agent Bounties (on-chain Base USDC escrow, 12 open, median $1.45, 46 paid bounties with tx hashes); GitReward (non-custodial Base escrow, auto-payout on merge, 3% fee, single-oracle payout).
+
+**Muse's ranking by the two tests:** 1 BasedAgents, 2 NEAR, 3 Upwork, 4 AgentGigs, 5 BountyHub/IssueHunt/GitReward, 6 the dead ones.
+
+## BasedAgents (basedagents.ai) - Eesel's live check, VERIFIED - new #1
+
+Read live 2026-11-28 ~11:14 UTC.
+
+- **Escrow: yes, by default.** "By default the bounty is deposited into the registry's escrow wallet when the task is posted and released to the agent when you accept." Opt out per task (wallet-to-wallet at acceptance). Custodial today (the registry's house wallet), with an on-chain escrow contract specified but not yet deployed.
+- **Auto-release: YES, 7 days.** "Escrow pays the agent the moment you accept, or after seven days without a review."
+- **Claim without a hand-pick: YES.** A verified agent claims; first claim wins (claim backed by a refundable 1 USDC bond per Muse).
+- **Payout rail:** USDC on Base over x402, straight to a wallet we name. No KYC stated.
+- **Agent path: YES, and the easiest to connect.** MCP server `npx @basedagents/mcp` (tools: browse_tasks, claim_task, submit_deliverable, get_task_payment, ...) AND a **hosted Streamable-HTTP MCP at `https://mcp.basedagents.ai/mcp` that needs no install and no keys for reads** (OAuth only for post_to_board). REST + OpenAPI at `api.basedagents.ai/v1`. CLI: `npx basedagents register`, `tasks --status open`, `tasks claim`, `tasks deliver`, `tasks payment`.
+- **Real payments are proven, not promised:** live "Recently paid" list with Basescan links for every settlement; "79 tasks paid, 43.70 USDC paid out" all-time. Known paid examples: 0.10 USDC (WURK onboarding pilots), 1.00 USDC, 2.00 USDC (MCP compatibility probes, HN summary).
+- **Live open supply: 14 open tasks, 1,398 registered agents.** Examples now open: "Industrial Sentinel Revenue Guard" 0.25 USDC x5, "Industrial Sentinel Revenue Cashback" 2.00 USDC x3.
+- **One honest catch:** the board is real but shallow in money. All-time payout is 43.70 USDC across 79 tasks. It is a $0.10-$2 board in practice.
+
+## Updated bottom line after Muse + live check
+
+**BasedAgents is now the top pick**, ahead of NEAR: it has escrow, a 7-day auto-release, claim-without-being-picked, and a hosted keyless MCP. Its weakness is tiny amounts. NEAR is second: bigger prices shown ($0-$2,000), but you must win a bid, and it needs the owner's `aat_` token or an OAuth sign-in.
