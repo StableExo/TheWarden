@@ -129,8 +129,59 @@ Two-step path for all public replies: lead with a genuine, free 30-45 minute rea
 > - **Failure / refund:** AI-assisted diagnosis and patch diff delivered by the human seller of record. If no actionable root cause or valid patch diff can be delivered within 2 hours, you receive a full refund (returned in USDC on Base or via PayPal).
 
 **Eesel's note:** the operable finding is that the cleared surfaces tonight are **X and Farcaster** (both conditional), while both Discords are on **HOLD** and Railway's Central Station explicitly bans self-promotion. So the run opens on X and Farcaster, not Discord, unless the pinned Discord rules are quoted and clear paid offers. Two flags: (1) the USDC contract address must be verified against Circle's official Base documentation before it is ever used, and never trusted from a pasted message; (2) the 100% refund guarantee is a stronger commitment than earlier drafts and is the owner's call.
-### Grok - first-reply template - PENDING
+### Grok - first-reply template
 
-## The run card - PENDING all pieces
+Core pattern, every time: (1) a short, specific free observation based only on what is public in the post; (2) offer a free 30-45 minute read-only look; (3) only mention the paid $75 / 2-hour job if they reply asking, or the rules explicitly allow a priced offer up front; (4) keep it human, calm, non-salesy, one reply per post, vary the wording.
 
-To be assembled once the remaining four lanes land: the channel list with rule status, the exact first-reply, the offer text, the intake questions, the compliance block, the payment wording, the log template, and the 24-hour fallback trigger.
+Primary template (recommended default):
+
+> Hey - saw the boot failure.
+>
+> Quick free read from what's visible: [1-2 sentence specific observation about the error, log line, or common Railway/Base pattern that matches what they posted. Example: "The exit code plus the missing env reference in the build log usually means the runtime can't see the variable that was set only in the dashboard."]
+>
+> Happy to do a free 30-45 min read-only pass on the logs/config you can share (no access needed beyond what you paste, no keys, nothing touches production). I'll tell you what I find either way.
+>
+> If it looks like a clean fix after that and you want the full diagnosis + patch diff, I can do that as a flat $75 / ~2 hour job, paid in USDC on Base or PayPal. Just say if you want me to dig in.
+
+Shorter variant (detailed post or strict channel):
+
+> Looks like a classic Railway/Base boot miss - [one precise observation from their post].
+>
+> I can take a free 30-45 min read-only look at the logs/config you share and tell you what I see. No keys, nothing writes to your side.
+>
+> If you want the actual fix + patch after that, it's $75 flat for the full diagnosis and diff. Let me know.
+
+Notes for the human seat: always replace the bracketed observation with something real and specific (generic replies kill trust); lead with the free look; if they accept, the free clock starts when they paste the logs/config; if the free look shows a clear fixable cause, offer the paid step, otherwise say so cleanly and stop with no charge; end every paid offer with the failure path; never ask for keys, tokens or production access; read-only pasted logs/config only; deliver a diff, nothing more.
+
+**Eesel's note:** this is the recommended default first reply. Muse's Stage 1 gives the Discord/Farcaster phrasing and a short X line, so we pair Grok's primary template for the free observation with Muse's shorter X wording where the post is on X.
+
+## The run card (assembled 2026-11-28, all five lanes in)
+
+**What:** Dead-Boot Rescue. $75 flat, 2-hour read-only diagnosis plus patch diff for a Base/Railway app that will not boot.
+
+**Who:** seller of record Taylor Marlow / StableExo. Human reviews everything before a buyer sees it. No AI holds an account or makes a promise.
+
+**Where tonight:** **X only.** Farcaster held (rules unquoted), Railway Discord #help held (no rule found), Railway Station forum bans priced offers. Before posting, open the X rules URL and confirm it covers the reply behaviour (Sonnet flagged the slug as mislabeled). One offer per channel. The 24-hour result measures X conversion only.
+
+**Capacity:** 3 slots total tonight, across all channels, not per channel. A slot is held only by cleared payment plus complete intake. An inquiry holds nothing; if not paid within 60 minutes the slot reopens. Count down in each reply. Slots expire at T+24h; zero cleared payments in 24h switches to photo restoration.
+
+**First reply (free, unpriced):** Grok's primary template, with Muse's shorter X wording where the post is on X. One human-typed reply per post, each tied to that poster's real error, no identical text, no DMs unless they message first, no scripting.
+
+**Paid follow-up (only after they ask):** Muse's Stage 2, ending with the failure path in plain language.
+
+**Payment and terms:** Gemini's block, with ONE OPEN SWITCH - pay-before or pay-after.
+- **Pay-after (Sonnet):** deliver the diagnosis and diff, then invoice; 48-hour refund if the patch, applied as delivered, does not resolve the reported failure. Lower buyer risk, better first-test conversion, but the owner delivers before money. **Eesel's recommendation for the first test.**
+- **Pay-before (Muse):** T0 is cleared USDC plus complete intake, and the clock starts on cleared payment. Protects the owner, harder sell.
+Only cleared USDC counts as settled within 24 hours either way (PayPal Goods & Services may be held).
+
+**The clock:** delivery due 2 hours from T0. No diagnosis within 2 hours = no charge. Diagnosis delivered but no fix = the buyer gets the report, $75 stands. PayPal does not start the clock.
+
+**Intake:** Muse's nine questions (sent only after acceptance).
+
+**Compliance (Sonnet):** the disclosure line in the first reply and the offer, before any money moves. No keys ever; if one arrives, tell the sender to rotate it. The owner redacts before anything reaches a seat. No buyer material in the repo; the run log holds counts and post URLs only. Look only at what the buyer hands over; never scan or probe their live app. Diff only, buyer applies it. Delete buyer material within 7 days.
+
+**Log fields (eesel):** per post - URL, exact quote, channel, rule URL and status, time replied, first-reply text used, reply / inquiry / paid, tx hash if USDC, T0, delivery time, result. Record zero if no cleared payment within 24 hours.
+
+**24-hour fallback:** photo restoration, after its groups' rules are quoted.
+
+**Open decision:** payment timing, pay-after (recommended) or pay-before. Everything else is ready.
