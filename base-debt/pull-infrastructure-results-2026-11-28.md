@@ -66,6 +66,29 @@ Muse's note: "one browser result in this run did not pass a safety check, so I d
 
 **Eesel's note:** both are genuinely "job plus price posted," and both are agent-native (NEAR has an MCP and x402; AgentGigs is REST-autonomous). But three things temper them: cleared cash is not same-day (NEAR needs buyer acceptance then withdrawal; AgentGigs is approval plus a 24h cooldown); supply at the low end is thin and low-priced; and both need the owner's account, KYC and API key. The autonomy is real; the fast-dollar and thick-supply assumptions are not.
 
+## Gemini - marketplaces and bounties (live audit)
+
+**NEAR AI Agent Market** (market.near.ai) - live; human and AI buyers hire listed agents or post briefs; escrow held from hire; payout on buyer acceptance (or after the acceptance window); withdraw USDC to a wallet or USD via Stripe Connect. Jobs: SEO/GEO audits, competitive niche checks, security red-teaming, code review, data extraction, research reports. Live storefront shows 1,110 listed agents with completed-job counts (27 on a GEO agent, 5 on Super SEO, 2 on Red Timmy). Competition moderate; $1-$10 micro-tasks plus higher specialized quotes. Native MCP + REST (`/v1/*`, polling), publishes SKILL.md and llms.txt, A2A with x402. Note: Muse read 1,182 agents from a search index; the counts differ and both are snapshots.
+
+**AgentGigs** (agentgigs.io) - API-first, escrow plus independent "proofer" verification; payout after proofer verification and poster approval, via Stripe Connect or wallet ("$0 per-transaction fees on wallet payments"). Two one-time human steps: email confirmation + Stripe Connect KYC. Supply thin and early.
+
+**dealwork.ai and ClawGig - supply check:** very low buyer liquidity / paused cycles. Gemini's read of 2026 builder audits: "the supply side of AI agent labor is ahead of the demand side. Lots of agents ready to work. Very few humans posting work." ClawGig's creator reportedly peaked at ~$1k+ total earned across dozens of gigs before pausing. Passive polling only; not for 24h cash.
+
+**Algora** (algora.io/bounties) - GitHub-integrated funded bounties (Cal.com, Remotion, Twenty, Zio, Coolify named). Contributor keeps 100%; the org pays the fee. Payout: Stripe Express 1-3 business days after merge, in practice 1-4 weeks with maintainer review. Active bounties typically $50-$2,500, ~260+ indexed. Competition severe (8-158 competing PRs). Edge: target stale bounties older than 14 days. Gemini reports a **public unauthenticated REST API** at `https://api.docs.algora.io/bounties` (`/api/orgs/{org}/bounties`) - **this conflicts with Copilot's "no public API documented" and is unverified.**
+
+**Superteam Earn** (earn.superteam.fun) - crypto/Web3 bounty and gig board backed by Solana sponsors; escrow USDC or SOL released to a wallet once winners are declared. Jobs: dev builds, security reviews, technical content, design, micro-grants ($100-$1,500+). Free profile, global eligibility, wallet required. Continuous supply (350+ opportunities, 2,790+ sponsors). Multi-day deadlines, not 24h. No public autonomous submission MCP.
+
+**Opire and BountyHub:** Opire - GitHub-comment bounty tracker, $20 minimum per Gemini, and per Opire's own docs "Creating or claiming a bounty does not create an automatic payment... payments are arranged directly by the people involved". **This conflicts with Copilot's Opire entry (Stripe Connect, 4% fee, payout on merge) and with the earlier Opire report. Opire is contested.** BountyHub - GitHub bounty UI, 0% hunter fee, Stripe/PayPal, 121 countries, pre-funded and pay-on-solve; verify each listing is pre-funded.
+
+**Gemini's bottom line:** fastest API-native autonomy = NEAR Agent Market plus Algora's public API (zero-auth discovery, target stale PRs older than 14 days). Avoid for 24h cash: ClawGig, dealwork.ai, and unescrowed Opire.
+
+## Conflicts and unverified claims to resolve
+
+- **Algora API:** Gemini reports a public unauthenticated REST API; Copilot reports none documented. Unverified.
+- **Opire:** Gemini (payments arranged directly, not automatic; $20 minimum) vs Copilot (Stripe Connect, 4% fee, on merge). Contested; needs a live doc read.
+- **NEAR supply count:** Gemini 1,110 agents; Muse 1,182 (search index). Both snapshots.
+- Every "fast" claim is still not same-day: NEAR needs acceptance then withdrawal; Algora is 1-3 business days after merge, weeks in practice.
+
 ## Pending
 
-Waiting on: security bounties, freelance-with-budgets, expert data, and the remaining agent-marketplace checks.
+Security bounties, freelance-with-budgets, expert data.
