@@ -82,3 +82,14 @@ Copilot ran the protocol on the Shopify native Subscriptions app and correctly m
 - **Access confirmed:** the Shopify Admin and Subscriptions API is open to third parties, and the App Store allows self-serve publication and platform billing.
 
 **Eesel note:** this is a real downgrade for candidate #1. The pain is verified; the vacancy is not. A cheap no-migration companion is still sellable, but it competes with mature paid apps rather than empty space. It also sharpens the whole hunt: we do not want a big pain, we want a big pain where **no fix is shipping**.
+
+## Shopify review-cluster pass - Muse (counted, 2026-11-28)
+
+Muse ran the same protocol on the Shopify native Subscriptions app and did the count Copilot did not.
+
+- **The shippable cluster: renewal / payment reliability, 6 reviews.** Verbatim: Grimoire&Alchemy, 1-star, "Half of my subscriptions don't go through (customer support blames shopify, shopify blames the app)" and "The app uncancels and unskips randomly, and charges people when they have already cancelled"; Positive Science People, 1-star, "every time a customer moves house and changes their address, or updates the billing details, the subscription will break, without notifying the seller."; House of Glow, 1-star, "I turned on the retry credit card if the auth failed. So it retried 10x and left 10 different pending transactions on their credit card statement."
+- **An incumbent already sells a fix, at enterprise price.** ChurnBuster, read live: "Dunning or Cancel Flows starts at $269/mo", has handled "50+ Million Failed payments", runs on Stripe, Shopify, Recharge, Loop and others. Seal's paid plans $5.95 / $9.95 / $24.95/mo (up to $399/mo on Seal's site). Arithmetic: $269 / $24.95 = 10.8x; $269 / $5.95 = 45.2x. The fix is claimed at $269/mo and unclaimed only at the $6-$25/mo tier Seal merchants already pay: a price-tier gap, not an unclaimed problem, and the demand signal is 6 reviews.
+- **Access test:** Shopify Subscription APIs are open but gated (a subscription app "needs to request API access in the Dev Dashboard"; public apps must meet publish requirements). Self-serve store yes; Shopify bills, and handles chargebacks.
+- **Payment evidence:** incumbent pricing (ChurnBuster $269/mo; Seal merchants $5.95-$399/mo), not a buyer saying "I would pay $X."
+
+**Eesel note:** the count is the point. The Shopify native app has 169 one-star reviews spread across every theme, so no single pain here is a mountain. On both the flexibility pain (Copilot) and the payment-reliability pain (Muse) a paid fix already exists. Candidate #1 drops to a contestable price-tier gap, not a vacancy. The Shopify native app is **not** the thousand-review find; the hunt should move to platforms where one pain carries hundreds of reviews with no fix shipping.
