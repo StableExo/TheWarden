@@ -34,7 +34,28 @@ Copilot's closing note: "Treat this as a diagnostic deliverable, not a guarantee
 
 ### Muse - offer and intake - PENDING
 ### Sonnet - compliance block and channel rules - PENDING
-### Gemini - channel list and payment wording - PENDING
+### Gemini - channel clearance list and payment wording
+
+Two-step path for all public replies: lead with a genuine, free 30-45 minute read-only diagnostic observation first, and only introduce the paid $75 2-hour offer if the poster explicitly asks for hands-on help or the venue explicitly permits commercial offers.
+
+| Venue / Surface | URL | Rule Status | Constraint & path |
+|---|---|---|---|
+| X (Twitter) - public builder replies | https://x.com | CLEARED (conditional) | Individual, human-typed replies only (max 3 total). No automation or scripting, no duplicate templates, no cold DMs unless the poster messages first. |
+| Farcaster - /base-builds and /base | https://farcaster.xyz/~/channel/base-builds , https://warpcast.com/~/channel/base | CLEARED (conditional) | Builder-focused public feeds. Reply with a concrete diagnostic observation first; share the paid fix only if the builder asks. (/base enforces a Wrap posting threshold for top-level casts; replies to existing threads are direct.) |
+| Railway Central Station (forum and bounty board) | https://station.railway.com/community-code-of-conduct | NOT CLEARED for paid solicitation | Code of Conduct: "No Spam or Self-Promotion: Refrain from posting promotional content or spam. This includes advertising products, services, or websites." Do not pitch the $75 service here. Only participate on an official Railway-funded Bounty Board question (pays $10+ via Stripe Connect, requires AI disclosure). |
+| Railway Discord (#help) | https://discord.com/invite/railway | UNVERIFIED / HOLD | Do not post unless the pinned #rules text is quoted and verified to allow paid service offers. Standard support channels prohibit unsolicited commercial offers; skip by default. |
+| Base Discord (builder help) | https://discord.com/invite/buildonbase | UNVERIFIED / HOLD | Same gate: quote the pinned rules first; otherwise restrict to free diagnostic replies or skip. |
+
+**Payment wording (copy-ready):**
+
+> **Payment & Terms ($75 Flat - 2-Hour Dead-Boot Rescue)**
+> - **Amount & Asset:** $75.00 USD, payable in Native USDC on Base (Chain ID 8453) or via PayPal Goods & Services / direct invoice. (Please do not send bridged USDbC or funds on Ethereum mainnet or other L2s.)
+> - **Network gas fees:** the buyer covers the Base L2 gas fee so the full $75 USDC clears on-chain.
+> - **Custody & wallet:** payment goes directly to the owner-controlled personal wallet address provided on intake confirmation (never an AI-held or third-party custodial account).
+> - **Clock & settlement:** work begins once payment confirms on BaseScan (or clears in PayPal) and redacted logs or read-only repo access are shared. Only cleared, settled funds count toward the run log.
+> - **Failure / refund:** AI-assisted diagnosis and patch diff delivered by the human seller of record. If no actionable root cause or valid patch diff can be delivered within 2 hours, you receive a full refund (returned in USDC on Base or via PayPal).
+
+**Eesel's note:** the operable finding is that the cleared surfaces tonight are **X and Farcaster** (both conditional), while both Discords are on **HOLD** and Railway's Central Station explicitly bans self-promotion. So the run opens on X and Farcaster, not Discord, unless the pinned Discord rules are quoted and clear paid offers. Two flags: (1) the USDC contract address must be verified against Circle's official Base documentation before it is ever used, and never trusted from a pasted message; (2) the 100% refund guarantee is a stronger commitment than earlier drafts and is the owner's call.
 ### Grok - first-reply template - PENDING
 
 ## The run card - PENDING all pieces
