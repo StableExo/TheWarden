@@ -220,3 +220,16 @@ The frame is right, but three of the "can be autonomous" steps trip the rules, a
 Two rulings for the owner: (1) any MCP that needs an API key fails "no keys" as written; Sonnet would stay strict for tonight; (2) the final relay said build nothing until one payment clears, and setting up this stack is building, so Sonnet would run tonight manually and verify the MCPs afterward. The Base docs MCP, which has no auth, is fine to use now.
 
 **Consequence:** the MCP stack setup is **deferred until after the run**. Tonight runs manually. Only the keyless Base docs MCP is in active use.
+
+## Candidate statuses (Grok 4.5 verification, 2026-11-28)
+
+Treat these as seat-claimed, not independently re-checked by eesel:
+
+- **Base docs MCP:** linked and reachable (`https://docs.base.org/mcp`). A separate on-chain Base MCP is reported at `https://mcp.base.org`.
+- **GitHub official MCP:** exists, needs a GitHub PAT or OAuth (remote `https://api.githubcopilot.com/mcp/`, or local `github/github-mcp-server`), supports read-only. **Conflict:** Muse could not verify this (its open returned the wrong document); mark GitHub claimed-verified, unconfirmed.
+- **Browser MCP (Playwright):** exists, local (`npx @playwright/mcp@latest`).
+- **Web-search MCP (Exa):** exists, keyless free tier (`https://mcp.exa.ai/mcp`).
+- **Web-search MCP (Brave):** exists, needs `BRAVE_API_KEY`.
+- **Stripe MCP:** exists (`https://mcp.stripe.com`, OAuth or agent key); optional, not needed for the USDC path.
+- **Farcaster/Neynar MCP:** partial; docs MCP at `https://docs.neynar.com/mcp`, full data via API key; held until Farcaster rules are quoted.
+- **Railway/Vercel deploy logs:** no public MCP gives private deploy logs, so intake stays manual.
