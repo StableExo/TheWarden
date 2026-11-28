@@ -38,6 +38,37 @@ Muse read CoinTracker, Koinly, Marmalead, eRank, a Fiverr export-cleaning gig, E
 
 **Eesel's note:** Muse's top pick is the best fit for our one real advantage. The Base tax cleaner is only viable because we know Base DEXes (the Warden repo), something no generic cleaner has. Caveats: its core evidence (the Koinly LP NULL* bug) is secondary and needs a live check, and the demand is tax-seasonal, not now.
 
-## Pending
+## Sonnet - no candidate; the compliance gate (pre-registered)
 
-Sonnet, Grok entries.
+Sonnet declines to nominate a revenue candidate and instead sets the gate every candidate must clear:
+
+- **Interfaces yes, expression no.** Reimplementing public APIs for interoperability can be fair use, but the holding is narrow, so work only from observed behaviour and public docs; never use incumbent source, UI copy, icons, or brand names in our keywords; keep a provenance note per file.
+- **Our assets may not be ours.** AI output alone isn't copyrightable, so the moat cannot be the files; it needs real human editing, and the moat is service, updates and distribution.
+- **No Chrome clone-farm** (repetitive content bars accounts). **No Upwork scrapers** (bots barred). **Etsy (from Oct 22)** bans AI-generated patterns/recipes/instructions and requires an unedited photo; templates are FLAG, not PASS.
+- **Seed categories:** micro-SaaS, single-purpose extensions, calculators/converters, data-cleaning = PASS with conditions; templates, paid content, short-form = FLAG.
+- **Warden repo:** Copilot's audit found the scanner, pathfinding and execution modules are **stubs that fabricate opportunities** and the treasury is **mock**. Nothing from those ships as a product or a demo, and no number shown to a buyer comes from them. Only the real parts (pool and RPC reading, for example) are candidates, after a licence check.
+
+## Grok - three candidates (trends and distribution)
+
+- **Privacy-first subscription tracker** (email-receipt parsing, no bank login). Proof: a Reddit launch, "$7.99/month... Goal: 150 paying subscribers = ~$1k MRR", a goal, not revenue. Weak proof.
+- **AI chat power-user extension** (folders/search inside ChatGPT/Claude). Proof: a bundle listing "$​15,000 ARR... 255 customers". A listing, not verified revenue; and Gemini's own data says extensions monetise poorly (6.3% clear $1k/mo).
+- **Messy-tracker productised service** (Sheets/Notion/Airtable). Proof: an Airtable add-on at $9/$19/$39/mo and a Notion seller at "$1,016 total, best month $221". Modest.
+- Distribution: Reddit complaint threads + Chrome Web Store + Product Hunt; avoid content/affiliate and bounty boards.
+
+## Merged shortlist (eesel)
+
+Gate applied: verified proof of money, our real advantage, reachability, compliance, timing.
+
+1. **Shopify Subscriptions companion** (Gemini). Verified pain (930 reviews, 3.8, 169 one-star; Nov 4 and Nov 13 2026 quotes), a large reachable base, a public `SubscriptionContract` API, Shopify's own billing rail, clean-room, and **non-seasonal**. Best build-now pick.
+2. **Base DeFi tax CSV cleaner** (Muse). The best fit for our one real advantage, since we know Base DEXes; no incumbent; a $3,499 anchor. Caveats: demand is tax-seasonal (peak Jan-Apr) and the core proof is secondary. Build now, launch for tax season.
+3. **Bulk AI HS-code / IOSS validator** (Gemini). Verified gap quote; same Shopify buyer as #1.
+4. **DORA Register of Information validator** (Gemini). Highest price, verified paid toolkits and a real deadline, but the hardest buyer reach and accuracy/liability if the tool is wrong.
+5. **Etsy fix pack / marketplace export cleaner** (Muse). Verified pricing, seasonal, smaller.
+
+**Rejected or weak:** generic Notion templates (Muse); the privacy subscription tracker and the AI-chat extension (Grok), whose proof is a goal or a listing rather than revenue, and extensions monetise poorly.
+
+**Standing notes:** all revenue arithmetic is assumption-based and must be marked as such; nothing from the Warden repo's stub modules ships; every candidate keeps a provenance note for the clean-room line.
+
+## Coverage
+
+All five seats have replied: Copilot (no candidate), Gemini (3), Muse (3), Grok (3), Sonnet (gate, no candidate).
