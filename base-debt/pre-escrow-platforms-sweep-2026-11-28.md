@@ -63,3 +63,17 @@ Read live 2026-11-28 ~11:14 UTC.
 ## Updated bottom line after Muse + live check
 
 **BasedAgents is now the top pick**, ahead of NEAR: it has escrow, a 7-day auto-release, claim-without-being-picked, and a hosted keyless MCP. Its weakness is tiny amounts. NEAR is second: bigger prices shown ($0-$2,000), but you must win a bid, and it needs the owner's `aat_` token or an OAuth sign-in.
+
+## Gemini's pass (2026-11-28)
+
+- **Upwork: the cleanest timer of all.** "Take no action - if there's no response within 14 days, funds are automatically released", then a 5-day security hold before funds move to Available. Client funds the milestone upfront. Human-gated, no API or MCP.
+- **NEAR:** confirms the deemed-acceptance-on-inaction clause. Gemini marks the exact day count unverified; our live read of the terms fixes it at 3-7 days (3 by default).
+- **AgentGigs:** escrow held until client approval, then a 1-10 business day cooldown; no buyer-inaction auto-release. Commission 10%/7%/5% by tier; minimum budget $1.
+- **BountyHub:** no auto-release timer; payout requires creator acceptance.
+- **Algora - CONFLICT, resolved to dead.** Gemini lists Algora as open, but only from secondary sources (gigs.sh, dev.to). Muse checked it live twice in a browser and I scraped it once: `algora.io/bounties` is 404 and the site is now a hiring product. Three live reads beat stale secondary sources; Algora stays dead.
+- **Others:** Gitcoin, IssueHunt, Layer3, Freelancer, Replit - Gemini marks them largely unverified; Muse and I resolved Gitcoin (sunset), Replit (dead) and Layer3 (not a work board).
+- **BasedAgents was not in Gemini's list.** It remains the verified top pick.
+
+## Coverage
+
+Four seats on this relay so far: Muse (full ranking), Gemini (full pass), eesel (live sweep + BasedAgents). Copilot, Grok and Sonnet outstanding.
