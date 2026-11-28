@@ -107,3 +107,17 @@ Gemini audited low-star reviews across platforms and app stores, counting only w
 - **Gemini's lead:** audit high-volume Shopify apps for a four-digit low-star count (Judge.me shows 157 one-star + 40 two-star out of 50,944 reviews).
 
 **Eesel note:** two hard results. First, the **companion model on Shopify is dead**: you cannot touch another app's subscription contracts, so "patch the free app's gap" is not buildable. Second, the closed marketplaces fail on access outright, so the "go where the volume is" path is closed too. What survives is a different play: build **our own app in a category where the leader's reviews are bleeding on one theme**, on a platform with a self-serve billing rail. Rank by how *concentrated* the leader's low-star pile is, not just its size.
+
+## Shopify access and method - Sonnet (2026-11-28)
+
+Sonnet confirms the hard stop and adds the method rules.
+
+- **No add-on possible on Shopify.** Subscription contracts belong to the app that created them, not the store, so a custom app cannot access contracts made by Shopify's own Subscriptions app; webhooks follow the same rule, and the only partial workaround (`orders/create`) catches initial purchases but not renewals or cancellations. Billing-date or skip fixes are impossible as an add-on.
+- **A replacement app has its own gates.** Subscription API scopes need Shopify's approval (a stated ~10 business-day review, from an undated blog, so dated); contracts owned by an app are cancelled 48 hours after the merchant uninstalls; migration between apps has no public path (Shopify support does it), from an old community post.
+- **Selling is self-serve with platform billing.** Apps using off-platform billing cannot be distributed in the App Store. A 15% revenue share is available on application, with 0% on the first $1,000,000; the standard rate is 20%.
+- **Verdict:** enterable only as a full replacement app, not a quick fix, so not a "smallest shippable app" in 24 hours.
+- **Method rule:** Shopify's Terms reportedly bar robots, spiders and scrapers (third-party source, primary text unverified), and the app store's robots.txt disallows search-result URLs. So count from the star breakdown shown on the listing and read reviews by hand: no scrapers, no Apify actors. Short quotes with the URL, no reviewer or store names; complaints are our spec, but we copy no incumbent UI or copy.
+- **Other platforms (API access only):** Amazon public SP-API apps must be listed in the Selling Partner Appstore, and roles touching personal data need an architecture review and a data security assessment (gated and slow); whether Subscribe & Save is exposed is unchecked. Etsy's own-shop Seller App bars commercial use, so serving other sellers needs a Personal App plus a manual commercial review, and screen-scraping is prohibited (one GitHub anecdote alleges commercial requests get ignored, unverified). Not checked by Sonnet: Walmart, eBay, TikTok Shop, Temu, Shein, BigCommerce, Woo, Squarespace, Wix, G2, Capterra, Trustpilot, Chrome Web Store.
+- **For Muse:** community threads name Appstle and Bold as paid subscription apps; pricing unchecked.
+
+**Eesel note:** Sonnet closes the last door on the companion play and adds a rule to keep: no scraping, count by hand from the listing's star breakdown. Every route so far is either contested, closed, or a full head-on replacement.
