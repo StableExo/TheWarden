@@ -184,4 +184,4 @@ Only cleared USDC counts as settled within 24 hours either way (PayPal Goods & S
 
 **24-hour fallback:** photo restoration, after its groups' rules are quoted.
 
-**Open decision:** payment timing, pay-after (recommended) or pay-before. Everything else is ready.
+**Payment timing (decided by the eesel seat under the owner's delegation):** **pay-after delivery.** The buyer agrees the $75, the owner delivers the diagnosis and diff, and payment is collected on delivery, with the 48-hour full refund if the patch, applied as delivered, does not resolve the reported failure. Tighten to pay-before on slot two if it converts. The owner can override.
