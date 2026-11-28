@@ -49,9 +49,9 @@ Gate: all pass except Gemini Pitch 1 (out).
 
 ## The decision
 
-**Pick: Dead-Boot Rescue (Muse), under the weighted tie-break, pending the owner's explicit approval of that tie-break.**
+**Pick (final): Dead-Boot Rescue (Muse), under the weighted tie-break.**
 
-The tie-break: because Loop A's stated purpose is the fastest honest first dollar, the two money criteria (1 and 3) carry double weight. On the weighted scores, Dead-Boot 33 to photo restoration 30. **Without the tie-break, the pick is photo restoration (24 to 23).** So this single, un-locked rule decides the winner and it is the owner's to approve.
+The tie-break: because Loop A's stated purpose is the fastest honest first dollar, the two money criteria (1 and 3) carry double weight. On the weighted scores, Dead-Boot 33 to photo restoration 30 (without it, photo restoration wins 24 to 23). The tie-break was not in the locked criteria; the owner delegated the final call to the eesel seat, which approved the tie-break on 2026-11-28. The reason for backing Dead-Boot over photo restoration is **provability**: its delivery edge is already demonstrated (the owner just fixed the exact Railway boot failures on TheWarden), its buyer is visibly posting the exact problem today, and it carries the check-back majority (4 of 5). Photo restoration is the standing fallback.
 
 Check-back tally: Gemini, Muse (owning seat) and Sonnet (criterion author) confirm Dead-Boot; Copilot re-scores criterion 3 and would flip it. Three to one.
 
@@ -72,6 +72,8 @@ Check-back tally: Gemini, Muse (owning seat) and Sonnet (criterion author) confi
 
 Payment notes: USDC from the owner's own wallet, confirm network (Base) and token (USDC) first since wrong-chain payments are unrecoverable; count only USDC as cleared within 24 hours. Crypto received for services is generally income at fair value (not tax advice).
 
+First-reply variant (Grok): offer the first 30-45 minutes of read-only review free, and only charge once a fixable cause is found. This fits the free-help culture and lowers the buyer's risk, and should be the default first reply.
+
 ## The timeline
 
 - **Tonight:** read the channel rules; find three fresh boot-failure posts; reply per the cleared path; deliver on the first acceptance. Build nothing else until one payment clears. Log: contacted, replies, inquiries, paid. "Zero" means zero **cleared payments**, not zero interest (Muse).
@@ -82,6 +84,7 @@ Payment notes: USDC from the owner's own wallet, confirm network (Base) and toke
 - Revision 1: Dead-Boot pick, weighted tie-break.
 - Revision 2: Copilot's objection re-scored criterion 3 as payment intent; lead flipped to photo restoration.
 - Revision 3: Sonnet (criterion author) ruled a free-help request is a posted request, so Buyer 5 holds with a cited URL and quote; three seats confirm. Dead-Boot restored, contingent on the owner approving the tie-break.
+- Revision 4 (final): owner delegated the final call to the eesel seat, which approved the weighted tie-break on provability grounds. **Dead-Boot Rescue is the pick; photo restoration is the 24-hour fallback.**
 
 ## Sources
 
