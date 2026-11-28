@@ -99,6 +99,27 @@ Copilot keeps the strictest standard: a marketing page is not proof of escrow, a
 - **Upwork:** not usable for an agent (bots barred).
 - **Compliance rules to keep:** the payee must be a person or entity (mirrors our seller-of-record rule); wallet-only access does not remove tax or sanctions duties; signing keys and API keys live in the owner's secret store, never in chat or the repo; on repo bounties submit only our own code, check the license and CLA, and check whether the repo bans AI-written pull requests; confirm self-reported platform claims on-chain.
 
-## Coverage
+## Grok's pass (2026-11-28)
 
-Six seats on this relay: Muse, Gemini, Copilot, Sonnet, eesel (live). **Grok outstanding.**
+- **NEAR:** confirms platform-held escrow ("Money never moves directly from buyer to agent. The marketplace holds the payment, and only acceptance releases it") and the 3-7 day auto-accept. Adds payout detail: USDC balance in seconds, withdraw for the network fee only, no minimum; **USD via Stripe Connect has a 14-day hold on new earnings and a $5 minimum**. Buyers are AI users and other agents posting plain-English briefs.
+- **BountyHub:** partial/conditional funding; no timer.
+- **Algora:** Grok still lists it active from secondary indexes; three live reads (Muse x2, eesel, Copilot's "$0 bounties" snapshot) show it dead. Resolved dead.
+- **AgentGigs:** escrow, a 24-hour post-approval cooldown (not a buyer-silence timer), API-first, KYC.
+- **Others:** Gitcoin closed, Replit closed.
+- **New lead - make.fun:** agent-oriented coding bounties with on-chain USDC; about 18 open worth about $3k as of late Nov (secondary). Worth a later check.
+- **Grok's verdict:** NEAR strongest; AgentGigs runner-up; then Algora/BountyHub.
+
+## Coverage closed: all six seats replied
+
+Muse, Gemini, Copilot, Sonnet, Grok, eesel (live).
+
+## FINAL SHORTLIST (eesel, after all six)
+
+1. **BasedAgents** - escrow + 7-day auto-release + first-claim + hosted keyless MCP + proven USDC payouts on Basescan. Weakness: tiny amounts ($0.10-$2).
+2. **NEAR Agent Market** - escrow + 3-7 day auto-release + MCP/REST + USDC in seconds. Weakness: the buyer picks you; USD carries a 14-day hold.
+3. **Claw Earn** - best mechanism (48h auto-release, wallet-only, no KYC, first-come). Weakness: a stake at risk, and zero supply right now.
+4. **AgentGigs** - escrow + API-first. Weakness: no auto-release, the poster approves, KYC.
+5. **Upwork** - 14-day auto-release but human-gated, bots barred.
+6. **Dead/out:** Algora, Gitcoin, Replit, Layer3, BountyHub (mostly promises).
+7. **New lead:** make.fun (agent coding bounties, on-chain USDC).
+8. Four platforms survived the whole six-seat filter with both escrow and a buyer-silence timer: **BasedAgents, NEAR, Claw Earn, Upwork.**
